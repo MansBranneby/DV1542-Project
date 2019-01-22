@@ -124,13 +124,20 @@ HRESULT CreateShaders()
 			0							 // used for INSTANCING (ignore)
 		},
 		{ 
-			"TEXCOORD", 
+			//"TEXCOORD", 
+			//0,				// same slot as previous (same vertexBuffer)
+			//DXGI_FORMAT_R32G32_FLOAT,
+			//0, 
+			//12,							// offset of FIRST element (after POSITION)
+			//D3D11_INPUT_PER_VERTEX_DATA, 
+			//0 
+			"COLOUR",
 			0,				// same slot as previous (same vertexBuffer)
-			DXGI_FORMAT_R32G32_FLOAT,
-			0, 
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
 			12,							// offset of FIRST element (after POSITION)
-			D3D11_INPUT_PER_VERTEX_DATA, 
-			0 
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
 		},
 	};
 
@@ -218,35 +225,65 @@ HRESULT CreateShaders()
 
 	return S_OK;
 }
+//Texture
+//struct TriangleVertex
+//{
+//	float x, y, z;
+//	float u, v;
+//};
 
+//Colour
 struct TriangleVertex
 {
 	float x, y, z;
-	float u, v;
+	float r, g, b;
 };
 
 void CreateTriangleData()
 {
 	// Array of Structs (AoS)
+	//Quad with UV
+	//TriangleVertex triangleVertices[6] =
+	//{
+	//	-0.5f, 0.5f, 0.0f,	//v0 pos
+	//	0.0f, 0.0f,			//v0 tex
+
+	//	0.5f, -0.5f, 0.0f,	//v1 pos
+	//	1.0f, 1.0f,			//v1 tex
+
+	//	-0.5f, -0.5f, 0.0f, //v2 pos
+	//	0.0f, 1.0f,			//v2 tex
+
+	//	-0.5f, 0.5f, 0.0f,	//v3 pos
+	//	0.0f, 0.0f,			//v3 tex
+
+	//	0.5f, 0.5f, 0.0f,	//v4 pos
+	//	1.0f, 0.0f,			//v4 tex
+
+	//	0.5f, -0.5f, 0.0f,	//v5 pos
+	//	1.0f, 1.0f			//v5 tex
+	//};
+	
+	//Quad with colour
 	TriangleVertex triangleVertices[6] =
 	{
 		-0.5f, 0.5f, 0.0f,	//v0 pos
-		0.0f, 0.0f,			//v0 tex
+		1.0f, 0.0f, 0.0f,	//v0 col
 
 		0.5f, -0.5f, 0.0f,	//v1 pos
-		1.0f, 1.0f,			//v1 tex
+		0.0f, 1.0f,	0.0f,	//v1 col
 
 		-0.5f, -0.5f, 0.0f, //v2 pos
-		0.0f, 1.0f,			//v2 tex
+		0.0f, 1.0f, 1.0f,	//v2 col
 
 		-0.5f, 0.5f, 0.0f,	//v3 pos
-		0.0f, 0.0f,			//v3 tex
+		1.0f, 0.0f, 0.0f,	//v3 col
 
 		0.5f, 0.5f, 0.0f,	//v4 pos
-		1.0f, 0.0f,			//v4 tex
+		1.0f, 0.0f,	1.0f,	//v4 col
 
 		0.5f, -0.5f, 0.0f,	//v5 pos
-		1.0f, 1.0f			//v5 tex
+		0.0f, 1.0f, 0.0f,	//v5 col
 	};
 
 	// Describe the Vertex Buffer

@@ -1,15 +1,17 @@
 struct GS_IN
 {
-	float4 Pos : SV_POSITION;
-	float2 Tex : TEXCOORD;
+	float4 pos : SV_POSITION;
+	//float2 tex : TEXCOORD;
+	float3 col : COLOUR;
 };
 
 struct GS_OUT
 {
-	float4 Pos : SV_POSITION;
-	float4 WorldPos : World_POSITION;
-	float4 WorldNor : World_NORMAL;
-	float2 Tex : TEXCOORD;
+	float4 pos : SV_POSITION;
+	float4 worldPos : World_POSITION;
+	float4 worldNor : World_NORMAL;
+	//float2 tex : TEXCOORD;
+	float3 col : COLOUR;
 };
 
 cbuffer GS_CONSTANT_BUFFER : register(b0)
@@ -21,23 +23,25 @@ cbuffer GS_CONSTANT_BUFFER : register(b0)
 void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 {
 	GS_OUT element;
-	float4 normal = float4(normalize(cross(input[1].Pos - input[0].Pos, input[2].Pos - input[0].Pos)), 0);
+	float4 normal = float4(normalize(cross(input[1].pos - input[0].pos, input[2].pos - input[0].pos)), 0);
 	for (uint i = 0; i < 3; i++)
 	{
-		element.Pos = mul(input[i].Pos, worldViewProj);
-		element.WorldPos = mul(input[i].Pos, world);
-		element.WorldNor = mul(normal, world);
-		element.Tex = input[i].Tex;
+		element.pos = mul(input[i].pos, worldViewProj);
+		element.worldPos = mul(input[i].pos, world);
+		element.worldNor = mul(normal, world);
+		//element.tex = input[i].tex;
+		element.col = input[i].col;
 		output.Append(element);
 	}
 	output.RestartStrip();
 	
 	for (uint i = 0; i < 3; i++)
 	{
-		element.Pos = mul(input[i].Pos + normal*0.5, worldViewProj);
-		element.WorldPos = mul(input[i].Pos + normal * 0.5, world);
-		element.WorldNor = mul(normal, world);
-		element.Tex = input[i].Tex;
+		element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
+		element.worldPos = mul(input[i].pos + normal * 0.5, world);
+		element.worldNor = mul(normal, world);
+		//element.tex = input[i].tex;
+		element.col = input[i].col;
 		output.Append(element);
 	}
 	output.RestartStrip();
