@@ -13,7 +13,29 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 
+// DirectXTK
+#include "CommonStates.h"
+#include "DDSTextureLoader.h"
+#include "DirectXHelpers.h"
+#include "Effects.h"
+#include "GamePad.h"
+#include "GeometricPrimitive.h"
+#include "GraphicsMemory.h"
+#include "Keyboard.h"
+#include "Model.h"
+#include "Mouse.h"
+#include "PostProcess.h"
+#include "PrimitiveBatch.h"
+#include "ScreenGrab.h"
+#include "SimpleMath.h"
+#include "SpriteBatch.h"
+#include "SpriteFont.h"
+#include "VertexTypes.h"
+#include "WICTextureLoader.h"
 using namespace DirectX;
+using namespace DirectX::SimpleMath;
+
+using Microsoft::WRL::ComPtr;
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -352,9 +374,9 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(float increment)
+void transform(float increment, float move)
 {
-	XMVECTOR CamPos = XMVectorSet(0.0, 0.0, -2.0, 0.0);
+	XMVECTOR CamPos = XMVectorSet(0.0, 0.0, move, 0.0);
 	XMVECTOR LookAt = XMVectorSet(0.0, 0.0, 0.0, 0.0);
 	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
 	
@@ -530,7 +552,6 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 		
 		textureSetUp();
-		transform(gRotation);
 		createConstantBuffer();
 
 		ShowWindow(wndHandle, nCmdShow);
@@ -542,10 +563,27 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		ImGui_ImplDX11_Init(gDevice, gDeviceContext);
 		ImGui::StyleColorsDark();
 
+		std::unique_ptr<Keyboard> keyboard;
+		keyboard = std::make_unique<Keyboard>();
+		float move = -2.0f;
+
 		while (WM_QUIT != msg.message)
 		{
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
+				switch (msg.message)
+				{
+					case WM_KEYDOWN:
+						Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+						break;
+				}
+				auto kb = keyboard->GetState();
+
+				if (kb.W)
+					move += 0.1f;
+				if (kb.S)
+					move -= 0.1f;
+
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
@@ -571,7 +609,11 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 				gRotation += ImGui::GetIO().DeltaTime / 0.8;
 
-				transform(gRotation);
+			
+
+				
+
+				transform(gRotation, move);
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
