@@ -14,6 +14,7 @@ cbuffer FS_CONSTANT_BUFFER : register(b0)
 {
 	float3 lightPos;
 	float3 lightCol;
+	float3 cameraPos;
 };
 
 float4 PS_main(GS_OUT input) : SV_Target
@@ -22,7 +23,9 @@ float4 PS_main(GS_OUT input) : SV_Target
 	float3 ambientCol = { 0.2, 0.2, 0.2 };
 	//float3 fragmentCol = textureCol * ambientCol;
 	float3 fragmentCol = input.col * ambientCol;
-	float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
-	fragmentCol += input.col * diffuseFactor * lightCol;
+	float diffuseFactor = input.col * max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0) * lightCol;
+	float3 r = normalize(2 * dot(input.worldNor, lightPos - input.worldPos) * input.worldNor - (lightPos - input.worldPos));
+	float3 specularCol = input.col * lightCol * pow(r * (normalize(cameraPos) - normalize(input.worldPos)), 2);
+	fragmentCol += diffuseFactor + specularCol;
 	return float4(fragmentCol, 1.0f);
 };

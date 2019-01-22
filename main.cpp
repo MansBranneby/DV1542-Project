@@ -48,7 +48,7 @@ ID3D11SamplerState *gSamplerState = nullptr;
 ID3D11Buffer* gVertexBuffer = nullptr;
 
 ID3D11Buffer* gConstantBuffer = nullptr;
-ID3D11Buffer* gConstantBufferLight = nullptr;
+ID3D11Buffer* gConstantBufferLightCamera = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 
 // resources that represent shaders
@@ -61,6 +61,14 @@ float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
 float gClearColour[3] = {};
+
+struct LightsCamera
+{
+	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
+	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
+	XMVECTOR cameraPos = { 0.0f, 0.0f, 0.0f };
+};
+LightsCamera gLightCamera;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -305,13 +313,6 @@ void CreateTriangleData()
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 }
 
-struct Lights
-{
-	XMVECTOR lightPos = {0.0f, 0.0f, -2.0f};
-	XMVECTOR lightCol = {1.0f, 1.0f, 1.0f};
-};
-Lights gLight;
-
 void createConstantBuffer()
 {
 	//WorldViewProj
@@ -334,9 +335,9 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBuffer);
 
 
-	//Light
+	//Light & Camera
 	// Fill in a buffer description.
-	cbDesc.ByteWidth = sizeof(gLight);
+	cbDesc.ByteWidth = sizeof(gLightCamera);
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
 	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -344,12 +345,12 @@ void createConstantBuffer()
 	cbDesc.StructureByteStride = 0;
 
 	// Fill in the subresource data.
-	InitData.pSysMem = &gLight;
+	InitData.pSysMem = &gLightCamera;
 	InitData.SysMemPitch = 0;
 	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
-	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
+	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLightCamera);
 }
 
 void transform(float increment)
@@ -370,6 +371,9 @@ void transform(float increment)
 
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
+
+	//Update ConstantBuffer with camera position
+	gLightCamera.cameraPos = CamPos;
 }
 
 void createDepthStencil()
@@ -506,7 +510,7 @@ void Render()
 
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
