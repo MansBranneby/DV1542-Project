@@ -20,12 +20,26 @@ cbuffer FS_CONSTANT_BUFFER : register(b0)
 float4 PS_main(GS_OUT input) : SV_Target
 {
 	//float3 textureCol = txDiffuse.Sample(sampAni, input.Tex).xyz;
+	
+	//LIGHTING//
+
+	//Ambient
 	float3 ambientCol = { 0.2, 0.2, 0.2 };
-	//float3 fragmentCol = textureCol * ambientCol;
-	float3 fragmentCol = input.col * ambientCol;
-	float diffuseFactor = input.col * max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0) * lightCol;
-	float3 r = normalize(2 * dot(input.worldNor, lightPos - input.worldPos) * input.worldNor - (lightPos - input.worldPos));
-	float3 specularCol = input.col * lightCol * pow(r * (normalize(cameraPos) - normalize(input.worldPos)), 2);
-	fragmentCol += diffuseFactor + specularCol;
+	float3 ambient = input.col * ambientCol;
+
+	//Diffuse
+	float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
+	float3 diffuse = input.col * lightCol * diffuseFactor;
+
+	//Specular
+	float3 n = normalize(input.worldNor.xyz);
+	float3 l = normalize(lightPos - input.worldPos.xyz);
+	float3 v = normalize(cameraPos - input.worldPos.xyz);
+	float3 r = normalize(2 * dot(n, l) * n - l);
+	
+	float3 specular = input.col * lightCol * pow(max(dot(r, v), 0), 2);
+
+	//Final
+	float3 fragmentCol = ambient + diffuse + specular;
 	return float4(fragmentCol, 1.0f);
 };
