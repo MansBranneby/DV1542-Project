@@ -1,7 +1,3 @@
-//--------------------------------------------------------------------------------------
-// BTH - Stefan Petersson 2014.
-//	   - modified by FLL
-//--------------------------------------------------------------------------------------
 #include <windows.h>
 
 #include "imgui/imgui.h"
@@ -64,14 +60,9 @@ float gClearColour[3] = {};
 
 struct LightsCamera
 {
-	//XMVECTOR lightPos = { -2.0f, 0.0f, 2.0f };
 	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
 	XMVECTOR cameraPos = { 0.0f, 0.0f, 0.0f };
-	
-	//float lightPos[3] = { 0.0f, 0.0f, -2.0f };
-	//float lightCol[3] = { 1.0f, 1.0f, 1.0f };
-	//float cameraPos[3] = { 0.0f, 0.0f, 0.0f };
 };
 LightsCamera gLightCamera;
 
@@ -378,11 +369,6 @@ void transform(float increment)
 	gMatricesPerFrame.World = World;
 
 	//Update ConstantBuffer with camera position
-	
-	//gLightCamera.cameraPos[0] = XMVectorGetX(CamPos);
-	//gLightCamera.cameraPos[1] = XMVectorGetY(CamPos);
-	//gLightCamera.cameraPos[2] = XMVectorGetZ(CamPos);
-
 	gLightCamera.cameraPos = CamPos;
 }
 
@@ -574,10 +560,6 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				
 				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 				ImGui::Text("This is some useful text.");// Display some text (you can use a format strings too)
-				
-				//ImGui::SliderFloat3("Light X-pos", gLightCamera.lightPos, -10.0f, 10.0f);
-				/*ImGui::SliderFloat("Light X-pos", &gLightCamera.lightPos, -10.0f, 10.0f);
-				ImGui::SliderFloat("Light Z-pos", &gLightCamera.lightPos, -10.0f, 10.0f);*/
 				ImGui::SliderFloat("Rotation", &gRotation, 0.0f, 10.0f);
 				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
