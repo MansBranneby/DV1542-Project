@@ -2,6 +2,7 @@
 // BTH - Stefan Petersson 2014.
 //	   - modified by FLL
 //--------------------------------------------------------------------------------------
+#pragma once
 #include <windows.h>
 
 #include <iostream>
@@ -15,6 +16,9 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+
+// extra
+#include <algorithm>
 
 // DirectXTK
 #include "CommonStates.h"
@@ -377,10 +381,10 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(float increment, float move, DirectX::Mouse::State ms)
+void transform(float increment, XMFLOAT3 camPos, float pitch, float yaw)
 {
-	XMVECTOR CamPos = XMVectorSet(0.0, 0.0, move, 0.0);
-	XMVECTOR LookAt = XMVectorSet(ms.x / 100.0f, ms.y / 100.0f, 0.0, 0.0);
+	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0);
+	XMVECTOR LookAt = XMVectorSet(pitch, yaw, 0.0, 0.0);
 	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(gRotation);
@@ -573,7 +577,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		keyboard = std::make_unique<Keyboard>();
 		mouse = std::make_unique<Mouse>();
 		mouse->SetWindow(wndHandle);
-		float move = -2.0f;
+		XMFLOAT3 camPos{ 0.0f, 0.0f, -2.0f };
+		float pitch = 0.0f;
+		float yaw = 0.0f;
 
 		while (WM_QUIT != msg.message)
 		{
@@ -592,6 +598,10 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				case WM_LBUTTONDOWN:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_LBUTTONUP:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_INPUT:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_ACTIVATEAPP:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 					break;
 				}
@@ -622,19 +632,29 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 				gRotation = 0;//ImGui::GetIO().DeltaTime / 0.8;
 
-			
 				DirectX::Mouse::State ms = mouse->GetState();
-				//mouse->SetMode(Mouse::MODE_RELATIVE);
+				mouse->SetMode(Mouse::MODE_RELATIVE);
+
+				pitch += ms.x / 100.0f;
+				yaw -= ms.y / 100.0f;
 
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				if (kb.W)
-					move += 0.001f;
+					camPos.z += 0.001f;
 				if (kb.S)
-					move -= 0.001f;
+					camPos.z -= 0.001f;
+				if (kb.A)
+					camPos.x -= 0.001f;
+				if (kb.D)
+					camPos.x += 0.001f;
+				if (kb.Space)
+					camPos.y += 0.001f;
+				if (kb.LeftControl)
+					camPos.y -= 0.001f;
 				if (kb.Escape)
 					msg.message = WM_QUIT;
-				transform(gRotation, move, ms);
 
+				transform(gRotation, camPos, pitch, yaw);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
