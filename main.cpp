@@ -4,6 +4,9 @@
 //--------------------------------------------------------------------------------------
 #include <windows.h>
 
+#include <iostream>
+
+
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
@@ -374,10 +377,10 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(float increment, float move)
+void transform(float increment, float move, DirectX::Mouse::State ms)
 {
 	XMVECTOR CamPos = XMVectorSet(0.0, 0.0, move, 0.0);
-	XMVECTOR LookAt = XMVectorSet(0.0, 0.0, 0.0, 0.0);
+	XMVECTOR LookAt = XMVectorSet(ms.x / 100.0f, ms.y / 100.0f, 0.0, 0.0);
 	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(gRotation);
@@ -562,10 +565,14 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		ImGui_ImplWin32_Init(wndHandle);
 		ImGui_ImplDX11_Init(gDevice, gDeviceContext);
 		ImGui::StyleColorsDark();
-
-		std::unique_ptr<Keyboard> keyboard;
-		keyboard = std::make_unique<Keyboard>();
 		
+		std::unique_ptr<Keyboard> keyboard;
+		std::unique_ptr<Mouse> mouse;
+		Mouse::ButtonStateTracker tracker;
+
+		keyboard = std::make_unique<Keyboard>();
+		mouse = std::make_unique<Mouse>();
+		mouse->SetWindow(wndHandle);
 		float move = -2.0f;
 
 		while (WM_QUIT != msg.message)
@@ -578,6 +585,14 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_KEYUP:
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_MOUSEMOVE:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_MOUSEHOVER:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_LBUTTONDOWN:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_LBUTTONUP:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 					break;
 				}
 				TranslateMessage(&msg);
@@ -591,6 +606,8 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
+		
+				
 
 				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
@@ -605,13 +622,20 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 				gRotation = 0;//ImGui::GetIO().DeltaTime / 0.8;
 
-				auto kb = keyboard->GetState();
-				if (kb.W)
-					move += 0.0001f;
-				if (kb.S)
-					move -= 0.0001f;
+			
+				DirectX::Mouse::State ms = mouse->GetState();
+				//mouse->SetMode(Mouse::MODE_RELATIVE);
 
-				transform(gRotation, move);
+				DirectX::Keyboard::State kb = keyboard->GetState();
+				if (kb.W)
+					move += 0.001f;
+				if (kb.S)
+					move -= 0.001f;
+				if (kb.Escape)
+					msg.message = WM_QUIT;
+				transform(gRotation, move, ms);
+
+
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
