@@ -565,29 +565,25 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 		std::unique_ptr<Keyboard> keyboard;
 		keyboard = std::make_unique<Keyboard>();
+		
 		float move = -2.0f;
 
 		while (WM_QUIT != msg.message)
 		{
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+			if (PeekMessage(&msg, wndHandle, 0, 0, PM_REMOVE))
 			{
 				switch (msg.message)
 				{
-					case WM_KEYDOWN:
-						Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-						break;
+				case WM_KEYDOWN:
+					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_KEYUP:
+					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+					break;
 				}
-				auto kb = keyboard->GetState();
-
-				if (kb.W)
-					move += 0.1f;
-				if (kb.S)
-					move -= 0.1f;
-
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else
+			else  
 			{
 				Render(); //8. Rendera
 				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
@@ -607,11 +603,13 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				if (gDist == 0.0f)
 					gDist += 0.0001f;
 
-				gRotation += ImGui::GetIO().DeltaTime / 0.8;
+				gRotation = 0;//ImGui::GetIO().DeltaTime / 0.8;
 
-			
-
-				
+				auto kb = keyboard->GetState();
+				if (kb.W)
+					move += 0.0001f;
+				if (kb.S)
+					move -= 0.0001f;
 
 				transform(gRotation, move);
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
