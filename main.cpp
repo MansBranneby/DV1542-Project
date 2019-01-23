@@ -33,6 +33,9 @@ ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
 // A "view" of a particular resource (the color buffer)
+//Rendertarget first pass
+ID3D11RenderTargetView* gRenderTargetFirstPass = nullptr;
+//Backbuffer
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
 ID3D11DepthStencilView* gDSV = nullptr;
@@ -417,6 +420,7 @@ void createDepthStencil()
 
 void textureSetUp()
 {
+	//BTH LOGO
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
@@ -462,6 +466,9 @@ void textureSetUp()
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+
+	//TEXTURE FOR FIRST PASS RENDER
+
 }
 
 void SetViewport()
@@ -476,6 +483,38 @@ void SetViewport()
 	gDeviceContext->RSSetViewports(1, &vp);
 }
 
+void renderFirstPass()
+{
+	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
+	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+
+	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gVertexLayout);
+
+	//ConstantBuffer
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+
+	gDeviceContext->Draw(6, 0);
+}
+
+void renderSecondPass()
+{
+	gClearColour[3] = 1.0;
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+}
+
 void Render()
 {
 	// clear the back buffer to a deep blue
@@ -483,8 +522,12 @@ void Render()
 	gClearColour[3] = 1.0;
 
 	// use DeviceContext to talk to the API
-	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+	gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
 	gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	
+	//Deferred Rendering
+	renderFirstPass();
+	
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
@@ -512,6 +555,36 @@ void Render()
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
 	gDeviceContext->Draw(6, 0);
+}
+
+void updatePerFrame()
+{
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+	ImGui::Text("This is some useful text.");// Display some text (you can use a format strings too)
+	ImGui::SliderFloat("Rotation", &gRotation, 0.0f, 10.0f);
+	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::End();
+
+	if (gDist == 0.0f)
+		gDist += 0.0001f;
+
+	gRotation += ImGui::GetIO().DeltaTime / 0.8;
+
+	transform(gRotation);
+	D3D11_MAPPED_SUBRESOURCE mappedMemory;
+	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
+	gDeviceContext->Unmap(gConstantBuffer, 0);
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
@@ -551,33 +624,12 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			}
 			else
 			{
-				Render(); //8. Rendera
-				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-
-				ImGui_ImplDX11_NewFrame();
-				ImGui_ImplWin32_NewFrame();
-				ImGui::NewFrame();
-				
-				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-				ImGui::Text("This is some useful text.");// Display some text (you can use a format strings too)
-				ImGui::SliderFloat("Rotation", &gRotation, 0.0f, 10.0f);
-				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::End();
-
-				if (gDist == 0.0f)
-					gDist += 0.0001f;
-
-				gRotation += ImGui::GetIO().DeltaTime / 0.8;
-
-				transform(gRotation);
-				D3D11_MAPPED_SUBRESOURCE mappedMemory;
-				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
-				gDeviceContext->Unmap(gConstantBuffer, 0);
-
-				ImGui::Render();
-				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+				//Render(); //8. Rendera
+				gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
+				renderFirstPass();
+				updatePerFrame();
+				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
+				renderSecondPass();
 
 				gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
 			}
@@ -697,9 +749,6 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 
 		//DepthBuffer
 		createDepthStencil();
-
-		// set the render target as the back buffer
-		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, gDSV);
 	}
 	return hr;
 }
