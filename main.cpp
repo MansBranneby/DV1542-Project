@@ -403,22 +403,22 @@ void CreateTriangleData()
 	};
 
 	// Describe the Vertex Buffer
-	D3D11_BUFFER_DESC bufferDesc;
-	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	D3D11_BUFFER_DESC bufferDescFSQuad;
+	memset(&bufferDescFSQuad, 0, sizeof(bufferDescFSQuad));
 	// what type of buffer will this be?
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDescFSQuad.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	// what type of usage (press F1, read the docs)
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDescFSQuad.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(fsQuad);
+	bufferDescFSQuad.ByteWidth = sizeof(fsQuad);
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
-	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = fsQuad;
+	D3D11_SUBRESOURCE_DATA dataFSQuad;
+	dataFSQuad.pSysMem = fsQuad;
 
 	// create a Vertex Buffer
-	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferFSQuad);
+	gDevice->CreateBuffer(&bufferDesc, &dataFSQuad, &gVertexBufferFSQuad);
 }
 
 void createConstantBuffer()
@@ -635,7 +635,7 @@ void renderFirstPass()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+//	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 
 	UINT32 vertexSize = sizeof(TriangleVertexRGB);
 	UINT32 offset = 0;
@@ -645,16 +645,15 @@ void renderFirstPass()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+
+//	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	gDeviceContext->Draw(6, 0);
 }
 
 void renderSecondPass()
 {
-	gClearColour[3] = 1.0;
-	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-
 	gDeviceContext->VSSetShader(gVertexShaderSP, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
@@ -746,12 +745,21 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			}
 			else
 			{
+				// set depth stencil state
+
+				// clear colour and depth
+
+
 				//Render(); //8. Rendera
-				gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
+				//gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
+				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, gDSV);
+				gClearColour[3] = 1.0;
+				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 				renderFirstPass();
 				updatePerFrame();
-				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
-				renderSecondPass();
+				//gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
+				//renderSecondPass();
 
 				gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
 			}
