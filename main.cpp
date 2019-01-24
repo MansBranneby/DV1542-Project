@@ -384,7 +384,7 @@ void createConstantBuffer()
 void transform(float increment, XMFLOAT3 camPos, float pitch, float yaw)
 {
 	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0);
-	XMVECTOR LookAt = XMVectorSet(pitch, yaw, 0.0, 0.0);
+	XMVECTOR LookAt = XMVectorSet(pitch + camPos.x, yaw + camPos.y, camPos.z + 1.0f, 0.0);
 	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(gRotation);
