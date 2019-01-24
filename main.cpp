@@ -48,6 +48,9 @@ ID3D11Buffer* gConstantBufferLightCamera = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
 
+ID3D11Texture2D *gTextureFSQuad = nullptr;
+ID3D11Texture2D *gTextureBTH = nullptr;
+
 // SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11VertexShader* gVertexShaderSP = nullptr;
@@ -254,12 +257,14 @@ HRESULT createShadersSP()
 		return result;
 	}
 
-	gDevice->CreateVertexShader(
+	result = gDevice->CreateVertexShader(
 		pVS->GetBufferPointer(),
 		pVS->GetBufferSize(),
 		nullptr,
 		&gVertexShaderSP
 	);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
@@ -282,7 +287,9 @@ HRESULT createShadersSP()
 		},
 	};
 
-	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutFSQuad);
+	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutFSQuad);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	pVS->Release();
 
@@ -317,7 +324,9 @@ HRESULT createShadersSP()
 		return result;
 	}
 
-	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);
+	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	pPS->Release();
 
@@ -378,7 +387,9 @@ void CreateTriangleData()
 	data.pSysMem = triangleVertices;
 
 	// create a Vertex Buffer
-	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	//Fullscreen quad
 	TriangleVertexUV fsQuad[6] =
@@ -418,7 +429,9 @@ void CreateTriangleData()
 	dataFSQuad.pSysMem = fsQuad;
 
 	// create a Vertex Buffer
-	gDevice->CreateBuffer(&bufferDesc, &dataFSQuad, &gVertexBufferFSQuad);
+	result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void createConstantBuffer()
@@ -440,8 +453,9 @@ void createConstantBuffer()
 	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
-	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBuffer);
-
+	HRESULT result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBuffer);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	//Light & Camera
 	// Fill in a buffer description.
@@ -544,12 +558,12 @@ void textureSetUp()
 	texDesc.CPUAccessFlags = 0;
 
 	//Texture
-	ID3D11Texture2D *pTexture = NULL;
+	//ID3D11Texture2D *pTexture = NULL;
 	D3D11_SUBRESOURCE_DATA data;
 	ZeroMemory(&data, sizeof(data));
 	data.pSysMem = (void*)BTH_IMAGE_DATA;
 	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
+	HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &gTextureBTH);
 
 	//Resoruce view
 	D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
@@ -558,9 +572,9 @@ void textureSetUp()
 	RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
 	RVDesc.Texture2D.MostDetailedMip = 0;
-	hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
+	//hr = gDevice->CreateShaderResourceView(gTextureBTH, &RVDesc, &gTextureView);
 
-	pTexture->Release();
+	//pTexture->Release();
 
 	//Sampler
 	D3D11_SAMPLER_DESC sampDesc;
@@ -593,8 +607,9 @@ void createRenderTargets()
 	texDesc.SampleDesc.Count = 1;
 
 	//Texture
-	ID3D11Texture2D *pTexture = NULL;
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &pTexture);
+	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTextureFSQuad);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	// Rendertarget FIRST PASS //
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
@@ -603,17 +618,44 @@ void createRenderTargets()
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-	gDevice->CreateRenderTargetView(pTexture, &renderTargetViewDesc, &gRenderTargetFirstPass);
+	hr = gDevice->CreateRenderTargetView(gTextureFSQuad, &renderTargetViewDesc, &gRenderTargetFirstPass);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+
+
+
+
+
+	D3D11_TEXTURE2D_DESC texDesc1;
+	ZeroMemory(&texDesc1, sizeof(texDesc1));
+	texDesc1.Width = BTH_IMAGE_WIDTH;
+	texDesc1.Height = BTH_IMAGE_HEIGHT;
+	texDesc1.MipLevels = texDesc1.ArraySize = 1;
+	texDesc1.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	texDesc1.SampleDesc.Count = 1;
+	texDesc1.SampleDesc.Quality = 0;
+	texDesc1.Usage = D3D11_USAGE_DEFAULT;
+	texDesc1.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texDesc1.MiscFlags = 0;
+	texDesc1.CPUAccessFlags = 0;
+
+
+
+
+
+
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 	ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
-	shaderResourceViewDesc.Format = texDesc.Format;
+	shaderResourceViewDesc.Format = texDesc1.Format;
 	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+	shaderResourceViewDesc.Texture2D.MipLevels = texDesc1.MipLevels;
 
 	// Create the shader resource view.
-	gDevice->CreateShaderResourceView(pTexture, &shaderResourceViewDesc, &gTextureViewFS);
+	hr = gDevice->CreateShaderResourceView(gTextureBTH, &shaderResourceViewDesc, &gTextureViewFS);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void SetViewport()
@@ -635,7 +677,6 @@ void renderFirstPass()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-//	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 
 	UINT32 vertexSize = sizeof(TriangleVertexRGB);
 	UINT32 offset = 0;
@@ -645,9 +686,6 @@ void renderFirstPass()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
-
-//	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	gDeviceContext->Draw(6, 0);
 }
@@ -745,23 +783,21 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			}
 			else
 			{
-				// set depth stencil state
-
-				// clear colour and depth
-
-
-				//Render(); //8. Rendera
+				// RENDER //
 				//gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
-				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, gDSV);
+				
 				gClearColour[3] = 1.0;
-				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-				renderFirstPass();
-				updatePerFrame();
-				//gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
-				//renderSecondPass();
+				//gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
+				//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-				gSwapChain->Present(0, 0); //9. Växla front- och back-buffer
+				//renderFirstPass();
+
+				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
+				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+				
+				renderSecondPass();
+				updatePerFrame();
+				gSwapChain->Present(0, 0);
 			}
 		}
 
@@ -772,7 +808,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		gVertexBuffer->Release();
 		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
-		gTextureView->Release();
+		//gTextureView->Release();
 		gTextureViewFS->Release();
 		gSamplerState->Release();
 
