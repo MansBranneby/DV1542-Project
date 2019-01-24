@@ -383,8 +383,9 @@ void createConstantBuffer()
 
 void transform(float increment, XMFLOAT3 camPos, float pitch, float yaw)
 {
-	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0);
+
 	XMVECTOR LookAt = XMVectorSet(pitch + camPos.x, yaw + camPos.y, camPos.z + 1.0f, 0.0);
+	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0);
 	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(gRotation);
@@ -640,19 +641,55 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				if (kb.W)
+				{
+					camPos.x += pitch / 1000.0f;
 					camPos.z += 0.001f;
+					camPos.y += yaw / 1000.0f;
+				}
 				if (kb.S)
+				{
+					camPos.x -= pitch / 1000.0f;
 					camPos.z -= 0.001f;
+					camPos.y -= yaw / 1000.0f;
+				}
 				if (kb.A)
-					camPos.x -= 0.001f;
+				{
+					// camPos turned into vector
+					XMVECTOR camPosVec = { camPos.x, camPos.y, camPos.z, 0.0f };
+					// get rotation matrix
+					XMMATRIX rotateCamPos = DirectX::XMMatrixRotationY(XM_PI / 2);
+					// rotate vector
+					XMVECTOR newRot = XMVector4Transform(camPosVec, rotateCamPos);
+					float x = XMVectorGetX(newRot);
+					float y = XMVectorGetY(newRot);
+					float z = XMVectorGetZ(newRot);
+					camPos.x += x / 5000.0f;
+					camPos.y += y / 5000.0f;
+					camPos.z += z / 5000.0f;
+				}
 				if (kb.D)
-					camPos.x += 0.001f;
+				{
+					// camPos turned into vector
+					XMVECTOR camPosVec = { camPos.x, camPos.y, camPos.z, 0.0 };
+					// get rotation matrix
+					XMMATRIX rotateCamPos = DirectX::XMMatrixRotationY(XM_PI / 2);
+					// rotate vector
+					XMVECTOR newRot = XMVector4Transform(camPosVec, rotateCamPos);
+					float x = XMVectorGetX(newRot);
+					float y = XMVectorGetY(newRot);
+					float z = XMVectorGetZ(newRot);
+					camPos.x -= x / 5000.0f;
+					camPos.y -= y / 5000.0f;
+					camPos.z -= z / 5000.0f;
+				}
 				if (kb.Space)
 					camPos.y += 0.001f;
 				if (kb.LeftControl)
 					camPos.y -= 0.001f;
 				if (kb.Escape)
 					msg.message = WM_QUIT;
+
+				
 
 				transform(gRotation, camPos, pitch, yaw);
 
