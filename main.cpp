@@ -22,39 +22,40 @@ HRESULT CreateDirect3DContext(HWND wndHandle);
 #define WIDTH 768.0f
 #define HEIGHT 768.0f
 
-// Most directX Objects are COM Interfaces
-// https://es.wikipedia.org/wiki/Component_Object_Model
+// SwapChain //
 IDXGISwapChain* gSwapChain = nullptr;
 
-// Device and DeviceContext are the most common objects to
-// instruct the API what to do. It is handy to have a reference
-// to them available for simple applications.
+// Device and DeviceContext //
 ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
-// A "view" of a particular resource (the color buffer)
-//Rendertarget first pass
+// VIEWS //
 ID3D11RenderTargetView* gRenderTargetFirstPass = nullptr;
-//Backbuffer
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
-
 ID3D11DepthStencilView* gDSV = nullptr;
-
 ID3D11ShaderResourceView *gTextureView = nullptr;
+ID3D11ShaderResourceView *gTextureViewFS = nullptr;
+
+// SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
 
-// a resource to store Vertices in the GPU
+// BUFFERS //
 ID3D11Buffer* gVertexBuffer = nullptr;
-
+ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLightCamera = nullptr;
-ID3D11InputLayout* gVertexLayout = nullptr;
 
-// resources that represent shaders
+ID3D11InputLayout* gVertexLayout = nullptr;
+ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
+
+// SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
+ID3D11VertexShader* gVertexShaderSP = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
+ID3D11PixelShader* gPixelShaderSP = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 
+// RANDOM GLOBALS //
 float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
@@ -75,13 +76,14 @@ struct PerFrameMatrices {
 PerFrameMatrices gMatricesPerFrame;
 ID3D11Buffer* gMatrixPerFrameBuffer = NULL;
 
-HRESULT CreateShaders()
+HRESULT createShaders()
 {
 	// Binary Large OBject (BLOB), for compiled shader, and errors.
 	ID3DBlob* pVS = nullptr;
 	ID3DBlob* errorBlob = nullptr;
 
-	// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	// Vertexshader //
+
 	HRESULT result = D3DCompileFromFile(
 		L"Vertex.hlsl", // filename
 		nullptr,		// optional macros
@@ -115,11 +117,6 @@ HRESULT CreateShaders()
 		&gVertexShader
 	);
 	
-	// create input layout (verified using vertex shader)
-	// Press F1 in Visual Studio with the cursor over the datatype to jump
-	// to the documentation online!
-	// please read:
-	// https://msdn.microsoft.com/en-us/library/windows/desktop/bb205117(v=vs.85).aspx
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ 
 			"POSITION",		// "semantic" name in shader
@@ -131,13 +128,6 @@ HRESULT CreateShaders()
 			0							 // used for INSTANCING (ignore)
 		},
 		{ 
-			//"TEXCOORD", 
-			//0,				// same slot as previous (same vertexBuffer)
-			//DXGI_FORMAT_R32G32_FLOAT,
-			//0, 
-			//12,							// offset of FIRST element (after POSITION)
-			//D3D11_INPUT_PER_VERTEX_DATA, 
-			//0 
 			"COLOUR",
 			0,				// same slot as previous (same vertexBuffer)
 			DXGI_FORMAT_R32G32B32_FLOAT,
@@ -150,11 +140,9 @@ HRESULT CreateShaders()
 
 	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
 
-	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
 
-
-	////GeometryShader
+	// Geometryshader //
 	ID3DBlob* pGS = nullptr;
 	if (errorBlob) errorBlob->Release();
 	errorBlob = nullptr;
@@ -195,7 +183,7 @@ HRESULT CreateShaders()
 	// we do not need anymore this COM object, so we release it.
 	pGS->Release();
 
-	////create pixel shader
+	// Pixelshader //
 	ID3DBlob* pPS = nullptr;
 	if (errorBlob) errorBlob->Release();
 	errorBlob = nullptr;
@@ -227,69 +215,150 @@ HRESULT CreateShaders()
 	}
 
 	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
-	// we do not need anymore this COM object, so we release it.
+
 	pPS->Release();
 
 	return S_OK;
 }
+
+HRESULT createShadersSP()
+{
+	// Binary Large OBject (BLOB), for compiled shader, and errors.
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	// Vertexshader //
+	HRESULT result = D3DCompileFromFile(
+		L"VertexSP.hlsl",	// filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"VS_main",			// entry point
+		"vs_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,					// IGNORE...DEPRECATED.
+		&pVS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pVS)
+			pVS->Release();
+		return result;
+	}
+
+	gDevice->CreateVertexShader(
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
+		&gVertexShaderSP
+	);
+
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{
+			"POSITION",						// "semantic" name in shader
+			0,								// "semantic" index (not used)
+			DXGI_FORMAT_R32G32_FLOAT,		// size of ONE element (3 floats)
+			0,								// input slot
+			0,								// offset of first element
+			D3D11_INPUT_PER_VERTEX_DATA,	// specify data PER vertex
+			0								// used for INSTANCING (ignore)
+		},
+		{
+			"UV_COORD",
+			0,								// same slot as previous (same vertexBuffer)
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			8,								// offset of FIRST element (after POSITION)
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+	};
+
+	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutFSQuad);
+
+	pVS->Release();
+
+	// Pixelshader //
+	ID3DBlob* pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"FragmentSP.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"PS_main",			// entry point
+		"ps_5_0",			// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pPS)
+			pPS->Release();
+		return result;
+	}
+
+	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);
+
+	pPS->Release();
+
+	return S_OK;
+}
+
 //Texture
-//struct TriangleVertex
-//{
-//	float x, y, z;
-//	float u, v;
-//};
+struct TriangleVertexUV
+{
+	float x, y, z;
+	float u, v;
+};
 
 //Colour
-struct TriangleVertex
+struct TriangleVertexRGB
 {
 	float x, y, z;
 	float r, g, b;
 };
 
 void CreateTriangleData()
-{
-	// Array of Structs (AoS)
-	//Quad with UV
-	//TriangleVertex triangleVertices[6] =
-	//{
-	//	-0.5f, 0.5f, 0.0f,	//v0 pos
-	//	0.0f, 0.0f,			//v0 tex
-
-	//	0.5f, -0.5f, 0.0f,	//v1 pos
-	//	1.0f, 1.0f,			//v1 tex
-
-	//	-0.5f, -0.5f, 0.0f, //v2 pos
-	//	0.0f, 1.0f,			//v2 tex
-
-	//	-0.5f, 0.5f, 0.0f,	//v3 pos
-	//	0.0f, 0.0f,			//v3 tex
-
-	//	0.5f, 0.5f, 0.0f,	//v4 pos
-	//	1.0f, 0.0f,			//v4 tex
-
-	//	0.5f, -0.5f, 0.0f,	//v5 pos
-	//	1.0f, 1.0f			//v5 tex
-	//};
-	
+{	
 	//Quad with colour
-	TriangleVertex triangleVertices[6] =
+	TriangleVertexRGB triangleVertices[6] =
 	{
-		-0.5f, 0.5f, 0.0f,	//v0 pos
-		1.0f, 0.0f, 0.0f,	//v0 col
+		-0.5f, 0.5f, 0.0f,	//v0 pos	L T
+		1.0f, 0.0f, 0.0f,	//v0 col	
 
-		0.5f, -0.5f, 0.0f,	//v1 pos
+		0.5f, -0.5f, 0.0f,	//v1 pos	R B
 		0.0f, 1.0f,	0.0f,	//v1 col
 
-		-0.5f, -0.5f, 0.0f, //v2 pos
+		-0.5f, -0.5f, 0.0f, //v2 pos	L B
 		0.0f, 1.0f, 1.0f,	//v2 col
 
-		-0.5f, 0.5f, 0.0f,	//v3 pos
+		-0.5f, 0.5f, 0.0f,	//v3 pos	L T
 		1.0f, 0.0f, 0.0f,	//v3 col
 
-		0.5f, 0.5f, 0.0f,	//v4 pos
+		0.5f, 0.5f, 0.0f,	//v4 pos	R T
 		1.0f, 0.0f,	1.0f,	//v4 col
 
-		0.5f, -0.5f, 0.0f,	//v5 pos
+		0.5f, -0.5f, 0.0f,	//v5 pos	R B
 		0.0f, 1.0f, 0.0f,	//v5 col
 	};
 
@@ -310,6 +379,46 @@ void CreateTriangleData()
 
 	// create a Vertex Buffer
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+
+	//Fullscreen quad
+	TriangleVertexUV fsQuad[6] =
+	{
+		-1.0f, 1.0f, 0.0f,	//v0 pos	L T
+		0.0f, 0.0f,			//v0 tex
+
+		1.0, -1.0f, 0.0f,	//v1 pos	R B
+		1.0f, 1.0f,			//v1 tex
+
+		-1.0f, -1.0f, 0.0f, //v2 pos	L B
+		0.0f, 1.0f,			//v2 tex
+
+		-1.0f, 1.0f, 0.0f,	//v3 pos	L T
+		0.0f, 0.0f,			//v3 tex
+
+		1.0f, 1.0f, 0.0f,	//v4 pos	R T
+		1.0f, 0.0f,			//v4 tex
+
+		1.0f, -1.0f, 0.0f,	//v5 pos	R B
+		1.0f, 1.0f			//v5 tex
+	};
+
+	// Describe the Vertex Buffer
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	// what type of buffer will this be?
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	// what type of usage (press F1, read the docs)
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	// how big in bytes each element in the buffer is.
+	bufferDesc.ByteWidth = sizeof(fsQuad);
+
+	// this struct is created just to set a pointer to the
+	// data containing the vertices.
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = fsQuad;
+
+	// create a Vertex Buffer
+	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferFSQuad);
 }
 
 void createConstantBuffer()
@@ -367,7 +476,7 @@ void transform(float increment)
 
 	XMMATRIX WorldView = XMMatrixMultiply(View, World);
 	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
-
+	
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
 
@@ -466,9 +575,45 @@ void textureSetUp()
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+}
 
+void createRenderTargets()
+{
 	//TEXTURE FOR FIRST PASS RENDER
+	D3D11_TEXTURE2D_DESC texDesc;
+	ZeroMemory(&texDesc, sizeof(texDesc));
+	texDesc.Width = WIDTH;
+	texDesc.Height = HEIGHT;
+	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	texDesc.CPUAccessFlags = D3D11_USAGE_DEFAULT;
+	texDesc.MiscFlags = 0;
+	texDesc.SampleDesc.Count = 1;
 
+	//Texture
+	ID3D11Texture2D *pTexture = NULL;
+	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &pTexture);
+
+	// Rendertarget FIRST PASS //
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+	ZeroMemory(&renderTargetViewDesc, sizeof(renderTargetViewDesc));
+	renderTargetViewDesc.Format = texDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc.Texture2D.MipSlice = 0;
+
+	gDevice->CreateRenderTargetView(pTexture, &renderTargetViewDesc, &gRenderTargetFirstPass);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+	ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
+	shaderResourceViewDesc.Format = texDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	// Create the shader resource view.
+	gDevice->CreateShaderResourceView(pTexture, &shaderResourceViewDesc, &gTextureViewFS);
 }
 
 void SetViewport()
@@ -492,17 +637,13 @@ void renderFirstPass()
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 
-	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 vertexSize = sizeof(TriangleVertexRGB);
 	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 
-	// specify the topology to use when drawing
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
-	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
 
@@ -513,48 +654,27 @@ void renderSecondPass()
 {
 	gClearColour[3] = 1.0;
 	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-}
 
-void Render()
-{
-	// clear the back buffer to a deep blue
-	//float clearColor[] = { 0, 0, 0, 1 };
-	gClearColour[3] = 1.0;
-
-	// use DeviceContext to talk to the API
-	gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
-	gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	
-	//Deferred Rendering
-	renderFirstPass();
-	
-	// specifying NULL or nullptr we are disabling that stage
-	// in the pipeline
-	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	gDeviceContext->VSSetShader(gVertexShaderSP, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
-	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderSP, nullptr, 0);
 
-	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 vertexSize = sizeof(TriangleVertexUV);
 	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 
-	// specify the topology to use when drawing
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferFSQuad, &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gVertexLayout);
-
-	//ConstantBuffer
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+	gDeviceContext->IASetInputLayout(gVertexLayoutFSQuad);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
+	gDeviceContext->PSSetShaderResources(0, 1, &gTextureViewFS);
 
-	// issue a draw call of 3 vertices (similar to OpenGL)
 	gDeviceContext->Draw(6, 0);
+
+	ID3D11ShaderResourceView* nullRTV = { NULL };
+	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
 }
 
 void updatePerFrame()
@@ -590,15 +710,17 @@ void updatePerFrame()
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
 	MSG msg = { 0 };
-	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
+	HWND wndHandle = InitWindow(hInstance); // Skapa fönster
 	
 	if (wndHandle)
 	{
-		CreateDirect3DContext(wndHandle); //2. Skapa och koppla SwapChain, Device och Device Context
+		CreateDirect3DContext(wndHandle); // Skapa och koppla SwapChain, Device och Device Context
 
-		SetViewport(); //3. Sätt viewport
+		SetViewport();
 
-		CreateShaders(); //4. Skapa vertex- och pixel-shaders
+		createRenderTargets();
+		createShaders();
+		createShadersSP();
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 		
@@ -640,14 +762,20 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		ImGui::DestroyContext();
 
 		gVertexBuffer->Release();
+		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
 		gTextureView->Release();
+		gTextureViewFS->Release();
 		gSamplerState->Release();
 
 		gVertexLayout->Release();
+		gVertexLayoutFSQuad->Release();
+		
 		gVertexShader->Release();
+		gVertexShaderSP->Release();
 		gGeometryShader->Release();
 		gPixelShader->Release();
+		gPixelShaderSP->Release();
 
 		gDSV->Release();
 		gBackbufferRTV->Release();
