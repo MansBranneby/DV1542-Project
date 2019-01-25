@@ -381,17 +381,17 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(float increment, XMFLOAT3 camPos, float pitch, float yaw)
+void transform(XMFLOAT3 camPos, XMMATRIX rotation)
 {
-
-	XMVECTOR LookAt = XMVectorSet(pitch + camPos.x, yaw + camPos.y, camPos.z + 1.0f, 0.0);
-	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0);
-	XMVECTOR Up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 2.0f, 0.0f);
+	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0f);
+	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	
-	XMMATRIX World = DirectX::XMMatrixRotationY(gRotation);
+	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);
-	
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
+	View = XMMatrixMultiply(View, rotation);
+
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
@@ -634,53 +634,29 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				gRotation = 0;//ImGui::GetIO().DeltaTime / 0.8;
 
 				DirectX::Mouse::State ms = mouse->GetState();
+				DirectX::Keyboard::State kb = keyboard->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
 
-				pitch += ms.x / 100.0f;
-				yaw -= ms.y / 100.0f;
+				yaw -= ms.x * XM_PI / 180;
+				pitch -= ms.y * XM_PI / 180;
 
-				DirectX::Keyboard::State kb = keyboard->GetState();
+				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+			
 				if (kb.W)
 				{
-					camPos.x += pitch / 1000.0f;
-					camPos.z += 0.001f;
-					camPos.y += yaw / 1000.0f;
+					
 				}
 				if (kb.S)
 				{
-					camPos.x -= pitch / 1000.0f;
-					camPos.z -= 0.001f;
-					camPos.y -= yaw / 1000.0f;
+					
 				}
 				if (kb.A)
 				{
-					// camPos turned into vector
-					XMVECTOR camPosVec = { camPos.x, camPos.y, camPos.z, 0.0f };
-					// get rotation matrix
-					XMMATRIX rotateCamPos = DirectX::XMMatrixRotationY(XM_PI / 2);
-					// rotate vector
-					XMVECTOR newRot = XMVector4Transform(camPosVec, rotateCamPos);
-					float x = XMVectorGetX(newRot);
-					float y = XMVectorGetY(newRot);
-					float z = XMVectorGetZ(newRot);
-					camPos.x += x / 5000.0f;
-					camPos.y += y / 5000.0f;
-					camPos.z += z / 5000.0f;
+					
 				}
 				if (kb.D)
 				{
-					// camPos turned into vector
-					XMVECTOR camPosVec = { camPos.x, camPos.y, camPos.z, 0.0 };
-					// get rotation matrix
-					XMMATRIX rotateCamPos = DirectX::XMMatrixRotationY(XM_PI / 2);
-					// rotate vector
-					XMVECTOR newRot = XMVector4Transform(camPosVec, rotateCamPos);
-					float x = XMVectorGetX(newRot);
-					float y = XMVectorGetY(newRot);
-					float z = XMVectorGetZ(newRot);
-					camPos.x -= x / 5000.0f;
-					camPos.y -= y / 5000.0f;
-					camPos.z -= z / 5000.0f;
+			
 				}
 				if (kb.Space)
 					camPos.y += 0.001f;
@@ -689,9 +665,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				
-
-				transform(gRotation, camPos, pitch, yaw);
+				transform(camPos, rotation);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
