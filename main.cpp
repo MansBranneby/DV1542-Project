@@ -381,17 +381,37 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(XMFLOAT3 camPos, XMMATRIX rotation)
+void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camForward, XMVECTOR camRight, XMVECTOR camUp)
 {
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 2.0f, 0.0f);
-	XMVECTOR CamPos = XMVectorSet(camPos.x, camPos.y, camPos.z, 0.0f);
+	XMVECTOR defaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR defaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR defaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, -2.0, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	
+	camRight = XMVector3TransformCoord(defaultRight, rotation); ///
+	camForward = XMVector3TransformCoord(defaultForward, rotation); ///
+	Up = XMVector3Cross(camForward, camRight); ///
+	LookAt = XMVector3TransformCoord(defaultForward, rotation); //
+	LookAt = XMVector3Normalize(LookAt); //
+
+	CamPos += move.x * camRight;
+	CamPos += move.y * camUp;
+	CamPos += move.z * camForward;
+
+	move.x = 0.0f;
+	move.y = 0.0f;
+	move.z = 0.0f;
+
+	LookAt = CamPos + LookAt;
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
-	View = XMMatrixMultiply(View, rotation);
 
+	//View = XMMatrixMultiply(View, rotation);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
@@ -578,9 +598,12 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		keyboard = std::make_unique<Keyboard>();
 		mouse = std::make_unique<Mouse>();
 		mouse->SetWindow(wndHandle);
-		XMFLOAT3 camPos{ 0.0f, 0.0f, -2.0f };
+		XMFLOAT3 move{ 0.0f, 0.0f, 0.0f };
 		float pitch = 0.0f;
 		float yaw = 0.0f;
+		XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+		XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 		while (WM_QUIT != msg.message)
 		{
@@ -594,15 +617,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_MOUSEMOVE:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_MOUSEHOVER:
-					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_LBUTTONDOWN:
-					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_LBUTTONUP:
-					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_INPUT:
-					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_ACTIVATEAPP:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 					break;
 				}
@@ -637,35 +652,27 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
 
-				yaw -= ms.x * XM_PI / 180;
-				pitch -= ms.y * XM_PI / 180;
+				yaw += ms.x * XM_PI / 180;
+				pitch += ms.y * XM_PI / 180;
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 			
 				if (kb.W)
-				{
-					
-				}
+					move.z += 0.001f;
 				if (kb.S)
-				{
-					
-				}
+					move.z -= 0.001f;
 				if (kb.A)
-				{
-					
-				}
+					move.x -= 0.001f;
 				if (kb.D)
-				{
-			
-				}
+					move.x += 0.001f;
 				if (kb.Space)
-					camPos.y += 0.001f;
+					move.y += 0.001f;
 				if (kb.LeftControl)
-					camPos.y -= 0.001f;
+					move.y -= 0.001f;
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				transform(camPos, rotation);
+				transform(move, rotation, camForward, camRight, camUp);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
