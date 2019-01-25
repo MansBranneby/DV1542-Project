@@ -381,7 +381,7 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camForward, XMVECTOR camRight, XMVECTOR camUp)
+void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR camUp, XMVECTOR camForward)
 {
 	XMVECTOR defaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	XMVECTOR defaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
@@ -400,11 +400,6 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camForward, XMVECTOR c
 	CamPos += move.x * camRight;
 	CamPos += move.y * camUp;
 	CamPos += move.z * camForward;
-
-	move.x = 0.0f;
-	move.y = 0.0f;
-	move.z = 0.0f;
-
 	LookAt = CamPos + LookAt;
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
@@ -641,24 +636,23 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::Text("Mouse Y:%.2f, X:%.2f )", pitch, yaw);
 				ImGui::End();
 
 				if (gDist == 0.0f)
 					gDist += 0.0001f;
 
-				gRotation = 0;//ImGui::GetIO().DeltaTime / 0.8;
 
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
 
-				yaw += ms.x * XM_PI / 180;
-				pitch += ms.y * XM_PI / 180;
-
+				yaw += ms.x * (XM_PI / 180);
+				pitch += ms.y * (XM_PI / 180);
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 			
 				if (kb.W)
-					move.z += 0.001f;
+					move.z += 0.001;
 				if (kb.S)
 					move.z -= 0.001f;
 				if (kb.A)
@@ -672,7 +666,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				transform(move, rotation, camForward, camRight, camUp);
+				transform(move, rotation, camRight, camUp, camForward);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
