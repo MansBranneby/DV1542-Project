@@ -392,8 +392,11 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	
 	camRight = XMVector3TransformCoord(defaultRight, rotation); ///
+	camUp = XMVector3TransformCoord(defaultUp, rotation);
 	camForward = XMVector3TransformCoord(defaultForward, rotation); ///
 	Up = XMVector3Cross(camForward, camRight); ///
+
+
 	LookAt = XMVector3TransformCoord(defaultForward, rotation); //
 	LookAt = XMVector3Normalize(LookAt); //
 
@@ -663,6 +666,8 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 					move.y += 0.001f;
 				if (kb.LeftControl)
 					move.y -= 0.001f;
+				if (kb.Home)
+					move = { 0.0f, 0.0f, -2.0f };
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
