@@ -6,7 +6,8 @@
 #include <windows.h>
 
 #include <iostream>
-
+#include <fstream>
+#include <sstream>
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
@@ -265,8 +266,70 @@ HRESULT CreateShaders()
 struct TriangleVertex
 {
 	float x, y, z;
+	//float u, v;
 	float r, g, b;
 };
+
+
+
+
+void LoadOBJ(
+	std::string filePath,
+	std::vector<XMFLOAT3>vtxPos,
+	std::vector<XMFLOAT2>vtxUV,
+	std::vector<XMFLOAT3> vtxNormal,
+	std::vector<int> vertexIndices,
+	std::vector<int> uvIndices,
+	std::vector<int> normalIndices)
+{
+	std::ifstream inFile;
+	std::string line2, special;
+	std::istringstream inputString;
+	XMFLOAT3 tempPos, tempNormal;
+	XMFLOAT2 tempUV;
+
+	inFile.open(filePath);
+	while (std::getline(inFile, line2))
+	{
+		inputString.str(line2);
+		if (line2.substr(0, 2) == "v ")
+		{
+			inputString >> special >> tempPos.x >> tempPos.y >> tempPos.z;
+			vtxPos.push_back(tempPos);
+		}
+		else if (line2.substr(0, 3) == "vt ")
+		{
+			inputString >> special >> tempUV.x >> tempUV.y;
+			vtxUV.push_back(tempUV);
+		}
+		else if (line2.substr(0, 3) == "vn ")
+		{
+			inputString >> special >> tempNormal.x >> tempNormal.y >> tempNormal.z;
+			vtxNormal.push_back(tempNormal);
+		}
+		else if (line2.substr(0, 2) == "f ")
+		{
+			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+			char skip;
+
+			inputString >>
+				vertexIndex[0] >> skip >> uvIndex[0] >> skip >> normalIndex[0] >> skip >>
+				vertexIndex[1] >> skip >> uvIndex[1] >> skip >> normalIndex[1] >> skip >>
+				vertexIndex[2] >> skip >> uvIndex[2] >> skip >> normalIndex[2];
+
+			vertexIndices.push_back(vertexIndex[0]);
+			vertexIndices.push_back(vertexIndex[1]);
+			vertexIndices.push_back(vertexIndex[2]);
+			uvIndices.push_back(uvIndex[0]);
+			uvIndices.push_back(uvIndex[1]);
+			uvIndices.push_back(uvIndex[2]);
+			normalIndices.push_back(normalIndex[0]);
+			normalIndices.push_back(normalIndex[1]);
+			normalIndices.push_back(normalIndex[2]);
+		}
+	}
+	inFile.close();
+}
 
 void CreateTriangleData()
 {
