@@ -272,47 +272,47 @@ struct TriangleVertex
 
 
 void LoadOBJ(
-	std::string filePath,
-	std::vector<XMFLOAT3>vtxPos,
-	std::vector<XMFLOAT2>vtxUV,
-	std::vector<XMFLOAT3> vtxNormal,
-	std::vector<int> vertexIndices,
-	std::vector<int> uvIndices,
-	std::vector<int> normalIndices)
+	std::string &filePath,
+	std::vector<XMFLOAT3> &vtxPos,
+	std::vector<XMFLOAT2> &vtxUV,
+	std::vector<XMFLOAT3> &vtxNormal,
+	std::vector<int> &vertexIndices,
+	std::vector<int> &uvIndices,
+	std::vector<int> &normalIndices)
 {
 	std::ifstream inFile;
-	std::string line2, special;
+	std::string line, special;
 	std::istringstream inputString;
 	XMFLOAT3 tempPos, tempNormal;
 	XMFLOAT2 tempUV;
 
 	inFile.open(filePath);
-	while (std::getline(inFile, line2))
+	while (std::getline(inFile, line))
 	{
-		inputString.str(line2);
-		if (line2.substr(0, 2) == "v ")
+		inputString.str(line);
+		if (line.substr(0, 2) == "v ")
 		{
 			inputString >> special >> tempPos.x >> tempPos.y >> tempPos.z;
 			vtxPos.push_back(tempPos);
 		}
-		else if (line2.substr(0, 3) == "vt ")
+		else if (line.substr(0, 3) == "vt ")
 		{
 			inputString >> special >> tempUV.x >> tempUV.y;
 			vtxUV.push_back(tempUV);
 		}
-		else if (line2.substr(0, 3) == "vn ")
+		else if (line.substr(0, 3) == "vn ")
 		{
 			inputString >> special >> tempNormal.x >> tempNormal.y >> tempNormal.z;
 			vtxNormal.push_back(tempNormal);
 		}
-		else if (line2.substr(0, 2) == "f ")
+		else if (line.substr(0, 2) == "f ")
 		{
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+			int vertexIndex[3], uvIndex[3], normalIndex[3];
 			char skip;
 
 			inputString >>
-				vertexIndex[0] >> skip >> uvIndex[0] >> skip >> normalIndex[0] >> skip >>
-				vertexIndex[1] >> skip >> uvIndex[1] >> skip >> normalIndex[1] >> skip >>
+				vertexIndex[0] >> skip >> uvIndex[0] >> skip >> normalIndex[0] >>
+				vertexIndex[1] >> skip >> uvIndex[1] >> skip >> normalIndex[1] >>
 				vertexIndex[2] >> skip >> uvIndex[2] >> skip >> normalIndex[2];
 
 			vertexIndices.push_back(vertexIndex[0]);
@@ -325,6 +325,7 @@ void LoadOBJ(
 			normalIndices.push_back(normalIndex[1]);
 			normalIndices.push_back(normalIndex[2]);
 		}
+		inputString.clear();
 	}
 	inFile.close();
 }
@@ -353,15 +354,15 @@ void CreateTriangleData()
 		0.0f, 1.0f, 0.0f,	//v5 col
 	};
 
-	//std::string filePath = "Resources\\";
-	//std::vector<XMFLOAT3>vtxPos;
-	//std::vector<XMFLOAT2>vtxUV;
-	//std::vector<XMFLOAT3> vtxNormal;
-	//std::vector<int> vertexIndices;
-	//std::vector<int> uvIndices;
-	//std::vector<int> normalIndices;
+	std::string filePath = "Resources\\Pony_cartoon.obj";
+	std::vector<XMFLOAT3>vtxPos;
+	std::vector<XMFLOAT2>vtxUV;
+	std::vector<XMFLOAT3> vtxNormal;
+	std::vector<int> vertexIndices;
+	std::vector<int> uvIndices;
+	std::vector<int> normalIndices;
 
-	//LoadOBJ()
+	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices);
 
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
