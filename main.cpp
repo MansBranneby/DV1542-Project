@@ -271,8 +271,6 @@ struct TriangleVertex
 };
 
 
-
-
 void LoadOBJ(
 	std::string filePath,
 	std::vector<XMFLOAT3>vtxPos,
@@ -333,29 +331,6 @@ void LoadOBJ(
 
 void CreateTriangleData()
 {
-	// Array of Structs (AoS)
-	//Quad with UV
-	//TriangleVertex triangleVertices[6] =
-	//{
-	//	-0.5f, 0.5f, 0.0f,	//v0 pos
-	//	0.0f, 0.0f,			//v0 tex
-
-	//	0.5f, -0.5f, 0.0f,	//v1 pos
-	//	1.0f, 1.0f,			//v1 tex
-
-	//	-0.5f, -0.5f, 0.0f, //v2 pos
-	//	0.0f, 1.0f,			//v2 tex
-
-	//	-0.5f, 0.5f, 0.0f,	//v3 pos
-	//	0.0f, 0.0f,			//v3 tex
-
-	//	0.5f, 0.5f, 0.0f,	//v4 pos
-	//	1.0f, 0.0f,			//v4 tex
-
-	//	0.5f, -0.5f, 0.0f,	//v5 pos
-	//	1.0f, 1.0f			//v5 tex
-	//};
-	
 	//Quad with colour
 	TriangleVertex triangleVertices[6] =
 	{
@@ -377,6 +352,16 @@ void CreateTriangleData()
 		0.5f, -0.5f, 0.0f,	//v5 pos
 		0.0f, 1.0f, 0.0f,	//v5 col
 	};
+
+	//std::string filePath = "Resources\\";
+	//std::vector<XMFLOAT3>vtxPos;
+	//std::vector<XMFLOAT2>vtxUV;
+	//std::vector<XMFLOAT3> vtxNormal;
+	//std::vector<int> vertexIndices;
+	//std::vector<int> uvIndices;
+	//std::vector<int> normalIndices;
+
+	//LoadOBJ()
 
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
