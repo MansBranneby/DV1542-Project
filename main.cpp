@@ -407,6 +407,7 @@ void CreateTriangleData()
 	data.pSysMem = triangleVertices;
 
 	// create a Vertex Buffer
+	//gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 }
 
