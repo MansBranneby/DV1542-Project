@@ -313,22 +313,44 @@ void LoadOBJ(
 			int size = std::distance(std::istream_iterator<std::string>(inputString),std::istream_iterator<std::string>());
 			inputString.clear();
 			inputString.str(line);
-			/*vertexIndex[0] >> skip >> uvIndex[i] >> skip >> normalIndex[i + 1] >>
-				vertexIndex[1] >> skip >> uvIndex[1] >> skip >> normalIndex[1] >>
-				vertexIndex[2] >> skip >> uvIndex[2] >> skip >> normalIndex[2];*/
+
 			inputString >> skip;
 			for (int i = 0; i < size - 1; i++)
 				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
-			
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
-			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
+
+			if (size == 4)
+			{
+				vertexIndices.push_back(vertexIndex[0]);
+				vertexIndices.push_back(vertexIndex[1]);
+				vertexIndices.push_back(vertexIndex[2]);
+				uvIndices.push_back(uvIndex[0]);
+				uvIndices.push_back(uvIndex[1]);
+				uvIndices.push_back(uvIndex[2]);
+				normalIndices.push_back(normalIndex[0]);
+				normalIndices.push_back(normalIndex[1]);
+				normalIndices.push_back(normalIndex[2]);
+			}
+			else if (size == 5)
+			{
+				vertexIndices.push_back(vertexIndex[0]);
+				vertexIndices.push_back(vertexIndex[1]);
+				vertexIndices.push_back(vertexIndex[2]);
+				vertexIndices.push_back(vertexIndex[0]);
+				vertexIndices.push_back(vertexIndex[2]);
+				vertexIndices.push_back(vertexIndex[3]);
+				uvIndices.push_back(uvIndex[0]);
+				uvIndices.push_back(uvIndex[1]);
+				uvIndices.push_back(uvIndex[2]);
+				uvIndices.push_back(uvIndex[0]);
+				uvIndices.push_back(uvIndex[2]);
+				uvIndices.push_back(uvIndex[3]);
+				normalIndices.push_back(normalIndex[0]);
+				normalIndices.push_back(normalIndex[1]);
+				normalIndices.push_back(normalIndex[2]);
+				normalIndices.push_back(normalIndex[0]);
+				normalIndices.push_back(normalIndex[2]);
+				normalIndices.push_back(normalIndex[3]);
+			}
 		}
 		inputString.clear();
 	}
@@ -415,7 +437,6 @@ void createConstantBuffer()
 
 	// create a Constant Buffer
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBuffer);
-
 
 	//Light
 	// Fill in a buffer description.
