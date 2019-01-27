@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iterator>
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
@@ -307,14 +308,18 @@ void LoadOBJ(
 		}
 		else if (line.substr(0, 2) == "f ")
 		{
-			int vertexIndex[3], uvIndex[3], normalIndex[3];
+			int vertexIndex[4], uvIndex[4], normalIndex[4];
 			char skip;
-
-			inputString >>
-				vertexIndex[0] >> skip >> uvIndex[0] >> skip >> normalIndex[0] >>
+			int size = std::distance(std::istream_iterator<std::string>(inputString),std::istream_iterator<std::string>());
+			inputString.clear();
+			inputString.str(line);
+			/*vertexIndex[0] >> skip >> uvIndex[i] >> skip >> normalIndex[i + 1] >>
 				vertexIndex[1] >> skip >> uvIndex[1] >> skip >> normalIndex[1] >>
-				vertexIndex[2] >> skip >> uvIndex[2] >> skip >> normalIndex[2];
-
+				vertexIndex[2] >> skip >> uvIndex[2] >> skip >> normalIndex[2];*/
+			inputString >> skip;
+			for (int i = 0; i < size - 1; i++)
+				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
+			
 			vertexIndices.push_back(vertexIndex[0]);
 			vertexIndices.push_back(vertexIndex[1]);
 			vertexIndices.push_back(vertexIndex[2]);
