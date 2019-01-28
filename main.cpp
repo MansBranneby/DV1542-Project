@@ -268,7 +268,7 @@ struct TriangleVertex
 {
 	float x, y, z;
 	//float u, v;
-	float r, g, b;
+	//float r, g, b;
 };
 
 
@@ -357,29 +357,34 @@ void LoadOBJ(
 	inFile.close();
 }
 
+void sortOBJData(std::vector<int> vertexIndices, std::vector<int> uvIndices, std::vector<int> normalIndices)
+{
+
+}
+
 void CreateTriangleData()
 {
 	//Quad with colour
-	TriangleVertex triangleVertices[6] =
-	{
-		-0.5f, 0.5f, 0.0f,	//v0 pos
-		1.0f, 0.0f, 0.0f,	//v0 col
+	//TriangleVertex triangleVertices[6] =
+	//{
+	//	-0.5f, 0.5f, 0.0f,	//v0 pos
+	//	1.0f, 0.0f, 0.0f,	//v0 col
 
-		0.5f, -0.5f, 0.0f,	//v1 pos
-		0.0f, 1.0f,	0.0f,	//v1 col
+	//	0.5f, -0.5f, 0.0f,	//v1 pos
+	//	0.0f, 1.0f,	0.0f,	//v1 col
 
-		-0.5f, -0.5f, 0.0f, //v2 pos
-		0.0f, 1.0f, 1.0f,	//v2 col
+	//	-0.5f, -0.5f, 0.0f, //v2 pos
+	//	0.0f, 1.0f, 1.0f,	//v2 col
 
-		-0.5f, 0.5f, 0.0f,	//v3 pos
-		1.0f, 0.0f, 0.0f,	//v3 col
+	//	-0.5f, 0.5f, 0.0f,	//v3 pos
+	//	1.0f, 0.0f, 0.0f,	//v3 col
 
-		0.5f, 0.5f, 0.0f,	//v4 pos
-		1.0f, 0.0f,	1.0f,	//v4 col
+	//	0.5f, 0.5f, 0.0f,	//v4 pos
+	//	1.0f, 0.0f,	1.0f,	//v4 col
 
-		0.5f, -0.5f, 0.0f,	//v5 pos
-		0.0f, 1.0f, 0.0f,	//v5 col
-	};
+	//	0.5f, -0.5f, 0.0f,	//v5 pos
+	//	0.0f, 1.0f, 0.0f,	//v5 col
+	//};
 
 	std::string filePath = "Resources\\Pony_cartoon.obj";
 	std::vector<XMFLOAT3>vtxPos;
@@ -389,7 +394,20 @@ void CreateTriangleData()
 	std::vector<int> uvIndices;
 	std::vector<int> normalIndices;
 
+	
 	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices);
+	//Sort
+	std::vector<TriangleVertex>sortedPos;
+	/*for (int i = 0; i < vertexIndices.size(); i++)
+	{
+		int vertInd = vertexIndices[i];
+		XMFLOAT3 vertex = vtxPos[vertInd - 1];
+		sortedPos.push_back({vertex.x, vertex.y, vertex.z});
+	}*/
+		
+	sortedPos.push_back({ -0.5f, 0.5f, 0.0f });
+	sortedPos.push_back({ 0.5f, -0.5f, 0.0f });
+	sortedPos.push_back({ -0.5f, -0.5f, 0.0f });
 
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
@@ -399,12 +417,12 @@ void CreateTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(triangleVertices);
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * 3;
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = triangleVertices;
+	data.pSysMem = &sortedPos[0];
 
 	// create a Vertex Buffer
 	//gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
@@ -635,7 +653,7 @@ void Render()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(6, 0);
+	gDeviceContext->Draw(3, 0);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
