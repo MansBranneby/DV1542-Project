@@ -267,8 +267,8 @@ HRESULT CreateShaders()
 struct TriangleVertex
 {
 	float x, y, z;
-	//float u, v;
-	//float r, g, b;
+	float u, v;
+	float normalX, normalY, normalZ;
 };
 
 
@@ -398,16 +398,18 @@ void CreateTriangleData()
 	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices);
 	//Sort
 	std::vector<TriangleVertex>sortedPos;
-	/*for (int i = 0; i < vertexIndices.size(); i++)
+	for (int i = 0; i < vertexIndices.size(); i++)
 	{
-		int vertInd = vertexIndices[i];
-		XMFLOAT3 vertex = vtxPos[vertInd - 1];
-		sortedPos.push_back({vertex.x, vertex.y, vertex.z});
-	}*/
-		
-	sortedPos.push_back({ -0.5f, 0.5f, 0.0f });
-	sortedPos.push_back({ 0.5f, -0.5f, 0.0f });
-	sortedPos.push_back({ -0.5f, -0.5f, 0.0f });
+		int posIndex = vertexIndices[i];
+		int uvIndex = uvIndices[i];
+		int normalIndex = normalIndices[i];
+
+		XMFLOAT3 vertPos = vtxPos[posIndex - 1];
+		XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
+		XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
+
+		sortedPos.push_back({vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z});
+	}
 
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
@@ -417,7 +419,7 @@ void CreateTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * 3;
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * 25014;
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
@@ -484,12 +486,11 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, -2.0, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	
+
 	camRight = XMVector3TransformCoord(defaultRight, rotation); ///
 	camUp = XMVector3TransformCoord(defaultUp, rotation);
 	camForward = XMVector3TransformCoord(defaultForward, rotation); ///
 	Up = XMVector3Cross(camForward, camRight); ///
-
 
 	LookAt = XMVector3TransformCoord(defaultForward, rotation); //
 	LookAt = XMVector3Normalize(LookAt); //
@@ -499,7 +500,10 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	CamPos += move.z * camForward;
 	LookAt = CamPos + LookAt;
 	
+	XMMATRIX scale = XMMatrixScaling(0.001f, 0.001f, 0.001f);
+	
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
+	World = XMMatrixMultiply(World, scale);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
 
@@ -559,6 +563,9 @@ void createDepthStencil()
 
 void textureSetUp()
 {
+	//New
+	// CreateWICTextureFromFile();
+
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
@@ -653,7 +660,7 @@ void Render()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(3, 0);
+	gDeviceContext->Draw(25014, 0);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
