@@ -1,7 +1,7 @@
 struct GS_IN
 {
 	float4 pos : SV_POSITION;
-	//float2 tex : TEXCOORD;
+	float2 tex : TEXCOORD;
 	float3 col : COLOUR;
 };
 
@@ -10,7 +10,7 @@ struct GS_OUT
 	float4 pos : SV_POSITION;
 	float4 worldPos : World_POSITION;
 	float4 worldNor : World_NORMAL;
-	//float2 tex : TEXCOORD;
+	float2 tex : TEXCOORD;
 	float3 col : COLOUR;
 };
 
@@ -29,7 +29,7 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 		element.pos = mul(input[i].pos, worldViewProj);
 		element.worldPos = mul(input[i].pos, world);
 		element.worldNor = mul(normal, world);
-		//element.tex = input[i].tex;
+		element.tex = input[i].tex;
 		element.col = input[i].col;
 		output.Append(element);
 	}
@@ -40,7 +40,7 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 		element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
 		element.worldPos = mul(input[i].pos + normal * 0.5, world);
 		element.worldNor = mul(normal, world);
-		//element.tex = input[i].tex;
+		element.tex = input[i].tex;
 		element.col = input[i].col;
 		output.Append(element);
 	}

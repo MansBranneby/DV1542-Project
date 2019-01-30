@@ -155,14 +155,16 @@ HRESULT CreateShaders()
 			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
 			0							 // used for INSTANCING (ignore)
 		},
-		{ 
-			//"TEXCOORD", 
-			//0,				// same slot as previous (same vertexBuffer)
-			//DXGI_FORMAT_R32G32_FLOAT,
-			//0, 
-			//12,							// offset of FIRST element (after POSITION)
-			//D3D11_INPUT_PER_VERTEX_DATA, 
-			//0 
+		{
+			"TEXCOORD", 
+			0,				// same slot as previous (same vertexBuffer)
+			DXGI_FORMAT_R32G32_FLOAT,
+			0, 
+			12,							// offset of FIRST element (after POSITION)
+			D3D11_INPUT_PER_VERTEX_DATA, 
+			0 
+		},
+		{
 			"COLOUR",
 			0,				// same slot as previous (same vertexBuffer)
 			DXGI_FORMAT_R32G32B32_FLOAT,
@@ -273,22 +275,22 @@ struct TriangleVertex
 };
 
 
-void LoadOBJ(
-	std::string &filePath,
-	std::vector<XMFLOAT3> &vtxPos,
-	std::vector<XMFLOAT2> &vtxUV,
-	std::vector<XMFLOAT3> &vtxNormal,
-	std::vector<int> &vertexIndices,
-	std::vector<int> &uvIndices,
-	std::vector<int> &normalIndices,
-	std::vector<std::string> &externalLibs,
-	std::vector<std::string> &materials)
+std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
 {
+	std::vector<XMFLOAT3>vtxPos;
+	std::vector<XMFLOAT2>vtxUV;
+	std::vector<XMFLOAT3> vtxNormal;
+	std::vector<std::string> externalLibs;
+	std::vector<std::string> materials;
+	std::vector<int> vertexIndices;
+	std::vector<int> uvIndices;
+	std::vector<int> normalIndices;
+
 	std::ifstream inFile;
 	std::string line, special;
 	std::istringstream inputString;
-	XMFLOAT3 tempPos, tempNormal;
-	XMFLOAT2 tempUV;
+	DirectX::XMFLOAT3 tempPos, tempNormal;
+	DirectX::XMFLOAT2 tempUV;
 
 	inFile.open(filePath);
 	while (std::getline(inFile, line))
@@ -311,7 +313,7 @@ void LoadOBJ(
 		}
 		else if (line.substr(0, 2) == "f ")
 		{
-			int vertexIndex[4], uvIndex[4], normalIndex[4];
+			int vertexIndex[3], uvIndex[3], normalIndex[3];
 			char skip;
 			int size = std::distance(std::istream_iterator<std::string>(inputString),std::istream_iterator<std::string>());
 			inputString.clear();
@@ -357,50 +359,6 @@ void LoadOBJ(
 		}
 		inputString.clear();
 	}
-	inFile.close();
-}
-
-void sortOBJData(std::vector<int> vertexIndices, std::vector<int> uvIndices, std::vector<int> normalIndices)
-{
-
-}
-
-void CreateTriangleData()
-{
-	//Quad with colour
-	//TriangleVertex triangleVertices[6] =
-	//{
-	//	-0.5f, 0.5f, 0.0f,	//v0 pos
-	//	1.0f, 0.0f, 0.0f,	//v0 col
-
-	//	0.5f, -0.5f, 0.0f,	//v1 pos
-	//	0.0f, 1.0f,	0.0f,	//v1 col
-
-	//	-0.5f, -0.5f, 0.0f, //v2 pos
-	//	0.0f, 1.0f, 1.0f,	//v2 col
-
-	//	-0.5f, 0.5f, 0.0f,	//v3 pos
-	//	1.0f, 0.0f, 0.0f,	//v3 col
-
-	//	0.5f, 0.5f, 0.0f,	//v4 pos
-	//	1.0f, 0.0f,	1.0f,	//v4 col
-
-	//	0.5f, -0.5f, 0.0f,	//v5 pos
-	//	0.0f, 1.0f, 0.0f,	//v5 col
-	//};
-
-	std::string filePath = "Resources\\Pony_cartoon.obj";
-	std::vector<XMFLOAT3>vtxPos;
-	std::vector<XMFLOAT2>vtxUV;
-	std::vector<XMFLOAT3> vtxNormal;
-	std::vector<std::string> externalLibs;
-	std::vector<std::string> materials;
-	std::vector<int> vertexIndices;
-	std::vector<int> uvIndices;
-	std::vector<int> normalIndices;
-
-	
-	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices, externalLibs, materials);
 	//Sort
 	std::vector<TriangleVertex>sortedPos;
 	for (int i = 0; i < vertexIndices.size(); i++)
@@ -413,9 +371,22 @@ void CreateTriangleData()
 		XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
 		XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-		sortedPos.push_back({vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z});
+		sortedPos.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
 	}
+	inFile.close();
 
+	return sortedPos;
+}
+
+void sortOBJData(std::vector<int> vertexIndices, std::vector<int> uvIndices, std::vector<int> normalIndices)
+{
+
+}
+
+void CreateTriangleData()
+{
+	std::string filePath = "Resources\\Pony_cartoon.obj";
+	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -424,7 +395,7 @@ void CreateTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * 25014;
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * sortedPos.size();
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
@@ -615,6 +586,9 @@ void textureSetUp()
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
 
 	// new
+	const wchar_t* fileName = L"Resources\\Body_dDo_d_orange.jpg";
+	hr = CoInitialize(NULL);
+	CreateWICTextureFromFile(gDevice, fileName, NULL, &gTextureView);
 
 }
 
