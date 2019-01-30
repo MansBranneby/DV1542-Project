@@ -21,6 +21,7 @@
 
 // extra
 #include <algorithm>
+#include <WICTextureLoader.h>
 
 // DirectXTK
 #include "CommonStates.h"
@@ -279,7 +280,9 @@ void LoadOBJ(
 	std::vector<XMFLOAT3> &vtxNormal,
 	std::vector<int> &vertexIndices,
 	std::vector<int> &uvIndices,
-	std::vector<int> &normalIndices)
+	std::vector<int> &normalIndices,
+	std::vector<std::string> &externalLibs,
+	std::vector<std::string> &materials)
 {
 	std::ifstream inFile;
 	std::string line, special;
@@ -390,12 +393,14 @@ void CreateTriangleData()
 	std::vector<XMFLOAT3>vtxPos;
 	std::vector<XMFLOAT2>vtxUV;
 	std::vector<XMFLOAT3> vtxNormal;
+	std::vector<std::string> externalLibs;
+	std::vector<std::string> materials;
 	std::vector<int> vertexIndices;
 	std::vector<int> uvIndices;
 	std::vector<int> normalIndices;
 
 	
-	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices);
+	LoadOBJ(filePath, vtxPos, vtxUV, vtxNormal, vertexIndices, uvIndices, normalIndices, externalLibs, materials);
 	//Sort
 	std::vector<TriangleVertex>sortedPos;
 	for (int i = 0; i < vertexIndices.size(); i++)
@@ -563,9 +568,6 @@ void createDepthStencil()
 
 void textureSetUp()
 {
-	//New
-	// CreateWICTextureFromFile();
-
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
@@ -597,7 +599,7 @@ void textureSetUp()
 	hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
 
 	pTexture->Release();
-
+	
 	//Sampler
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -611,6 +613,9 @@ void textureSetUp()
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+
+	// new
+
 }
 
 void SetViewport()
