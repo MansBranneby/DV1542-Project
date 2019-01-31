@@ -73,8 +73,11 @@ ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
 ID3D11DepthStencilView* gDSV = nullptr;
 
-ID3D11ShaderResourceView *gTextureView = nullptr;
+//ID3D11ShaderResourceView *gTextureView = nullptr;
 ID3D11SamplerState *gSamplerState = nullptr;
+
+ID3D11ShaderResourceView* gRockTextureView = nullptr;
+ID3D10Texture2D* gRockTexture = nullptr;
 
 // a resource to store Vertices in the GPU
 ID3D11Buffer* gVertexBuffer = nullptr;
@@ -169,7 +172,7 @@ HRESULT CreateShaders()
 			0,				// same slot as previous (same vertexBuffer)
 			DXGI_FORMAT_R32G32B32_FLOAT,
 			0,
-			12,							// offset of FIRST element (after POSITION)
+			20,							// offset of FIRST element (after POSITION)
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
 		},
@@ -259,12 +262,6 @@ HRESULT CreateShaders()
 
 	return S_OK;
 }
-//Texture
-//struct TriangleVertex
-//{
-//	float x, y, z;
-//	float u, v;
-//};
 
 //Colour
 struct TriangleVertex
@@ -360,7 +357,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
 		inputString.clear();
 	}
 	//Sort
-	std::vector<TriangleVertex>sortedPos;
+	std::vector<TriangleVertex>triangles;
 	for (int i = 0; i < vertexIndices.size(); i++)
 	{
 		int posIndex = vertexIndices[i];
@@ -368,24 +365,20 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
 		int normalIndex = normalIndices[i];
 
 		XMFLOAT3 vertPos = vtxPos[posIndex - 1];
-		XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
+		XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
 		XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-		sortedPos.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+		triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
 	}
 	inFile.close();
 
-	return sortedPos;
+	return triangles;
 }
 
-void sortOBJData(std::vector<int> vertexIndices, std::vector<int> uvIndices, std::vector<int> normalIndices)
-{
-
-}
 
 void CreateTriangleData()
 {
-	std::string filePath = "Resources\\Pony_cartoon.obj";
+	std::string filePath = "Resources\\Kamen.obj";
 	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
@@ -463,23 +456,20 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, -2.0, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-	camRight = XMVector3TransformCoord(defaultRight, rotation); ///
+	camRight = XMVector3TransformCoord(defaultRight, rotation);
 	camUp = XMVector3TransformCoord(defaultUp, rotation);
-	camForward = XMVector3TransformCoord(defaultForward, rotation); ///
-	Up = XMVector3Cross(camForward, camRight); ///
+	camForward = XMVector3TransformCoord(defaultForward, rotation);
+	Up = XMVector3Cross(camForward, camRight);
 
-	LookAt = XMVector3TransformCoord(defaultForward, rotation); //
-	LookAt = XMVector3Normalize(LookAt); //
+	LookAt = XMVector3TransformCoord(defaultForward, rotation);
+	LookAt = XMVector3Normalize(LookAt);
 
 	CamPos += move.x * camRight;
 	CamPos += move.y * camUp;
 	CamPos += move.z * camForward;
 	LookAt = CamPos + LookAt;
 	
-	XMMATRIX scale = XMMatrixScaling(0.001f, 0.001f, 0.001f);
-	
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	World = XMMatrixMultiply(World, scale);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
 
@@ -537,8 +527,9 @@ void createDepthStencil()
 		&gDSV);  // [out] Depth stencil view
 }
 
-void textureSetUp()
+void rockTexture()
 {
+	
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
@@ -552,25 +543,25 @@ void textureSetUp()
 	texDesc.MiscFlags = 0;
 	texDesc.CPUAccessFlags = 0;
 
-	//Texture
-	ID3D11Texture2D *pTexture = NULL;
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
+	////Texture
+	//ID3D11Texture2D *pTexture = NULL;
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
 
-	//Resoruce view
-	D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
-	ZeroMemory(&RVDesc, sizeof(RVDesc));
-	RVDesc.Format = texDesc.Format;
-	RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
-	RVDesc.Texture2D.MostDetailedMip = 0;
-	hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
+	////Resoruce view
+	//D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
+	//ZeroMemory(&RVDesc, sizeof(RVDesc));
+	//RVDesc.Format = texDesc.Format;
+	//RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	//RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
+	//RVDesc.Texture2D.MostDetailedMip = 0;
+	//hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gRockTextureView);
 
-	pTexture->Release();
-	
+	//pTexture->Release();
+
 	//Sampler
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -583,12 +574,68 @@ void textureSetUp()
 	sampDesc.MipLODBias = 0;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
-
+	HRESULT hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// new
-	const wchar_t* fileName = L"Resources\\Body_dDo_d_orange.jpg";
+	const wchar_t* fileName = L"Resources\\Kamen_None_color.jpg";
 	hr = CoInitialize(NULL);
-	CreateWICTextureFromFile(gDevice, fileName, NULL, &gTextureView);
+	CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
+}
+
+void textureSetUp()
+{
+	rockTexture();
+	//D3D11_TEXTURE2D_DESC texDesc;
+	//ZeroMemory(&texDesc, sizeof(texDesc));
+	//texDesc.Width = BTH_IMAGE_WIDTH;
+	//texDesc.Height = BTH_IMAGE_HEIGHT;
+	//texDesc.MipLevels = texDesc.ArraySize = 1;
+	//texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//texDesc.SampleDesc.Count = 1;
+	//texDesc.SampleDesc.Quality = 0;
+	//texDesc.Usage = D3D11_USAGE_DEFAULT;
+	//texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	//texDesc.MiscFlags = 0;
+	//texDesc.CPUAccessFlags = 0;
+
+	////Texture
+	//ID3D11Texture2D *pTexture = NULL;
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
+
+	////Resoruce view
+	//D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
+	//ZeroMemory(&RVDesc, sizeof(RVDesc));
+	//RVDesc.Format = texDesc.Format;
+	//RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	//RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
+	//RVDesc.Texture2D.MostDetailedMip = 0;
+	//hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
+
+	//pTexture->Release();
+	//
+	////Sampler
+	//D3D11_SAMPLER_DESC sampDesc;
+	//ZeroMemory(&sampDesc, sizeof(sampDesc));
+	//sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	//sampDesc.MaxAnisotropy = 0;
+	//sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	//sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	//sampDesc.MipLODBias = 0;
+	//sampDesc.MinLOD = 0;
+	//sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	//hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+
+	//// new
+	//const wchar_t* fileName = L"Resources\\fiveHundred.jpg";
+	//hr = CoInitialize(NULL);
+	//CreateWICTextureFromFile(gDevice, fileName, NULL, &gTextureView);
 
 }
 
@@ -620,7 +667,7 @@ void Render()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+	gDeviceContext->PSSetShaderResources(0, 1, &gRockTextureView);
 
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
@@ -639,7 +686,7 @@ void Render()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(25014, 0);
+	gDeviceContext->Draw(69120, 0);
 }
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
@@ -771,7 +818,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 
 		gVertexBuffer->Release();
 		gConstantBuffer->Release();
-		gTextureView->Release();
+		//gTextureView->Release();
 		gSamplerState->Release();
 
 		gVertexLayout->Release();

@@ -21,7 +21,7 @@ VS_OUT VS_main(VS_IN input)
 	output.pos = float4(input.pos, 1);
 	output.tex = input.tex;
 	output.col = input.col;
-	output.col = float3(1.0f,1.0f,1.0f);
+	output.col = float3(1.0f,0.0f,0.0f);
 
 	return output;
 }
