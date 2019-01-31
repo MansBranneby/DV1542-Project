@@ -30,11 +30,20 @@ ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
 // VIEWS //
-ID3D11RenderTargetView* gRenderTargetFirstPass = nullptr;
+ID3D11RenderTargetView* gRenderTargetDeferredPos = nullptr;
+ID3D11RenderTargetView* gRenderTargetDeferredNor = nullptr;
+ID3D11RenderTargetView* gRenderTargetDeferredCol = nullptr;
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11DepthStencilView* gDSV = nullptr;
-ID3D11ShaderResourceView *gTextureView = nullptr;
-ID3D11ShaderResourceView *gTextureViewFS = nullptr;
+
+ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {gRenderTargetDeferredPos, gRenderTargetDeferredNor, gRenderTargetDeferredCol};
+
+//ID3D11ShaderResourceView *gTextureView = nullptr;
+ID3D11ShaderResourceView *gShaderResourceDeferredPos = nullptr;
+ID3D11ShaderResourceView *gShaderResourceDeferredNor = nullptr;
+ID3D11ShaderResourceView *gShaderResourceDeferredCol = nullptr;
+
+ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {gShaderResourceDeferredPos, gShaderResourceDeferredNor, gShaderResourceDeferredCol};
 
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
@@ -48,8 +57,12 @@ ID3D11Buffer* gConstantBufferLightCamera = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
 
-ID3D11Texture2D *gTextureFSQuad = nullptr;
-ID3D11Texture2D *gTextureBTH = nullptr;
+
+//TEXTURES
+ID3D11Texture2D *gTexDeferredPos = nullptr;
+ID3D11Texture2D *gTexDeferredNor = nullptr;
+ID3D11Texture2D *gTexDeferredCol = nullptr;
+//ID3D11Texture2D *gTextureBTH = nullptr;
 
 // SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
@@ -281,7 +294,7 @@ HRESULT createShadersSP()
 			0,								// same slot as previous (same vertexBuffer)
 			DXGI_FORMAT_R32G32_FLOAT,
 			0,
-			8,								// offset of FIRST element (after POSITION)
+			12,								// offset of FIRST element (after POSITION)
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
 		},
@@ -543,35 +556,35 @@ void createDepthStencil()
 
 void textureSetUp()
 {
-	//BTH LOGO
-	D3D11_TEXTURE2D_DESC texDesc;
-	ZeroMemory(&texDesc, sizeof(texDesc));
-	texDesc.Width = BTH_IMAGE_WIDTH;
-	texDesc.Height = BTH_IMAGE_HEIGHT;
-	texDesc.MipLevels = texDesc.ArraySize = 1;
-	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	texDesc.SampleDesc.Count = 1;
-	texDesc.SampleDesc.Quality = 0;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
-	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texDesc.MiscFlags = 0;
-	texDesc.CPUAccessFlags = 0;
+	////BTH LOGO
+	//D3D11_TEXTURE2D_DESC texDesc;
+	//ZeroMemory(&texDesc, sizeof(texDesc));
+	//texDesc.Width = BTH_IMAGE_WIDTH;
+	//texDesc.Height = BTH_IMAGE_HEIGHT;
+	//texDesc.MipLevels = texDesc.ArraySize = 1;
+	//texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//texDesc.SampleDesc.Count = 1;
+	//texDesc.SampleDesc.Quality = 0;
+	//texDesc.Usage = D3D11_USAGE_DEFAULT;
+	//texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	//texDesc.MiscFlags = 0;
+	//texDesc.CPUAccessFlags = 0;
 
 	//Texture
 	//ID3D11Texture2D *pTexture = NULL;
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &gTextureBTH);
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &gTextureBTH);
 
-	//Resoruce view
-	D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
-	ZeroMemory(&RVDesc, sizeof(RVDesc));
-	RVDesc.Format = texDesc.Format;
-	RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
-	RVDesc.Texture2D.MostDetailedMip = 0;
+	////Resoruce view
+	//D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
+	//ZeroMemory(&RVDesc, sizeof(RVDesc));
+	//RVDesc.Format = texDesc.Format;
+	//RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	//RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
+	//RVDesc.Texture2D.MostDetailedMip = 0;
 	//hr = gDevice->CreateShaderResourceView(gTextureBTH, &RVDesc, &gTextureView);
 
 	//pTexture->Release();
@@ -588,7 +601,7 @@ void textureSetUp()
 	sampDesc.MipLODBias = 0;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+	HRESULT hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
 }
 
 void createRenderTargets()
@@ -607,7 +620,13 @@ void createRenderTargets()
 	texDesc.SampleDesc.Count = 1;
 
 	//Texture
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTextureFSQuad);
+	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredPos);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredNor);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredCol);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
@@ -618,42 +637,33 @@ void createRenderTargets()
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-	hr = gDevice->CreateRenderTargetView(gTextureFSQuad, &renderTargetViewDesc, &gRenderTargetFirstPass);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredPos, &renderTargetViewDesc, &gRenderTargetDeferredPos);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredNor, &renderTargetViewDesc, &gRenderTargetDeferredNor);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredCol, &renderTargetViewDesc, &gRenderTargetDeferredCol);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
-
-
-
-
-	D3D11_TEXTURE2D_DESC texDesc1;
-	ZeroMemory(&texDesc1, sizeof(texDesc1));
-	texDesc1.Width = BTH_IMAGE_WIDTH;
-	texDesc1.Height = BTH_IMAGE_HEIGHT;
-	texDesc1.MipLevels = texDesc1.ArraySize = 1;
-	texDesc1.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	texDesc1.SampleDesc.Count = 1;
-	texDesc1.SampleDesc.Quality = 0;
-	texDesc1.Usage = D3D11_USAGE_DEFAULT;
-	texDesc1.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texDesc1.MiscFlags = 0;
-	texDesc1.CPUAccessFlags = 0;
-
-
-
-
-
-
-
+	
+	// Shaderresourceview SECOND PASS //
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 	ZeroMemory(&shaderResourceViewDesc, sizeof(shaderResourceViewDesc));
-	shaderResourceViewDesc.Format = texDesc1.Format;
+	shaderResourceViewDesc.Format = texDesc.Format;
 	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-	shaderResourceViewDesc.Texture2D.MipLevels = texDesc1.MipLevels;
+	shaderResourceViewDesc.Texture2D.MipLevels = texDesc.MipLevels;
 
 	// Create the shader resource view.
-	hr = gDevice->CreateShaderResourceView(gTextureBTH, &shaderResourceViewDesc, &gTextureViewFS);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredPos, &shaderResourceViewDesc, &gShaderResourceDeferredPos);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredNor, &shaderResourceViewDesc, &gShaderResourceDeferredNor);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredCol, &shaderResourceViewDesc, &gShaderResourceDeferredCol);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
@@ -784,13 +794,13 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			else
 			{
 				// RENDER //
-				//gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
+				gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
 				
 				gClearColour[3] = 1.0;
-				//gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
-				//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
+				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-				//renderFirstPass();
+				renderFirstPass();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
