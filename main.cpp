@@ -272,7 +272,7 @@ struct TriangleVertex
 };
 
 
-std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
+std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 {
 	std::vector<XMFLOAT3>vtxPos;
 	std::vector<XMFLOAT2>vtxUV;
@@ -358,17 +358,35 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
 	}
 	//Sort
 	std::vector<TriangleVertex>triangles;
-	for (int i = 0; i < vertexIndices.size(); i++)
+	if (flippedUV)
 	{
-		int posIndex = vertexIndices[i];
-		int uvIndex = uvIndices[i];
-		int normalIndex = normalIndices[i];
+		for (int i = 0; i < vertexIndices.size(); i++)
+		{
+			int posIndex = vertexIndices[i];
+			int uvIndex = uvIndices[i];
+			int normalIndex = normalIndices[i];
 
-		XMFLOAT3 vertPos = vtxPos[posIndex - 1];
-		XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
-		XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
+			XMFLOAT3 vertPos = vtxPos[posIndex - 1];
+			XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
+			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-		triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+			triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+		}
+	}
+	else
+	{
+		for (int i = 0; i < vertexIndices.size(); i++)
+		{
+			int posIndex = vertexIndices[i];
+			int uvIndex = uvIndices[i];
+			int normalIndex = normalIndices[i];
+
+			XMFLOAT3 vertPos = vtxPos[posIndex - 1];
+			XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
+			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
+
+			triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+		}
 	}
 	inFile.close();
 
@@ -379,7 +397,8 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath)
 void CreateTriangleData()
 {
 	std::string filePath = "Resources\\Kamen.obj";
-	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath);
+	bool flippedUV = true;
+	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath, flippedUV);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -473,7 +492,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
 
-	//View = XMMatrixMultiply(View, rotation);
+	View = XMMatrixMultiply(View, rotation);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
