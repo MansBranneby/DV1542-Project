@@ -716,9 +716,7 @@ void renderSecondPass()
 	gDeviceContext->IASetInputLayout(gVertexLayoutFSQuad);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
-	gDeviceContext->PSSetShaderResources(0, 3, &gShaderResourceDeferred[0]);
-
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+	gDeviceContext->PSSetShaderResources(0, 1, &gTextureViewFS);
 
 	gDeviceContext->Draw(6, 0);
 
@@ -796,12 +794,10 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			else
 			{
 				// RENDER //
-				gDeviceContext->OMSetRenderTargets(3, &gRenderTargetsDeferred[0], gDSV);
+				gDeviceContext->OMSetRenderTargets(1, &gRenderTargetFirstPass, gDSV);
 				
 				gClearColour[3] = 1.0;
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredPos, gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredNor, gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredCol, gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetFirstPass, gClearColour);
 				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 				renderFirstPass();
@@ -823,12 +819,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
 		//gTextureView->Release();
-		gShaderResourceDeferredPos->Release();
-		gShaderResourceDeferredNor->Release();
-		gShaderResourceDeferredCol->Release();
-		gRenderTargetDeferredPos->Release();
-		gRenderTargetDeferredNor->Release();
-		gRenderTargetDeferredCol->Release();
+		gTextureViewFS->Release();
 		gSamplerState->Release();
 
 		gVertexLayout->Release();

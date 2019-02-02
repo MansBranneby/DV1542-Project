@@ -4,16 +4,10 @@
 struct GS_OUT
 {
 	float4 pos : SV_POSITION;
-	float4 posWS : WORLD_POSITION;
-	float4 norWS : WORLD_NORMAL;
-	float3 col : COLOUR;
-};
-
-struct PS_OUT
-{
-	float4 posWS : SV_Target0;
-	float4 norWS : SV_Target1;
-	float3 col : SV_Target2;
+	float4 worldPos : WORLD_POSITION;
+	//float4 worldNor : WORLD_NORMAL;
+	//float2 tex : TEXCOORD;
+	//float3 col : COLOUR;
 };
 
 //cbuffer FS_CONSTANT_BUFFER : register(b0)
@@ -23,7 +17,7 @@ struct PS_OUT
 //	float3 cameraPos;
 //};
 
-PS_OUT PS_main(GS_OUT input)// : SV_Target
+float4 PS_main(GS_OUT input) : SV_Target
 {
 	//float3 textureCol = txDiffuse.Sample(sampAni, input.Tex).xyz;
 	
@@ -48,10 +42,5 @@ PS_OUT PS_main(GS_OUT input)// : SV_Target
 	////Final
 	//float3 fragmentCol = ambient + diffuse + specular;
 	//return float4(fragmentCol, 1.0f);
-	PS_OUT output;
-	output.posWS = input.posWS;
-	output.norWS = normalize(input.norWS);
-	output.col = input.col;
-
-	return output;
+	return input.worldPos;
 };

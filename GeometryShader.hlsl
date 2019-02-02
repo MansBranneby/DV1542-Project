@@ -7,9 +7,9 @@ struct GS_IN
 struct GS_OUT
 {
 	float4 pos : SV_POSITION;
-	float4 posWS : WORLD_POSITION;
-	float4 norWS : WORLD_NORMAL;
-	float3 col : COLOUR;
+	float4 worldPos : WORLD_POSITION;
+	//float4 worldNor : WORLD_NORMAL;
+	//float3 col : COLOUR;
 };
 
 cbuffer GS_CONSTANT_BUFFER : register(b0)
@@ -25,9 +25,10 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	for (uint i = 0; i < 3; i++)
 	{
 		element.pos = mul(input[i].pos, worldViewProj);
-		element.posWS = mul(input[i].pos, world);
-		element.norWS = mul(normal, world);
-		element.col = input[i].col;
+		element.worldPos = mul(input[i].pos, world);
+		//element.worldNor = mul(normal, world);
+		//element.tex = input[i].tex;
+		//element.col = input[i].col;
 		output.Append(element);
 	}
 	output.RestartStrip();
@@ -35,9 +36,10 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	for (uint i = 0; i < 3; i++)
 	{
 		element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
-		element.posWS = mul(input[i].pos + normal * 0.5, world);
-		element.norWS = mul(normal, world);
-		element.col = input[i].col;
+		element.worldPos = mul(input[i].pos + normal * 0.5, world);
+		//element.worldNor = mul(normal, world);
+		//element.tex = input[i].tex;
+		//element.col = input[i].col;
 		output.Append(element);
 	}
 	output.RestartStrip();
