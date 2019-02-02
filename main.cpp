@@ -446,6 +446,8 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
+	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
 void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR camUp, XMVECTOR camForward)
 {
 	XMVECTOR defaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -453,20 +455,19 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	XMVECTOR defaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, -2.0, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	camRight = XMVector3TransformCoord(defaultRight, rotation);
 	camUp = XMVector3TransformCoord(defaultUp, rotation);
 	camForward = XMVector3TransformCoord(defaultForward, rotation);
-	Up = XMVector3Cross(camForward, camRight);
+	//Up = XMVector3Cross(camForward, camRight);
 
 	LookAt = XMVector3TransformCoord(defaultForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
 
-	CamPos += move.x * camRight;
-	CamPos += move.y * camUp;
-	CamPos += move.z * camForward;
+	CamPos += move.x * XMVector3Normalize(camRight);
+	CamPos += move.y * XMVector3Normalize(camUp);
+	CamPos += move.z * XMVector3Normalize(camForward);
 	LookAt = CamPos + LookAt;
 	
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
@@ -781,6 +782,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				pitch += ms.y * (XM_PI / 180);
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 			
+				move.x = 0; 
+				move.y = 0;
+				move.z = 0;
 				if (kb.W)
 					move.z += 0.001;
 				if (kb.S)
