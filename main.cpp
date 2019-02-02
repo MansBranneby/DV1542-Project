@@ -490,7 +490,6 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
 
-	//View = XMMatrixMultiply(View, rotation);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
@@ -783,19 +782,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ImGui::Text("Mouse Y:%.2f, X:%.2f )", pitch, yaw);
 				ImGui::End();
 
-		
-
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
 
-				yaw += ms.x * (XM_PI / 180);
-				pitch += ms.y * (XM_PI / 180);
+				yaw += XMConvertToRadians(ms.x);
+				pitch += XMConvertToRadians(ms.y);
+				pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 
 				move.x = 0;
 				move.y = 0;
 				move.z = 0;
+
 				if (kb.W)
 					move.z += 0.001;
 				if (kb.S)
