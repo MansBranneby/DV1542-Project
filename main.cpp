@@ -121,7 +121,7 @@ HRESULT CreateShaders()
 		&pVS,			// double pointer to ID3DBlob		
 		&errorBlob		// pointer for Error Blob messages.
 	);
-	
+
 	// compilation failed?
 	if (FAILED(result))
 	{
@@ -137,19 +137,19 @@ HRESULT CreateShaders()
 	}
 
 	gDevice->CreateVertexShader(
-		pVS->GetBufferPointer(), 
-		pVS->GetBufferSize(), 
-		nullptr, 
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
 		&gVertexShader
 	);
-	
+
 	// create input layout (verified using vertex shader)
 	// Press F1 in Visual Studio with the cursor over the datatype to jump
 	// to the documentation online!
 	// please read:
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/bb205117(v=vs.85).aspx
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
-		{ 
+		{
 			"POSITION",		// "semantic" name in shader
 			0,				// "semantic" index (not used)
 			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
@@ -159,13 +159,13 @@ HRESULT CreateShaders()
 			0							 // used for INSTANCING (ignore)
 		},
 		{
-			"TEXCOORD", 
+			"TEXCOORD",
 			0,				// same slot as previous (same vertexBuffer)
 			DXGI_FORMAT_R32G32_FLOAT,
-			0, 
+			0,
 			12,							// offset of FIRST element (after POSITION)
-			D3D11_INPUT_PER_VERTEX_DATA, 
-			0 
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
 		},
 		{
 			"COLOUR",
@@ -312,7 +312,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 		{
 			int vertexIndex[3], uvIndex[3], normalIndex[3];
 			char skip;
-			int size = std::distance(std::istream_iterator<std::string>(inputString),std::istream_iterator<std::string>());
+			int size = std::distance(std::istream_iterator<std::string>(inputString), std::istream_iterator<std::string>());
 			inputString.clear();
 			inputString.str(line);
 
@@ -421,8 +421,8 @@ void CreateTriangleData()
 
 struct Lights
 {
-	XMVECTOR lightPos = {0.0f, 0.0f, -2.0f};
-	XMVECTOR lightCol = {1.0f, 1.0f, 1.0f};
+	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
+	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
 };
 Lights gLight;
 
@@ -465,7 +465,7 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
 }
 
-	XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
 void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR camUp, XMVECTOR camForward)
 {
@@ -488,12 +488,12 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR cam
 	CamPos += move.y * XMVector3Normalize(camUp);
 	CamPos += move.z * XMVector3Normalize(camForward);
 	LookAt = CamPos + LookAt;
-	
+
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH/HEIGHT, 0.1, 20.0f);	
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
 
-	View = XMMatrixMultiply(View, rotation);
+	//View = XMMatrixMultiply(View, rotation);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
@@ -549,7 +549,7 @@ void createDepthStencil()
 
 void rockTexture()
 {
-	
+
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
@@ -709,11 +709,11 @@ void Render()
 	gDeviceContext->Draw(69120, 0);
 }
 
-int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
-	
+
 	if (wndHandle)
 	{
 		CreateDirect3DContext(wndHandle); //2. Skapa och koppla SwapChain, Device och Device Context
@@ -723,7 +723,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		CreateShaders(); //4. Skapa vertex- och pixel-shaders
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
-		
+
 		textureSetUp();
 		createConstantBuffer();
 
@@ -735,7 +735,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		ImGui_ImplWin32_Init(wndHandle);
 		ImGui_ImplDX11_Init(gDevice, gDeviceContext);
 		ImGui::StyleColorsDark();
-		
+
 		std::unique_ptr<Keyboard> keyboard;
 		std::unique_ptr<Mouse> mouse;
 		Mouse::ButtonStateTracker tracker;
@@ -769,7 +769,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
-			else  
+			else
 			{
 				Render(); //8. Rendera
 				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
@@ -777,12 +777,12 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
-		
-				
+
+
 
 				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-				ImGui::SliderFloat("float", &gFloat, 0.0f, 2*3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
+				ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
 				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -800,8 +800,8 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				yaw += ms.x * (XM_PI / 180);
 				pitch += ms.y * (XM_PI / 180);
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-			
-				move.x = 0; 
+
+				move.x = 0;
 				move.y = 0;
 				move.z = 0;
 				if (kb.W)
@@ -857,16 +857,16 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		DestroyWindow(wndHandle);
 	}
 
-	return (int) msg.wParam;
+	return (int)msg.wParam;
 }
 
 HWND InitWindow(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex = { 0 };
-	wcex.cbSize = sizeof(WNDCLASSEX); 
-	wcex.style          = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc    = WndProc;
-	wcex.hInstance      = hInstance;
+	wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.hInstance = hInstance;
 	wcex.lpszClassName = L"BTH_D3D_DEMO";
 	if (!RegisterClassEx(&wcex))
 		return false;
@@ -891,17 +891,17 @@ HWND InitWindow(HINSTANCE hInstance)
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lParam);
-LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	// check if IMGUI can handle the message (when we click INSIDE ImGui
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
 		return true;
 
-	switch (message) 
+	switch (message)
 	{
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		break;		
+		break;
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
