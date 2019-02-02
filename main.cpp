@@ -467,30 +467,27 @@ void createConstantBuffer()
 
 XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
-void transform(XMFLOAT3 move, XMMATRIX rotation, XMVECTOR camRight, XMVECTOR camUp, XMVECTOR camForward)
+void transform(XMFLOAT3 move, XMMATRIX rotation)
 {
-	XMVECTOR defaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR defaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR defaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	camRight = XMVector3TransformCoord(defaultRight, rotation);
-	camUp = XMVector3TransformCoord(defaultUp, rotation);
-	camForward = XMVector3TransformCoord(defaultForward, rotation);
-	//Up = XMVector3Cross(camForward, camRight);
-
-	LookAt = XMVector3TransformCoord(defaultForward, rotation);
+	LookAt = XMVector3TransformCoord(camForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
 
-	CamPos += move.x * XMVector3Normalize(camRight);
-	CamPos += move.y * XMVector3Normalize(camUp);
-	CamPos += move.z * XMVector3Normalize(camForward);
+	camRight = XMVector3TransformCoord(camRight, rotation);
+	camUp = XMVector3TransformCoord(camUp, rotation);
+	camForward = XMVector3TransformCoord(camForward, rotation);
+
+	CamPos += move.x * camRight;
+	CamPos += move.y * camUp;
+	CamPos += move.z * camForward;
 	LookAt = CamPos + LookAt;
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, Up);
+	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
 
 	//View = XMMatrixMultiply(View, rotation);
@@ -746,9 +743,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		XMFLOAT3 move{ 0.0f, 0.0f, 0.0f };
 		float pitch = 0.0f;
 		float yaw = 0.0f;
-		XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-		XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-		XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 		while (WM_QUIT != msg.message)
 		{
@@ -789,9 +783,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ImGui::Text("Mouse Y:%.2f, X:%.2f )", pitch, yaw);
 				ImGui::End();
 
-				if (gDist == 0.0f)
-					gDist += 0.0001f;
-
+		
 
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
@@ -821,7 +813,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				transform(move, rotation, camRight, camUp, camForward);
+				transform(move, rotation);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
