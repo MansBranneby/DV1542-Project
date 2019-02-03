@@ -81,10 +81,13 @@ ID3D10Texture2D* gRockTexture = nullptr;
 
 // a resource to store Vertices in the GPU
 ID3D11Buffer* gVertexBuffer = nullptr;
-
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
+ID3D11Buffer* gConstantBufferCamera = nullptr;
+ID3D11Buffer* gConstantBufferBillboard = nullptr;
+
 ID3D11InputLayout* gVertexLayout = nullptr;
+
 
 // resources that represent shaders
 ID3D11VertexShader* gVertexShader = nullptr;
@@ -101,7 +104,28 @@ struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
 };
 PerFrameMatrices gMatricesPerFrame;
-ID3D11Buffer* gMatrixPerFrameBuffer = NULL;
+ID3D11Buffer* gMatrixPerFrameBuffer = nullptr;
+
+struct Lights
+{
+	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
+	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
+};
+Lights gLight;
+
+struct CameraData
+{
+	XMVECTOR camPos;
+};
+CameraData gCameraData;
+
+struct BillboardData
+{
+	float billboardHeight = 40.0f;
+	float billboardWidth = 40.0f;
+	float padding1, padding2;
+};
+BillboardData gBillboardData;
 
 HRESULT CreateShaders()
 {
@@ -419,13 +443,6 @@ void CreateTriangleData()
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 }
 
-struct Lights
-{
-	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
-	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
-};
-Lights gLight;
-
 void createConstantBuffer()
 {
 	//WorldViewProj
@@ -463,6 +480,40 @@ void createConstantBuffer()
 
 	// create a Constant Buffer
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
+
+	// CameraData
+	// Fill in a buffer description.
+	cbDesc.ByteWidth = sizeof(gCameraData);
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbDesc.MiscFlags = 0;
+	cbDesc.StructureByteStride = 0;
+
+	// Fill in the subresource data.
+	InitData.pSysMem = &gCameraData;
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+
+	// create a Constant Buffer
+	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferCamera);
+
+	// BillboardData
+	// Fill in a buffer description.
+	cbDesc.ByteWidth = sizeof(gBillboardData);
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbDesc.MiscFlags = 0;
+	cbDesc.StructureByteStride = 0;
+
+	// Fill in the subresource data.
+	InitData.pSysMem = &gBillboardData;
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+
+	// create a Constant Buffer
+	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 }
 
 XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -697,6 +748,8 @@ void Render()
 
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	//gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	//gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
