@@ -26,7 +26,7 @@ float4 PS_main(VS_OUT input) : SV_Target
 
 //Ambient
 	float3 ambientCol = { 0.2, 0.2, 0.2 };
-	float3 ambient = textureCol * ambientCol;
+	//float3 ambient = textureCol * ambientCol;
 //
 ////Diffuse
 //float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
@@ -41,7 +41,7 @@ float4 PS_main(VS_OUT input) : SV_Target
 //float3 specular = input.col * lightCol * pow(max(dot(r, v), 0), 2);
 //
 ////Final
-float3 fragmentCol = ambient; //+ diffuse + specular;
+//float3 fragmentCol = ambient; //+ diffuse + specular;
 //return float4(fragmentCol, 1.0f);
-return float4(texturePos, 1.0f);
+return float4(textureCol, 1.0f);
 };
