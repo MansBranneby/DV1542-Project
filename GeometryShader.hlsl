@@ -19,16 +19,6 @@ cbuffer GS_CONSTANT_BUFFER : register(b0)
 	matrix world, worldViewProj;
 };
 
-//cbuffer GS_CONSTANT_BUFFER : register(b1)
-//{
-//	float3 camPos;
-//};
-//
-//cbuffer GS_CONSTANT_BUFFER : register(b2)
-//{
-//	float billboardHeight, billboardWidth;
-//};
-
 [maxvertexcount(6)]
 void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 {

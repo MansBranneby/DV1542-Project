@@ -81,6 +81,7 @@ ID3D10Texture2D* gRockTexture = nullptr;
 
 // a resource to store Vertices in the GPU
 ID3D11Buffer* gVertexBuffer = nullptr;
+ID3D11Buffer* gBillboardVertexBuffer = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
 ID3D11Buffer* gConstantBufferCamera = nullptr;
@@ -93,6 +94,7 @@ ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
+ID3D11GeometryShader* gBillboardShader = nullptr;
 
 float gFloat = 1.0f;
 float gDist = 0.0f;
@@ -121,8 +123,8 @@ CameraData gCameraData;
 
 struct BillboardData
 {
-	float billboardHeight = 40.0f;
-	float billboardWidth = 40.0f;
+	float billboardHeight = 100.0f;
+	float billboardWidth = 100.0f;
 	float padding1, padding2;
 };
 BillboardData gBillboardData;
@@ -244,6 +246,47 @@ HRESULT CreateShaders()
 		pGS->GetBufferSize(),
 		nullptr,
 		&gGeometryShader
+	);
+
+	// we do not need anymore this COM object, so we release it.
+	pGS->Release();
+
+	////GeometryShader for billboarding
+	pGS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"BillboardShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"GS_main",		// entry point
+		"gs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pGS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pGS)
+			pGS->Release();
+		return result;
+	}
+
+	gDevice->CreateGeometryShader(
+		pGS->GetBufferPointer(),
+		pGS->GetBufferSize(),
+		nullptr,
+		&gBillboardShader
 	);
 
 	// we do not need anymore this COM object, so we release it.
@@ -439,8 +482,18 @@ void CreateTriangleData()
 	data.pSysMem = &sortedPos[0];
 
 	// create a Vertex Buffer
-	//gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+	
+	// Billboard
+	TriangleVertex billboardVert
+	{
+		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f
+	};
+	bufferDesc.ByteWidth = sizeof(TriangleVertex);
+	data.pSysMem = &billboardVert;
+	gDevice->CreateBuffer(&bufferDesc, &data, &gBillboardVertexBuffer);
 }
 
 void createConstantBuffer()
@@ -549,6 +602,8 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
+
+	gCameraData.camPos = CamPos;
 }
 
 void createDepthStencil()
@@ -748,14 +803,52 @@ void Render()
 
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	//gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	//gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
 	gDeviceContext->Draw(69120, 0);
+}
+
+void renderBillboard()
+{
+	// clear the back buffer to a deep blue
+	//float clearColor[] = { 0, 0, 0, 1 };
+	gClearColour[3] = 1.0;
+
+	// use DeviceContext to talk to the API
+	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	// specifying NULL or nullptr we are disabling that stage
+	// in the pipeline
+	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gBillboardShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
+	gDeviceContext->PSSetShaderResources(0, 1, &gRockTextureView);
+
+	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gVertexLayout);
+
+	//ConstantBuffer
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+
+	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
+
+	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->Draw(1, 0);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
@@ -818,13 +911,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			else
 			{
 				Render(); //8. Rendera
-				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+				renderBillboard();
 
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
-
-
 
 				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
