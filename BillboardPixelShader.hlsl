@@ -1,6 +1,3 @@
-Texture2D txDiffuse : register(t0);
-SamplerState sampAni;
-
 struct GS_OUT
 {
 	float4 pos : SV_POSITION;
@@ -8,12 +5,6 @@ struct GS_OUT
 	float4 worldNor : World_NORMAL;
 	float2 tex : TEXCOORD;
 	float3 col : COLOUR;
-};
-
-cbuffer FS_CONSTANT_BUFFER : register(b0)
-{
-	float3 lightPos;
-	float3 lightCol;
 };
 
 float4 PS_main(GS_OUT input) : SV_Target

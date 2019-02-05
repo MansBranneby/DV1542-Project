@@ -93,8 +93,9 @@ ID3D11InputLayout* gVertexLayout = nullptr;
 // resources that represent shaders
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
+ID3D11PixelShader* gBillboardPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
-ID3D11GeometryShader* gBillboardShader = nullptr;
+ID3D11GeometryShader* gBillboardGeometryShader = nullptr;
 
 float gFloat = 1.0f;
 float gDist = 0.0f;
@@ -123,8 +124,8 @@ CameraData gCameraData;
 
 struct BillboardData
 {
-	float billboardHeight = 100.0f;
-	float billboardWidth = 100.0f;
+	float billboardHeight = 10.0f;
+	float billboardWidth = 10.0f;
 	float padding1, padding2;
 };
 BillboardData gBillboardData;
@@ -257,7 +258,7 @@ HRESULT CreateShaders()
 	errorBlob = nullptr;
 
 	result = D3DCompileFromFile(
-		L"BillboardShader.hlsl", // filename
+		L"BillboardGeometryShader.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"GS_main",		// entry point
@@ -286,7 +287,7 @@ HRESULT CreateShaders()
 		pGS->GetBufferPointer(),
 		pGS->GetBufferSize(),
 		nullptr,
-		&gBillboardShader
+		&gBillboardGeometryShader
 	);
 
 	// we do not need anymore this COM object, so we release it.
@@ -324,6 +325,43 @@ HRESULT CreateShaders()
 	}
 
 	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
+	// we do not need anymore this COM object, so we release it.
+	pPS->Release();
+
+	////create pixel shader billboard
+	pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"BillboardPixelShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"PS_main",		// entry point
+		"ps_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options
+		0,				// effect compile options
+		&pPS,			// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pPS)
+			pPS->Release();
+		return result;
+	}
+
+	HRESULT hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gBillboardPixelShader);
+	if(FAILED(hr))
+		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
 
@@ -487,13 +525,18 @@ void CreateTriangleData()
 	// Billboard
 	TriangleVertex billboardVert
 	{
-		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 2.0f,
 		0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f
+		1.0f, 1.0f, 1.0f
 	};
+
 	bufferDesc.ByteWidth = sizeof(TriangleVertex);
-	data.pSysMem = &billboardVert;
-	gDevice->CreateBuffer(&bufferDesc, &data, &gBillboardVertexBuffer);
+	D3D11_SUBRESOURCE_DATA data2;
+	data2.pSysMem = &billboardVert;
+	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+
 }
 
 void createConstantBuffer()
@@ -602,8 +645,6 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
-
-	gCameraData.camPos = CamPos;
 }
 
 void createDepthStencil()
@@ -818,16 +859,15 @@ void renderBillboard()
 	gClearColour[3] = 1.0;
 
 	// use DeviceContext to talk to the API
-	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+	gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gBillboardShader, nullptr, 0);
-	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gRockTextureView);
+	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
 
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
@@ -835,7 +875,7 @@ void renderBillboard()
 	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
 
 	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
@@ -845,7 +885,6 @@ void renderBillboard()
 	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 
-	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
 	gDeviceContext->Draw(1, 0);
@@ -910,8 +949,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
-				Render(); //8. Rendera
+				//Render(); //8. Rendera
 				renderBillboard();
+				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
@@ -957,12 +997,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
+				
 				transform(move, rotation);
+				gCameraData.camPos = CamPos;
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
 				gDeviceContext->Unmap(gConstantBuffer, 0);
+
+				gDeviceContext->Map(gConstantBufferBillboard, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+				memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
+				gDeviceContext->Unmap(gConstantBufferBillboard, 0);
 
 				ImGui::Render();
 				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -984,6 +1030,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gVertexShader->Release();
 		gGeometryShader->Release();
 		gPixelShader->Release();
+		gBillboardPixelShader->Release();
+		gBillboardGeometryShader->Release();
 
 		gDSV->Release();
 		gBackbufferRTV->Release();
