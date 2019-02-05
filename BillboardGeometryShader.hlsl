@@ -32,10 +32,10 @@ cbuffer GS_CONSTANT_BUFFER : register(b2)
 [maxvertexcount(4)]
 void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > output)
 {
-	float halfHeight = billboardHeight / 2;
-	float halfWidth = billboardWidth / 2;
+	float halfHeight = billboardHeight / 2.0f;
+	float halfWidth = billboardWidth / 2.0f;
 
-	float3 billboardNormal = normalize(camPos.xyz - input[0].pos.xyz);
+	float3 billboardNormal = camPos.xyz - input[0].pos.xyz;
 	billboardNormal.y = 0.0f;
 	billboardNormal = normalize(billboardNormal);
 
@@ -46,8 +46,8 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 
 	float3 billboardVertices[4];
 	billboardVertices[0] = input[0].pos.xyz - billboardRightVector - billboardUpVector;
-	billboardVertices[1] = input[0].pos.xyz + billboardRightVector - billboardUpVector;
-	billboardVertices[2] = input[0].pos.xyz - billboardRightVector + billboardUpVector;
+	billboardVertices[1] = input[0].pos.xyz - billboardRightVector + billboardUpVector;
+	billboardVertices[2] = input[0].pos.xyz + billboardRightVector - billboardUpVector;
 	billboardVertices[3] = input[0].pos.xyz + billboardRightVector + billboardUpVector;
 
 	GS_OUT element;

@@ -124,8 +124,8 @@ CameraData gCameraData;
 
 struct BillboardData
 {
-	float billboardHeight = 10.0f;
-	float billboardWidth = 10.0f;
+	float billboardHeight = 2.0f;
+	float billboardWidth = 2.0f;
 	float padding1, padding2;
 };
 BillboardData gBillboardData;
@@ -525,7 +525,7 @@ void CreateTriangleData()
 	// Billboard
 	TriangleVertex billboardVert
 	{
-		0.0f, 0.0f, 2.0f,
+		2.0f, 8.0f, -3.0f,
 		0.0f, 0.0f,
 		1.0f, 1.0f, 1.0f
 	};
@@ -645,6 +645,8 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
+
+	gCameraData.camPos = CamPos;
 }
 
 void createDepthStencil()
@@ -859,8 +861,8 @@ void renderBillboard()
 	gClearColour[3] = 1.0;
 
 	// use DeviceContext to talk to the API
-	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-	gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
@@ -924,9 +926,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		keyboard = std::make_unique<Keyboard>();
 		mouse = std::make_unique<Mouse>();
 		mouse->SetWindow(wndHandle);
-		XMFLOAT3 move{ 0.0f, 0.0f, 0.0f };
+		XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
+		float distance = 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
+	
+		double PCFreq = 0.0;
+		__int64 CounterStart = 0;
+		LARGE_INTEGER clockFreq;
+		LARGE_INTEGER startTime;
+		LARGE_INTEGER delta;
+		LARGE_INTEGER currTime;
+		QueryPerformanceFrequency(&clockFreq);
+		QueryPerformanceCounter(&startTime);
 
 		while (WM_QUIT != msg.message)
 		{
@@ -949,7 +961,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
-				//Render(); //8. Rendera
+				QueryPerformanceCounter(&currTime);
+				delta.QuadPart = currTime.QuadPart - startTime.QuadPart;
+				float deltaSeconds = (float)delta.QuadPart / clockFreq.QuadPart;
+				startTime = currTime;
+
+				Render(); //8. Rendera
 				renderBillboard();
 				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
@@ -963,9 +980,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::Text("Mouse Y:%.2f, X:%.2f )", pitch, yaw);
+				ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
 				ImGui::End();
-
+			
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
@@ -976,39 +993,37 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 
-				move.x = 0;
-				move.y = 0;
-				move.z = 0;
-
+				velocity.x = 0;
+				velocity.y = 0;
+				velocity.z = 0;
+				
 				if (kb.W)
-					move.z += 0.001;
+					velocity.z += distance * deltaSeconds;
 				if (kb.S)
-					move.z -= 0.001f;
+					velocity.z -= distance * deltaSeconds;
 				if (kb.A)
-					move.x -= 0.001f;
+					velocity.x -= distance * deltaSeconds;
 				if (kb.D)
-					move.x += 0.001f;
+					velocity.x += distance * deltaSeconds;
 				if (kb.Space)
-					move.y += 0.001f;
+					velocity.y += distance * deltaSeconds;
 				if (kb.LeftControl)
-					move.y -= 0.001f;
+					velocity.y -= distance * deltaSeconds;
 				if (kb.Home)
-					move = { 0.0f, 0.0f, -2.0f };
+					velocity = { 0.0f, 0.0f, -2.0f };
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				
-				transform(move, rotation);
-				gCameraData.camPos = CamPos;
+				transform(velocity, rotation);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
 				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
 				gDeviceContext->Unmap(gConstantBuffer, 0);
 
-				gDeviceContext->Map(gConstantBufferBillboard, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+				gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 				memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
-				gDeviceContext->Unmap(gConstantBufferBillboard, 0);
+				gDeviceContext->Unmap(gConstantBufferCamera, 0);
 
 				ImGui::Render();
 				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

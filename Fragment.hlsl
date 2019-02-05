@@ -18,12 +18,11 @@ cbuffer FS_CONSTANT_BUFFER : register(b0)
 
 float4 PS_main(GS_OUT input) : SV_Target
 {
-	//float3 textureCol = txDiffuse.Sample(sampAni, input.tex).xyz;
-	//float3 ambientCol = { 1.0, 1.0, 1.0 };
-	//float3 fragmentCol = textureCol * ambientCol;
-	////float3 fragmentCol = input.col * ambientCol;
-	//float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
-	//fragmentCol += input.col * diffuseFactor * lightCol;
-	//return float4(fragmentCol, 1.0f);
-	return float4(1.0f,1.0f,1.0f,1.0f);
+	float3 textureCol = txDiffuse.Sample(sampAni, input.tex).xyz;
+	float3 ambientCol = { 1.0, 1.0, 1.0 };
+	float3 fragmentCol = textureCol * ambientCol;
+	//float3 fragmentCol = input.col * ambientCol;
+	float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
+	fragmentCol += input.col * diffuseFactor * lightCol;
+	return float4(fragmentCol, 1.0f);
 };

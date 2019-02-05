@@ -16,5 +16,5 @@ float4 PS_main(GS_OUT input) : SV_Target
 	//float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
 	//fragmentCol += input.col * diffuseFactor * lightCol;
 	//return float4(fragmentCol, 1.0f);
-	return float4(1.0f,1.0f,1.0f,1.0f);
+	return float4(0.8f,0.2f,0.0f,1.0f);
 };
