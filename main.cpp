@@ -463,6 +463,8 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 	DirectX::XMFLOAT3 tempPos, tempNormal;
 	DirectX::XMFLOAT2 tempUV;
 
+	bool hasNorm = false, hasUV = false, hasLibrary = false;
+
 	inFile.open(filePath);
 	while (std::getline(inFile, line))
 	{
@@ -476,11 +478,13 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 		{
 			inputString >> special >> tempUV.x >> tempUV.y;
 			vtxUV.push_back(tempUV);
+			hasUV = true;
 		}
 		else if (line.substr(0, 3) == "vn ")
 		{
 			inputString >> special >> tempNormal.x >> tempNormal.y >> tempNormal.z;
 			vtxNormal.push_back(tempNormal);
+			hasUV = true;
 		}
 		else if (line.substr(0, 2) == "f ")
 		{
@@ -493,7 +497,19 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			inputString >> skip;
 			for (int i = 0; i < size - 1; i++)
 				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
-
+			
+			if (size == 4)
+			{
+				vertexIndices.push_back(vertexIndex[0]);
+				vertexIndices.push_back(vertexIndex[1]);
+				vertexIndices.push_back(vertexIndex[2]);
+				uvIndices.push_back(uvIndex[0]);
+				uvIndices.push_back(uvIndex[1]);
+				uvIndices.push_back(uvIndex[2]);
+				normalIndices.push_back(normalIndex[0]);
+				normalIndices.push_back(normalIndex[1]);
+				normalIndices.push_back(normalIndex[2]);
+			}
 			if (size == 4)
 			{
 				vertexIndices.push_back(vertexIndex[0]);
@@ -532,6 +548,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 		{
 			inputString >> special >> libraries;
 			materialLibs.push_back(libraries);
+			hasLibrary = true;
 		}
 		else if (line.substr(0, 7) == "usemtl ")
 		{
@@ -549,10 +566,19 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			int posIndex = vertexIndices[i];
 			int uvIndex = uvIndices[i];
 			int normalIndex = normalIndices[i];
+			XMFLOAT2 vertUV;
+			XMFLOAT3 vertNormal;
 
 			XMFLOAT3 vertPos = vtxPos[posIndex - 1];
-			XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
-			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
+			if(!hasUV)
+				vertUV = XMFLOAT2(0.0f, 0.0f);
+			else
+				vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
+
+			if (!hasNorm)
+				vertNormal = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			else
+				 vertNormal = vtxNormal[normalIndex - 1];
 
 			triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
 		}
@@ -575,24 +601,27 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 	inFile.close();
 
 	// Read materials
-	filePath = "Resources\\MaterialLibraries\\" + materialLibs[0];
-	inFile.open(filePath);
-	while (std::getline(inFile, line))
+	if (hasLibrary)
 	{
-		inputString.str(line);
-		if (line.substr(0, 7) == "map_Kd ")
+		filePath = "Resources\\MaterialLibraries\\" + materialLibs[0];
+		inFile.open(filePath);
+		while (std::getline(inFile, line))
 		{
-			inputString >> special >> material;
+			inputString.str(line);
+			if (line.substr(0, 7) == "map_Kd ")
+			{
+				inputString >> special >> material;
+			}
 		}
-	}
 	
-	std::wstring widestr = std::wstring(material.begin(), material.end());
-	wchar_t widecstr[1000] = L"Resources\\Textures\\";
-	const wchar_t* widecstr1 = widestr.c_str();
-	const wchar_t* fileName = wcscat(widecstr, widecstr1);
+		std::wstring widestr = std::wstring(material.begin(), material.end());
+		wchar_t widecstr[100] = L"Resources\\Textures\\";
+		const wchar_t* widecstr1 = widestr.c_str();
+		const wchar_t* fileName = wcscat(widecstr, widecstr1);
 
-	HRESULT hr = CoInitialize(NULL);
-	CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
+		HRESULT hr = CoInitialize(NULL);
+		CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
+	}
 
 	return triangles;
 }
@@ -600,9 +629,10 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 
 void CreateTriangleData()
 {
-	std::string filePath = "Resources\\Meshes\\model.obj";
+	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
 	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gRockTextureView);
+
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -612,12 +642,10 @@ void CreateTriangleData()
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
 	bufferDesc.ByteWidth = sizeof(TriangleVertex) * mesh.size();
-
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = &mesh[0];
-
 	// create a Vertex Buffer
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	
@@ -629,11 +657,12 @@ void CreateTriangleData()
 	};
 
 	bufferDesc.ByteWidth = sizeof(TriangleVertex);
-	D3D11_SUBRESOURCE_DATA data2;
-	data2.pSysMem = &billboardPointInfo;
-	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
+	data.pSysMem = &billboardPointInfo;
+	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data, &gBillboardVertexBuffer);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+
+	//Mesh2
 
 }
 
@@ -746,6 +775,12 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 	gCameraData.camPos = CamPos;
 }
+
+void mousePicker()
+{
+	
+}
+
 
 void createDepthStencil()
 {
