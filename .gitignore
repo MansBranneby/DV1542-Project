@@ -6,3 +6,4 @@
 !Resources/
 !BillboardGeometryShader.hlsl
 !BillboardPixelShader.hlsl
+!BillboardVertexShader.hlsl

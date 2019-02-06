@@ -21,7 +21,7 @@
 
 // extra
 #include <algorithm>
-#include <WICTextureLoader.h>
+#include <wchar.h>
 
 // DirectXTK
 #include "CommonStates.h"
@@ -88,10 +88,11 @@ ID3D11Buffer* gConstantBufferCamera = nullptr;
 ID3D11Buffer* gConstantBufferBillboard = nullptr;
 
 ID3D11InputLayout* gVertexLayout = nullptr;
-
+ID3D11InputLayout* gBillboardLayoutPosCol = nullptr;
 
 // resources that represent shaders
 ID3D11VertexShader* gVertexShader = nullptr;
+ID3D11VertexShader* gBillboardVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gBillboardPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
@@ -207,9 +208,72 @@ HRESULT CreateShaders()
 
 	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
 
-	// we do not need anymore this COM object, so we release it.
+	//// we do not need anymore this COM object, so we release it.
 	pVS->Release();
 
+	pVS = nullptr;
+	//Billboard vertex shader
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	result = D3DCompileFromFile(
+		L"BillboardVertexShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"VS_main",		// entry point
+		"vs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pVS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pVS)
+			pVS->Release();
+		return result;
+	}
+
+	gDevice->CreateVertexShader(
+		pVS->GetBufferPointer(),
+		pVS->GetBufferSize(),
+		nullptr,
+		&gBillboardVertexShader
+	);
+
+	// BillboardLayout
+	D3D11_INPUT_ELEMENT_DESC billboardInputDesc[] = {
+		{
+			"POSITION",		// "semantic" name in shader
+			0,				// "semantic" index (not used)
+			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
+			0,							 // input slot
+			0,							 // offset of first element
+			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+			0							 // used for INSTANCING (ignore)
+		},
+		{
+			"COLOUR",
+			0,				// same slot as previous (same vertexBuffer)
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			12,							// offset of FIRST element (after POSITION)
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+	};
+
+	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gBillboardLayoutPosCol);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+	// we do not need anymore this COM object, so we release it.
+	pVS->Release();
 
 	////GeometryShader
 	ID3DBlob* pGS = nullptr;
@@ -376,20 +440,25 @@ struct TriangleVertex
 	float normalX, normalY, normalZ;
 };
 
+struct billboardPoint
+{
+	float x, y, z;
+	float r, g, b;
+};
 
 std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 {
 	std::vector<XMFLOAT3>vtxPos;
 	std::vector<XMFLOAT2>vtxUV;
 	std::vector<XMFLOAT3> vtxNormal;
-	std::vector<std::string> externalLibs;
+	std::vector<std::string> materialLibs;
 	std::vector<std::string> materials;
 	std::vector<int> vertexIndices;
 	std::vector<int> uvIndices;
 	std::vector<int> normalIndices;
 
 	std::ifstream inFile;
-	std::string line, special;
+	std::string line, special, libraries, material;
 	std::istringstream inputString;
 	DirectX::XMFLOAT3 tempPos, tempNormal;
 	DirectX::XMFLOAT2 tempUV;
@@ -459,6 +528,16 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 				normalIndices.push_back(normalIndex[3]);
 			}
 		}
+		else if (line.substr(0, 7) == "mtllib ")
+		{
+			inputString >> special >> libraries;
+			materialLibs.push_back(libraries);
+		}
+		else if (line.substr(0, 7) == "usemtl ")
+		{
+			inputString >> special >> material;
+			materials.push_back(material);
+		}
 		inputString.clear();
 	}
 	//Sort
@@ -495,13 +574,33 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 	}
 	inFile.close();
 
+	// Read materials
+	filePath = "Resources\\MaterialLibraries\\" + materialLibs[0];
+	inFile.open(filePath);
+	while (std::getline(inFile, line))
+	{
+		inputString.str(line);
+		if (line.substr(0, 7) == "map_Kd ")
+		{
+			inputString >> special >> material;
+		}
+	}
+	
+	std::wstring widestr = std::wstring(material.begin(), material.end());
+	wchar_t widecstr[1000] = L"Resources\\Textures\\";
+	const wchar_t* widecstr1 = widestr.c_str();
+	const wchar_t* fileName = wcscat(widecstr, widecstr1);
+
+	HRESULT hr = CoInitialize(NULL);
+	CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
+
 	return triangles;
 }
 
 
 void CreateTriangleData()
 {
-	std::string filePath = "Resources\\Kamen.obj";
+	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
 	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath, flippedUV);
 	// Describe the Vertex Buffer
@@ -523,16 +622,15 @@ void CreateTriangleData()
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	
 	// Billboard
-	TriangleVertex billboardVert
+	billboardPoint billboardPointInfo
 	{
 		2.0f, 8.0f, -3.0f,
-		0.0f, 0.0f,
 		1.0f, 1.0f, 1.0f
 	};
 
 	bufferDesc.ByteWidth = sizeof(TriangleVertex);
 	D3D11_SUBRESOURCE_DATA data2;
-	data2.pSysMem = &billboardVert;
+	data2.pSysMem = &billboardPointInfo;
 	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
@@ -695,7 +793,7 @@ void createDepthStencil()
 void rockTexture()
 {
 
-	D3D11_TEXTURE2D_DESC texDesc;
+	/*D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = BTH_IMAGE_WIDTH;
 	texDesc.Height = BTH_IMAGE_HEIGHT;
@@ -706,7 +804,7 @@ void rockTexture()
 	texDesc.Usage = D3D11_USAGE_DEFAULT;
 	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	texDesc.MiscFlags = 0;
-	texDesc.CPUAccessFlags = 0;
+	texDesc.CPUAccessFlags = 0;*/
 
 	////Texture
 	//ID3D11Texture2D *pTexture = NULL;
@@ -743,9 +841,9 @@ void rockTexture()
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// new
-	const wchar_t* fileName = L"Resources\\Kamen_None_color.jpg";
-	hr = CoInitialize(NULL);
-	CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
+	//const wchar_t* fileName = L"Resources\\Kamen_None_color.jpg";
+	//hr = CoInitialize(NULL);
+	//CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
 }
 
 void textureSetUp()
@@ -865,13 +963,13 @@ void renderBillboard()
 	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	// specifying NULL or nullptr we are disabling that stage
 	// in the pipeline
-	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
 
-	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 vertexSize = sizeof(billboardPoint);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
 	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
@@ -879,7 +977,7 @@ void renderBillboard()
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gVertexLayout);
+	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
 
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);

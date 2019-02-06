@@ -36,11 +36,11 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 	float halfWidth = billboardWidth / 2.0f;
 
 	float3 billboardNormal = camPos.xyz - input[0].pos.xyz;
-	billboardNormal.y = 0.0f;
 	billboardNormal = normalize(billboardNormal);
 
-	float3 billboardUpVector = { 0.0f, 1.0f, 0.0f };
-	float3 billboardRightVector = normalize(cross(billboardNormal, billboardUpVector));
+	float3 WorldUpVector = { 0.0f, 1.0f, 0.0f };
+	float3 billboardRightVector = normalize(cross(billboardNormal, WorldUpVector));
+	float3 billboardUpVector = normalize(cross(billboardRightVector, billboardNormal));
 	billboardRightVector *= halfWidth;
 	billboardUpVector *= halfHeight;
 
