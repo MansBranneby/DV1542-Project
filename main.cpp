@@ -446,7 +446,7 @@ struct billboardPoint
 	float r, g, b;
 };
 
-std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
+std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView)
 {
 	std::vector<XMFLOAT3>vtxPos;
 	std::vector<XMFLOAT2>vtxUV;
@@ -592,7 +592,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 	const wchar_t* fileName = wcscat(widecstr, widecstr1);
 
 	HRESULT hr = CoInitialize(NULL);
-	CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
+	CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
 
 	return triangles;
 }
@@ -600,9 +600,9 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV)
 
 void CreateTriangleData()
 {
-	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
+	std::string filePath = "Resources\\Meshes\\model.obj";
 	bool flippedUV = true;
-	std::vector<TriangleVertex> sortedPos = LoadOBJ(filePath, flippedUV);
+	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gRockTextureView);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -611,12 +611,12 @@ void CreateTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * sortedPos.size();
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * mesh.size();
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &sortedPos[0];
+	data.pSysMem = &mesh[0];
 
 	// create a Vertex Buffer
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
