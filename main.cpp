@@ -1,3 +1,4 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include <windows.h>
 
 #include "imgui/imgui.h"
@@ -5,9 +6,12 @@
 #include "imgui/imgui_impl_dx11.h"
 #include "bth_image.h"
 
+#include "stb_image.h"
+
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
+#include "WICTextureLoader.h"
 
 using namespace DirectX;
 
@@ -38,10 +42,12 @@ ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11DepthStencilView* gDSV = nullptr;
 
 ID3D11ShaderResourceView *gTextureView = nullptr;
+ID3D11ShaderResourceView *gTextureViewHeightMap = nullptr;
 ID3D11SamplerState *gSamplerState = nullptr;
 
 // a resource to store Vertices in the GPU
 ID3D11Buffer* gVertexBuffer = nullptr;
+ID3D11Buffer* gVertexBufferHeightMap = nullptr;
 
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLightCamera = nullptr;
@@ -49,6 +55,7 @@ ID3D11InputLayout* gVertexLayout = nullptr;
 
 // resources that represent shaders
 ID3D11VertexShader* gVertexShader = nullptr;
+ID3D11VertexShader* gVertexShaderHeightMap = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 
@@ -111,6 +118,34 @@ HRESULT CreateShaders()
 		nullptr, 
 		&gVertexShader
 	);
+
+	result = D3DCompileFromFile(
+		L"VertexShaderHeightMap.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"VS_main",		// entry point
+		"vs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pVS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pVS)
+			pVS->Release();
+		return result;
+	}
+
+	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderHeightMap);
 	
 	// create input layout (verified using vertex shader)
 	// Press F1 in Visual Studio with the cursor over the datatype to jump
@@ -300,6 +335,66 @@ void CreateTriangleData()
 	// how big in bytes each element in the buffer is.
 	bufferDesc.ByteWidth = sizeof(triangleVertices);
 
+	//Plane for height-map
+	TriangleVertex triangleVerticesHeightMap[400];
+	int nr = 0;
+	for (int i = 0; i < 20; i++)
+	{
+		for (int j = 0; j < 20; j++)
+		{
+			triangleVerticesHeightMap[nr++] = {float(i), -1.0f, float(j), 1.0, 1.0, 1.0};
+		}
+	}
+
+	//TriangleVertex triangleVerticesHeightMap[6] =
+	//{
+	//	-1.0f, -1.0f, 1.0f,		//v0 pos
+	//	1.0f, 0.0f, 0.0f,		//v0 col
+
+	//	1.0f, -1.0f, -1.0f,		//v1 pos
+	//	1.0f, 0.0f,	0.0f,		//v1 col
+
+	//	-1.0f, -1.0f, -1.0f,	//v2 pos
+	//	1.0f, 0.0f, 0.0f,		//v2 col
+
+	//	-1.0f, -1.0f, 1.0f,		//v3 pos
+	//	1.0f, 0.0f, 0.0f,		//v3 col
+
+	//	1.0f, -1.0f, 1.0f,		//v4 pos
+	//	1.0f, 0.0f,	0.0f,		//v4 col
+
+	//	1.0f, -1.0f, -1.0f,		//v5 pos
+	//	1.0f, 0.0f, 0.0f,		//v5 col
+
+	//	//-0.5f, 0.5f, 0.0f,	//v0 pos
+	//	//1.0f, 0.0f, 0.0f,	//v0 col
+
+	//	//0.5f, -0.5f, 0.0f,	//v1 pos
+	//	//0.0f, 1.0f,	0.0f,	//v1 col
+
+	//	//-0.5f, -0.5f, 0.0f, //v2 pos
+	//	//0.0f, 1.0f, 1.0f,	//v2 col
+
+	//	//-0.5f, 0.5f, 0.0f,	//v3 pos
+	//	//1.0f, 0.0f, 0.0f,	//v3 col
+
+	//	//0.5f, 0.5f, 0.0f,	//v4 pos
+	//	//1.0f, 0.0f,	1.0f,	//v4 col
+
+	//	//0.5f, -0.5f, 0.0f,	//v5 pos
+	//	//0.0f, 1.0f, 0.0f,	//v5 col
+	//};
+
+	// Describe the Vertex Buffer
+	D3D11_BUFFER_DESC bufferDescHeightMap;
+	memset(&bufferDescHeightMap, 0, sizeof(bufferDescHeightMap));
+	// what type of buffer will this be?
+	bufferDescHeightMap.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	// what type of usage (press F1, read the docs)
+	bufferDescHeightMap.Usage = D3D11_USAGE_DEFAULT;
+	// how big in bytes each element in the buffer is.
+	bufferDescHeightMap.ByteWidth = sizeof(triangleVerticesHeightMap);
+
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
@@ -307,6 +402,12 @@ void CreateTriangleData()
 
 	// create a Vertex Buffer
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+
+	//HEIGHT-MAP (Vertex buffer)//
+	//
+	//
+	data.pSysMem = triangleVerticesHeightMap;
+	gDevice->CreateBuffer(&bufferDescHeightMap, &data, &gVertexBufferHeightMap);
 }
 
 void createConstantBuffer()
@@ -462,6 +563,9 @@ void textureSetUp()
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
+
+	const wchar_t* filename = L"Resources\\heightmap.png";
+	CreateWICTextureFromFile(gDevice, filename, NULL, &gTextureViewHeightMap);
 }
 
 void SetViewport()
@@ -514,6 +618,45 @@ void Render()
 	gDeviceContext->Draw(6, 0);
 }
 
+void renderHeightMap()
+{
+	// clear the back buffer to a deep blue
+	//float clearColor[] = { 0, 0, 0, 1 };
+	gClearColour[3] = 1.0;
+
+	// use DeviceContext to talk to the API
+	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	// specifying NULL or nullptr we are disabling that stage
+	// in the pipeline
+	gDeviceContext->VSSetShader(gVertexShaderHeightMap, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
+	
+	gDeviceContext->VSSetShaderResources(0, 1, &gTextureViewHeightMap);
+
+	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferHeightMap, &vertexSize, &offset);
+
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gVertexLayout);
+
+	//ConstantBuffer
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+
+	//gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
+
+	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->Draw(400, 0);
+}
+
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
 	MSG msg = { 0 };
@@ -552,6 +695,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 			else
 			{
 				Render(); //8. Rendera
+				renderHeightMap();
 				gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 				ImGui_ImplDX11_NewFrame();
@@ -588,6 +732,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		ImGui::DestroyContext();
 
 		gVertexBuffer->Release();
+		gVertexBufferHeightMap->Release();
 		gConstantBuffer->Release();
 		gTextureView->Release();
 		gSamplerState->Release();
