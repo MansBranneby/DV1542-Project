@@ -30,20 +30,21 @@ ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
 // VIEWS //
-ID3D11RenderTargetView* gRenderTargetDeferredPos = nullptr;
-ID3D11RenderTargetView* gRenderTargetDeferredNor = nullptr;
-ID3D11RenderTargetView* gRenderTargetDeferredCol = nullptr;
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11DepthStencilView* gDSV = nullptr;
 
-ID3D11RenderTargetView* gRenderTargetsDeferred[] = {gRenderTargetDeferredPos, gRenderTargetDeferredNor, gRenderTargetDeferredCol};
+ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {};
+//ID3D11RenderTargetView* gRenderTargetDeferredPos = gRenderTargetsDeferred[0];
+//ID3D11RenderTargetView* gRenderTargetDeferredNor = gRenderTargetsDeferred[1];
+//ID3D11RenderTargetView* gRenderTargetDeferredCol = gRenderTargetsDeferred[2];
 
 //ID3D11ShaderResourceView *gTextureView = nullptr;
-ID3D11ShaderResourceView *gShaderResourceDeferredPos = nullptr;
-ID3D11ShaderResourceView *gShaderResourceDeferredNor = nullptr;
-ID3D11ShaderResourceView *gShaderResourceDeferredCol = nullptr;
 
-ID3D11ShaderResourceView *gShaderResourceDeferred[] = {gShaderResourceDeferredPos, gShaderResourceDeferredNor, gShaderResourceDeferredCol};
+ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
+
+//ID3D11ShaderResourceView *gShaderResourceDeferredPos = gShaderResourceDeferred[0];
+//ID3D11ShaderResourceView *gShaderResourceDeferredNor = gShaderResourceDeferred[1];
+//ID3D11ShaderResourceView *gShaderResourceDeferredCol = gShaderResourceDeferred[2];
 
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
@@ -544,12 +545,15 @@ void createDepthStencil()
 	gDeviceContext->OMSetDepthStencilState(pDSState, 1);
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
+	ZeroMemory(&descDSV, sizeof(descDSV));
 	descDSV.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	descDSV.Texture2D.MipSlice = 0;
 
 	// Create the depth stencil view
 	hr = gDevice->CreateDepthStencilView(pDepthStencil, &descDSV, &gDSV);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void textureSetUp()
@@ -635,13 +639,13 @@ void createRenderTargets()
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-	hr = gDevice->CreateRenderTargetView(gTexDeferredPos, &renderTargetViewDesc, &gRenderTargetDeferredPos);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredPos, &renderTargetViewDesc, &gRenderTargetsDeferred[0]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-	hr = gDevice->CreateRenderTargetView(gTexDeferredNor, &renderTargetViewDesc, &gRenderTargetDeferredNor);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredNor, &renderTargetViewDesc, &gRenderTargetsDeferred[1]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-	hr = gDevice->CreateRenderTargetView(gTexDeferredCol, &renderTargetViewDesc, &gRenderTargetDeferredCol);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredCol, &renderTargetViewDesc, &gRenderTargetsDeferred[2]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
@@ -655,13 +659,13 @@ void createRenderTargets()
 	shaderResourceViewDesc.Texture2D.MipLevels = texDesc.MipLevels;
 
 	// Create the shader resource view.
-	hr = gDevice->CreateShaderResourceView(gTexDeferredPos, &shaderResourceViewDesc, &gShaderResourceDeferredPos);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredPos, &shaderResourceViewDesc, &gShaderResourceDeferred[0]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-	hr = gDevice->CreateShaderResourceView(gTexDeferredNor, &shaderResourceViewDesc, &gShaderResourceDeferredNor);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredNor, &shaderResourceViewDesc, &gShaderResourceDeferred[1]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-	hr = gDevice->CreateShaderResourceView(gTexDeferredCol, &shaderResourceViewDesc, &gShaderResourceDeferredCol);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredCol, &shaderResourceViewDesc, &gShaderResourceDeferred[2]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
@@ -798,9 +802,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 				
 				gClearColour[3] = 1.0;
 				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredPos, gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredNor, gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetDeferredCol, gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
 
@@ -821,12 +825,12 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdL
 		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
 		//gTextureView->Release();
-		gShaderResourceDeferredPos->Release();
-		gShaderResourceDeferredNor->Release();
-		gShaderResourceDeferredCol->Release();
-		gRenderTargetDeferredPos->Release();
-		gRenderTargetDeferredNor->Release();
-		gRenderTargetDeferredCol->Release();
+		gShaderResourceDeferred[0]->Release();
+		gShaderResourceDeferred[1]->Release();
+		gShaderResourceDeferred[2]->Release();
+		gRenderTargetsDeferred[0]->Release();
+		gRenderTargetsDeferred[1]->Release();
+		gRenderTargetsDeferred[2]->Release();
 		gSamplerState->Release();
 
 		gVertexLayout->Release();
