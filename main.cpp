@@ -776,7 +776,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	gCameraData.camPos = CamPos;
 }
 
-void mousePicker()
+void mousePicking(POINT cursorPos)
 {
 	
 }
@@ -1063,7 +1063,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		float distance = 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
-	
+		POINT cursorPos;
+
 		double PCFreq = 0.0;
 		__int64 CounterStart = 0;
 		LARGE_INTEGER clockFreq;
@@ -1107,25 +1108,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
 
-				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-				ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
-				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
-				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
-				ImGui::End();
-			
-				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
+				DirectX::Mouse::State ms = mouse->GetState();
 				mouse->SetMode(Mouse::MODE_RELATIVE);
+
+				GetCursorPos(&cursorPos); // gets current curosr coordinates
+				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
+
+				mousePicking(cursorPos);
 
 				yaw += XMConvertToRadians(ms.x);
 				pitch += XMConvertToRadians(ms.y);
 				pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-
+				
 				velocity.x = 0;
 				velocity.y = 0;
 				velocity.z = 0;
@@ -1146,7 +1143,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					velocity = { 0.0f, 0.0f, -2.0f };
 				if (kb.Escape)
 					msg.message = WM_QUIT;
-
+			
 				transform(velocity, rotation);
 
 				D3D11_MAPPED_SUBRESOURCE mappedMemory;
@@ -1158,6 +1155,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 				gDeviceContext->Unmap(gConstantBufferCamera, 0);
 
+				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+				ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
+				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
+				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::Text("Camera world coordinates: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
+				ImGui::Text("Cursor pixel coordinates: X:%.2li, Y:%.2li)", cursorPos.x, cursorPos.y);
+				ImGui::End();
+				
 				ImGui::Render();
 				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
