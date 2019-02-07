@@ -763,13 +763,14 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
-
+	
+	
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 
 	XMMATRIX WorldView = XMMatrixMultiply(View, World);
 	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
-
+	
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
 
@@ -778,7 +779,10 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 void mousePicking(POINT cursorPos)
 {
-	
+	cursorPos.x;
+	cursorPos.y;
+	float derp = XMVectorGetX(Projection.r[0]);
+
 }
 
 
