@@ -739,7 +739,13 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 }
 
-XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+struct Camera 
+{
+	XMMATRIX view;
+	XMMATRIX projection;
+	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+};
+Camera gCamera;
 
 void transform(XMFLOAT3 move, XMMATRIX rotation)
 {
@@ -755,36 +761,72 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	camUp = XMVector3TransformCoord(camUp, rotation);
 	camForward = XMVector3TransformCoord(camForward, rotation);
 
-	CamPos += move.x * camRight;
-	CamPos += move.y * camUp;
-	CamPos += move.z * camForward;
-	LookAt = CamPos + LookAt;
+	gCamera.pos += move.x * camRight;
+	gCamera.pos += move.y * camUp;
+	gCamera.pos += move.z * camForward;
+	gCameraData.camPos = gCamera.pos;
+	LookAt = gCamera.pos + LookAt;
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, camUp);
+	gCamera.view = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
+	gCamera.projection = Projection;
 	
-	
-	View = XMMatrixTranspose(View);
+	gCamera.view = XMMatrixTranspose(gCamera.view);
 	Projection = XMMatrixTranspose(Projection);
 
-	XMMATRIX WorldView = XMMatrixMultiply(View, World);
+	XMMATRIX WorldView = XMMatrixMultiply(gCamera.view, World);
 	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
 	
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
-
-	gCameraData.camPos = CamPos;
 }
 
 void mousePicking(POINT cursorPos)
 {
-	cursorPos.x;
-	cursorPos.y;
-	float derp = XMVectorGetX(Projection.r[0]);
+	float projX = XMVectorGetX(gCamera.projection.r[0]);
+	float projY = XMVectorGetY(gCamera.projection.r[1]);
 
+	float viewX = (2.0f * cursorPos.x / WIDTH - 1.0f) / projX;
+	float viewY = (2.0f * cursorPos.y / HEIGHT - 1.0f) / projY;
+
+	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 0.0f, 0.0f);
+
+	// view -> world
+	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
+	rayDirection = XMVector3Transform(rayDirection, inverseView);
+	rayOrigin = inverseView.r[4];
+
+	// world -> local 
+
+	
 }
 
+
+
+float triangleTest(vec3 rayDir, vec3 rayOrigin, triangle_type tri)
+{
+	// IMPLEMENT HERE
+	vec3 e1 = tri.vtx1.xyz - tri.vtx0.xyz;
+	vec3 e2 = tri.vtx2.xyz - tri.vtx0.xyz;
+	vec3 s = rayOrigin - tri.vtx0.xyz;
+
+	float a = 1 / determinant(mat3x3(-rayDir, e1, e2));
+	float b = determinant(mat3x3(s, e1, e2));
+	float c = determinant(mat3x3(-rayDir, s, e2));
+	float d = determinant(mat3x3(-rayDir, e1, s));
+
+	float t = a * b;
+	float u = a * c;
+	float v = a * d;
+	float w = 1 - u - v;
+
+	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
+		t = -1;
+
+	return t;
+}
 
 void createDepthStencil()
 {
@@ -1119,7 +1161,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				GetCursorPos(&cursorPos); // gets current curosr coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
 
-				mousePicking(cursorPos);
+				if (ms.leftButton)
+				{
+					mousePicking(cursorPos);
+				}
 
 				yaw += XMConvertToRadians(ms.x);
 				pitch += XMConvertToRadians(ms.y);
@@ -1165,7 +1210,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 				ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::Text("Camera world coordinates: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
+				ImGui::Text("Camera world coordinates: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 				ImGui::Text("Cursor pixel coordinates: X:%.2li, Y:%.2li)", cursorPos.x, cursorPos.y);
 				ImGui::End();
 				

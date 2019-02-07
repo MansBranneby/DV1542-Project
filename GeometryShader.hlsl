@@ -34,22 +34,7 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 		output.Append(element);
 	}
 	output.RestartStrip();
-	
-	//for (uint i = 0; i < 3; i++)
-	//{
-	//	element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
-	//	element.worldPos = mul(input[i].pos + normal * 0.5, world);
-	//	element.worldNor = mul(normal, world);
-	//	element.tex = input[i].tex;
-	//	element.col = input[i].col;
-	//	output.Append(element);
-	//}
-	//output.RestartStrip();
 
-	// Billboarding
-	//float billboardHalfHeight = billboardHeight / 2.0f;
-	//float billboardHalfWidth = billboardWidth / 2.0f;
 
-	//float3 billboardNormal;
 
 }
