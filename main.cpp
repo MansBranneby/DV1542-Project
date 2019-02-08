@@ -71,8 +71,6 @@ ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
 
-ID3D10Texture2D* gRockTexture = nullptr;
-
 // BUFFERS //
 ID3D11Buffer* gVertexBuffer = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
@@ -705,8 +703,9 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 	const wchar_t* fileName = wcscat(widecstr, widecstr1);
 
 	HRESULT hr = CoInitialize(NULL);
-	CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
-
+	hr = CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
+	if (FAILED(hr))
+		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
 	return triangles;
 }
 
@@ -1056,13 +1055,13 @@ void renderFirstPass()
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 	gDeviceContext->PSSetShaderResources(0, 1, &gShaderResourceObjTexture);
-
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
 
 	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
+	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 

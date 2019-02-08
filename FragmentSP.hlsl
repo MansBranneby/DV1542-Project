@@ -21,14 +21,14 @@ cbuffer FS_CONSTANT_BUFFER_CAMERA : register(b1)
 
 float4 PS_main(VS_OUT input) : SV_Target
 {
-	float3 position = normalize(txPosition.Sample(sampAni, input.tex).xyz);
-	float3 normal = normalize(txNormal.Sample(sampAni, input.tex).xyz);
-	float3 colour = normalize(txColour.Sample(sampAni, input.tex).xyz);
+	float3 position = txPosition.Sample(sampAni, input.tex).xyz;
+	float3 normal = txNormal.Sample(sampAni, input.tex).xyz;
+	float3 colour = txColour.Sample(sampAni, input.tex).xyz;
 
 	//LIGHTING//
 
 	//Ambient
-	float3 ambientCol = { 0.2, 0.2, 0.2 };
+	float3 ambientCol = { 1.0, 1.0, 1.0 };
 	float3 ambient = colour * ambientCol;
 
 	//Diffuse
@@ -45,6 +45,21 @@ float4 PS_main(VS_OUT input) : SV_Target
 
 	//Final
 	float3 fragmentCol = ambient + diffuse + specular;
+
+
+	// PRÖVNING
+	//
+	//float3 textureCol = txColour.Sample(sampAni, input.tex).xyz;
+	//float3 ambientCol = { 1.0, 1.0, 1.0 };
+	//float3 fragmentCol = textureCol * ambientCol;
+	//float3 fragmentCol = input.col * ambientCol;
+	//float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
+	//return float4(fragmentCol, 1.0f);
+
+
+
+
+
 
 	return float4(fragmentCol, 1.0f);
 };
