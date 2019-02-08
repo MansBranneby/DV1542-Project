@@ -720,7 +720,7 @@ void renderSecondPass()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
 
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
 
 	gDeviceContext->Draw(6, 0);
 

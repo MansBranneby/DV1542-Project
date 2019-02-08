@@ -18,30 +18,30 @@ cbuffer FS_CONSTANT_BUFFER : register(b0)
 
 float4 PS_main(VS_OUT input) : SV_Target
 {
-	float3 texturePos = txPosition.Sample(sampAni, input.tex).xyz;
-	float3 textureNor = txNormal.Sample(sampAni, input.tex).xyz;
-	float3 textureCol = txColour.Sample(sampAni, input.tex).xyz;
+	float3 position = normalize(txPosition.Sample(sampAni, input.tex).xyz);
+	float3 normal = normalize(txNormal.Sample(sampAni, input.tex).xyz);
+	float3 colour = normalize(txColour.Sample(sampAni, input.tex).xyz);
 
-//LIGHTING//
+	//LIGHTING//
 
-//Ambient
+	//Ambient
 	float3 ambientCol = { 0.2, 0.2, 0.2 };
-	//float3 ambient = textureCol * ambientCol;
-//
-////Diffuse
-//float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
-//float3 diffuse = input.col * lightCol * diffuseFactor;
-//
-////Specular
-//float3 n = normalize(input.worldNor.xyz);
-//float3 l = normalize(lightPos - input.worldPos.xyz);
-//float3 v = normalize(cameraPos - input.worldPos.xyz);
-//float3 r = normalize(2 * dot(n, l) * n - l);
-//
-//float3 specular = input.col * lightCol * pow(max(dot(r, v), 0), 2);
-//
-////Final
-//float3 fragmentCol = ambient; //+ diffuse + specular;
-//return float4(fragmentCol, 1.0f);
-return float4(texturePos, 1.0f);
+	float3 ambient = colour * ambientCol;
+
+	//Diffuse
+	float diffuseFactor = max(dot(normalize(lightPos - position), normalize(normal)), 0);
+	float3 diffuse = colour * lightCol * diffuseFactor;
+
+	//Specular
+	float3 n = normalize(normal);
+	float3 l = normalize(lightPos - position);
+	float3 v = normalize(cameraPos - position);
+	float3 r = normalize(2 * dot(n, l) * n - l);
+
+	float3 specular = colour * lightCol * pow(max(dot(r, v), 0), 20);
+
+	//Final
+	float3 fragmentCol = ambient + diffuse + specular;
+
+	return float4(fragmentCol, 1.0f);
 };
