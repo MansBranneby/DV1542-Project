@@ -600,7 +600,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 
 void CreateTriangleData()
 {
-	std::string filePath = "Resources\\Meshes\\model.obj";
+	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
 	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gRockTextureView);
 	// Describe the Vertex Buffer
