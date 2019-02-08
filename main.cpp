@@ -1068,6 +1068,37 @@ void renderFirstPass()
 	gDeviceContext->Draw(69120, 0);
 }
 
+
+//void renderBillboard()
+//{
+//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+//	
+//	UINT32 vertexSize = sizeof(billboardPoint);
+//	UINT32 offset = 0;
+//	// specify which vertex buffer to use next.
+//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+//
+//	// specify the topology to use when drawing
+//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+//	// specify the IA Layout (how is data passed)
+//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+//
+//	//ConstantBuffer
+//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+//
+//
+//	// issue a draw call of 3 vertices (similar to OpenGL)
+//	gDeviceContext->Draw(1, 0);
+//}
+
+
 void renderSecondPass()
 {
 	gDeviceContext->VSSetShader(gVertexShaderSP, nullptr, 0);
@@ -1124,35 +1155,6 @@ void update()
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
 }
-
-//void renderBillboard()
-//{
-//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
-//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
-//
-//	UINT32 vertexSize = sizeof(billboardPoint);
-//	UINT32 offset = 0;
-//	// specify which vertex buffer to use next.
-//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
-//
-//	// specify the topology to use when drawing
-//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-//	// specify the IA Layout (how is data passed)
-//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-//
-//	//ConstantBuffer
-//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-//
-//
-//	// issue a draw call of 3 vertices (similar to OpenGL)
-//	gDeviceContext->Draw(1, 0);
-//}
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -1279,6 +1281,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
+
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
+
 				//renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
