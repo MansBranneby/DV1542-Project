@@ -60,28 +60,18 @@ ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
 // VIEWS //
-ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11DepthStencilView* gDSV = nullptr;
 
+ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {};
-//ID3D11RenderTargetView* gRenderTargetDeferredPos = gRenderTargetsDeferred[0];
-//ID3D11RenderTargetView* gRenderTargetDeferredNor = gRenderTargetsDeferred[1];
-//ID3D11RenderTargetView* gRenderTargetDeferredCol = gRenderTargetsDeferred[2];
-
-//ID3D11ShaderResourceView *gTextureView = nullptr;
 
 ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
-
-//ID3D11ShaderResourceView *gShaderResourceDeferredPos = gShaderResourceDeferred[0];
-//ID3D11ShaderResourceView *gShaderResourceDeferredNor = gShaderResourceDeferred[1];
-//ID3D11ShaderResourceView *gShaderResourceDeferredCol = gShaderResourceDeferred[2];
+ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
 
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
 
-ID3D11ShaderResourceView* gRockTextureView = nullptr;
 ID3D10Texture2D* gRockTexture = nullptr;
-
 
 // BUFFERS //
 ID3D11Buffer* gVertexBuffer = nullptr;
@@ -101,7 +91,6 @@ ID3D11InputLayout* gBillboardLayoutPosCol = nullptr;
 ID3D11Texture2D *gTexDeferredPos = nullptr;
 ID3D11Texture2D *gTexDeferredNor = nullptr;
 ID3D11Texture2D *gTexDeferredCol = nullptr;
-//ID3D11Texture2D *gTextureBTH = nullptr;
 
 // SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
@@ -113,7 +102,7 @@ ID3D11PixelShader* gBillboardPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gBillboardGeometryShader = nullptr;
 
-// RANDOM GLOBALS //
+// GLOBALS //
 float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
@@ -147,7 +136,26 @@ struct BillboardData
 };
 BillboardData gBillboardData;
 
-HRESULT CreateShaders()
+struct TriangleVertex
+{
+	float x, y, z;
+	float u, v;
+	float normalX, normalY, normalZ;
+};
+
+struct TriangleVertexUV
+{
+	float x, y, z;
+	float u, v;
+};
+
+struct billboardPoint
+{
+	float x, y, z;
+	float r, g, b;
+};
+
+HRESULT createShaders()
 {
 	// Binary Large OBject (BLOB), for compiled shader, and errors.
 	ID3DBlob* pVS = nullptr;
@@ -505,18 +513,6 @@ HRESULT createShadersSP()
 			0
 		},
 	};
-	struct TriangleVertex //UT UR FUNKTIONEN
-	{
-	float x, y, z;
-	float u, v;
-	float normalX, normalY, normalZ;
-};
-
-struct billboardPoint
-{
-	float x, y, z;
-	float r, g, b;
-};
 
 	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutFSQuad);
 	if (FAILED(result))
@@ -554,6 +550,14 @@ struct billboardPoint
 			pPS->Release();
 		return result;
 	}
+
+	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	
+	return S_OK;
+}
+
 std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView) //UT UR FUNKTION
 {
 	std::vector<XMFLOAT3>vtxPos;
@@ -570,9 +574,6 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 	std::istringstream inputString;
 	DirectX::XMFLOAT3 tempPos, tempNormal;
 	DirectX::XMFLOAT2 tempUV;
-	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);// i funkt
-	if (FAILED(result))//i funkt
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);//i funkt
 
 	inFile.open(filePath);
 	while (std::getline(inFile, line))
@@ -601,8 +602,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			inputString.clear();
 			inputString.str(line);
 
-	return S_OK;
-}
+
 			inputString >> skip; // Fortsättning av OBJLoader
 			for (int i = 0; i < size - 1; i++)
 				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
@@ -710,15 +710,11 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 	return triangles;
 }
 
-		0.5f, -0.5f, 0.0f,	//v5 pos
-		0.0f, 1.0f, 0.0f,	//v5 col
-	};
-
-void CreateTriangleData()
+void createTriangleData()
 {
 	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
-	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gRockTextureView);
+	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -780,9 +776,7 @@ void CreateTriangleData()
 	result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
 	if (FAILED(result))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-}
-	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);//Troligtvis en dubblett
-	
+
 	// Billboard
 	billboardPoint billboardPointInfo
 	{
@@ -796,7 +790,6 @@ void CreateTriangleData()
 	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
-
 }
 
 void createConstantBuffer()
@@ -824,7 +817,7 @@ void createConstantBuffer()
 
 	//Light
 	// Fill in a buffer description.
-	cbDesc.ByteWidth = sizeof(gLightCamera);
+	cbDesc.ByteWidth = sizeof(gLight);
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
 	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -957,38 +950,6 @@ void createDepthStencil()
 
 void rockTexture()
 {
-	D3D11_TEXTURE2D_DESC texDesc;
-	ZeroMemory(&texDesc, sizeof(texDesc));
-	texDesc.Width = BTH_IMAGE_WIDTH;
-	texDesc.Height = BTH_IMAGE_HEIGHT;
-	texDesc.MipLevels = texDesc.ArraySize = 1;
-	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	texDesc.SampleDesc.Count = 1;
-	texDesc.SampleDesc.Quality = 0;
-	texDesc.Usage = D3D11_USAGE_DEFAULT;
-	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texDesc.MiscFlags = 0;
-	texDesc.CPUAccessFlags = 0;
-
-	//Texture
-	ID3D11Texture2D *pTexture = NULL;
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
-
-	//Resoruce view
-	D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
-	ZeroMemory(&RVDesc, sizeof(RVDesc));
-	RVDesc.Format = texDesc.Format;
-	RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
-	RVDesc.Texture2D.MostDetailedMip = 0;
-	hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
-
-	//pTexture->Release();
-
 	//Sampler
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -1004,67 +965,11 @@ void rockTexture()
 	HRESULT hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
-	// new
-	//const wchar_t* fileName = L"Resources\\Kamen_None_color.jpg";
-	//hr = CoInitialize(NULL);
-	//CreateWICTextureFromFile(gDevice, fileName, NULL, &gRockTextureView);
 }
 
 void textureSetUp()
 {
 	rockTexture();
-	//D3D11_TEXTURE2D_DESC texDesc;
-	//ZeroMemory(&texDesc, sizeof(texDesc));
-	//texDesc.Width = BTH_IMAGE_WIDTH;
-	//texDesc.Height = BTH_IMAGE_HEIGHT;
-	//texDesc.MipLevels = texDesc.ArraySize = 1;
-	//texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	//texDesc.SampleDesc.Count = 1;
-	//texDesc.SampleDesc.Quality = 0;
-	//texDesc.Usage = D3D11_USAGE_DEFAULT;
-	//texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	//texDesc.MiscFlags = 0;
-	//texDesc.CPUAccessFlags = 0;
-
-	////Texture
-	//ID3D11Texture2D *pTexture = NULL;
-	//D3D11_SUBRESOURCE_DATA data;
-	//ZeroMemory(&data, sizeof(data));
-	//data.pSysMem = (void*)BTH_IMAGE_DATA;
-	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	//HRESULT hr = gDevice->CreateTexture2D(&texDesc, &data, &pTexture);
-
-	////Resoruce view
-	//D3D11_SHADER_RESOURCE_VIEW_DESC RVDesc;
-	//ZeroMemory(&RVDesc, sizeof(RVDesc));
-	//RVDesc.Format = texDesc.Format;
-	//RVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	//RVDesc.Texture2D.MipLevels = texDesc.MipLevels;
-	//RVDesc.Texture2D.MostDetailedMip = 0;
-	//hr = gDevice->CreateShaderResourceView(pTexture, &RVDesc, &gTextureView);
-
-	//pTexture->Release();
-	//
-	////Sampler
-	//D3D11_SAMPLER_DESC sampDesc;
-	//ZeroMemory(&sampDesc, sizeof(sampDesc));
-	//sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	//sampDesc.MaxAnisotropy = 0;
-	//sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	//sampDesc.MipLODBias = 0;
-	//sampDesc.MinLOD = 0;
-	//sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	//hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
-
-	//// new
-	//const wchar_t* fileName = L"Resources\\fiveHundred.jpg";
-	//hr = CoInitialize(NULL);
-	//CreateWICTextureFromFile(gDevice, fileName, NULL, &gTextureView);
-
-	HRESULT hr = gDevice->CreateSamplerState(&sampDesc, &gSamplerState);
 }
 
 void createRenderTargets()
@@ -1150,7 +1055,7 @@ void renderFirstPass()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+	gDeviceContext->PSSetShaderResources(0, 1, &gShaderResourceObjTexture);
 
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
@@ -1182,49 +1087,17 @@ void renderSecondPass()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
 
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLightCamera);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	gDeviceContext->PSSetConstantBuffers(1, 1, &gConstantBufferCamera);
 
-	gDeviceContext->Draw(69120, 0);
+	gDeviceContext->Draw(6, 0);
 
 	ID3D11ShaderResourceView* nullRTV = { NULL };
 	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
 }
 
-void updatePerFrame()
+void update()
 {
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-	ImGui::Text("This is some useful text.");// Display some text (you can use a format strings too)
-	ImGui::SliderFloat("Rotation", &gRotation, 0.0f, 10.0f);
-	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	ImGui::End();
-
-	if (gDist == 0.0f)
-		gDist += 0.0001f;
-
-	gRotation += ImGui::GetIO().DeltaTime / 0.8;
-
-	transform(gRotation);
-	D3D11_MAPPED_SUBRESOURCE mappedMemory;
-	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
-	gDeviceContext->Unmap(gConstantBuffer, 0);
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	QueryPerformanceCounter(&currTime);
-	delta.QuadPart = currTime.QuadPart - startTime.QuadPart;
-	float deltaSeconds = (float)delta.QuadPart / clockFreq.QuadPart;
-	startTime = currTime;
-
-	Render(); //8. Rendera
-	renderBillboard();
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui_ImplDX11_NewFrame();
@@ -1240,39 +1113,9 @@ void updatePerFrame()
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
 	ImGui::End();
 
-	DirectX::Mouse::State ms = mouse->GetState();
-	DirectX::Keyboard::State kb = keyboard->GetState();
-	mouse->SetMode(Mouse::MODE_RELATIVE);
-
-	yaw += XMConvertToRadians(ms.x);
-	pitch += XMConvertToRadians(ms.y);
-	pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
-
-	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-
-	velocity.x = 0;
-	velocity.y = 0;
-	velocity.z = 0;
-
-	if (kb.W)
-		velocity.z += distance * deltaSeconds;
-	if (kb.S)
-		velocity.z -= distance * deltaSeconds;
-	if (kb.A)
-		velocity.x -= distance * deltaSeconds;
-	if (kb.D)
-		velocity.x += distance * deltaSeconds;
-	if (kb.Space)
-		velocity.y += distance * deltaSeconds;
-	if (kb.LeftControl)
-		velocity.y -= distance * deltaSeconds;
-	if (kb.Home)
-		velocity = { 0.0f, 0.0f, -2.0f };
-	if (kb.Escape)
-		msg.message = WM_QUIT;
-
-	transform(velocity, rotation);
-
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	
 	D3D11_MAPPED_SUBRESOURCE mappedMemory;
 	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
@@ -1281,48 +1124,36 @@ void updatePerFrame()
 	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-void renderBillboard()
-{
-	// clear the back buffer to a deep blue
-	//float clearColor[] = { 0, 0, 0, 1 };
-	gClearColour[3] = 1.0;
-
-	// use DeviceContext to talk to the API
-	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-	//gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	// specifying NULL or nullptr we are disabling that stage
-	// in the pipeline
-	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
-
-	UINT32 vertexSize = sizeof(billboardPoint);
-	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
-
-	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-
-	//ConstantBuffer
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-
-
-	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(1, 0);
-}
+//void renderBillboard()
+//{
+//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+//
+//	UINT32 vertexSize = sizeof(billboardPoint);
+//	UINT32 offset = 0;
+//	// specify which vertex buffer to use next.
+//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+//
+//	// specify the topology to use when drawing
+//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+//	// specify the IA Layout (how is data passed)
+//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+//
+//	//ConstantBuffer
+//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+//
+//
+//	// issue a draw call of 3 vertices (similar to OpenGL)
+//	gDeviceContext->Draw(1, 0);
+//}
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -1339,7 +1170,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		createShaders();
 		createShadersSP();
 
-		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
+		createTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
 		textureSetUp();
 		createConstantBuffer();
@@ -1366,7 +1197,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		float yaw = 0.0f;
 	
 		double PCFreq = 0.0;
-		__int64 CounterStart = 0;
+		__int64 CounterStart = 0; //ANVÄNDS DESSA?
 		LARGE_INTEGER clockFreq;
 		LARGE_INTEGER startTime;
 		LARGE_INTEGER delta;
@@ -1395,6 +1226,50 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
+				//Camera updates
+				//
+				//
+
+				QueryPerformanceCounter(&currTime);
+				delta.QuadPart = currTime.QuadPart - startTime.QuadPart;
+				float deltaSeconds = (float)delta.QuadPart / clockFreq.QuadPart;
+				startTime = currTime;
+
+				DirectX::Mouse::State ms = mouse->GetState();
+				DirectX::Keyboard::State kb = keyboard->GetState();
+				mouse->SetMode(Mouse::MODE_RELATIVE);
+
+				yaw += XMConvertToRadians(ms.x);
+				pitch += XMConvertToRadians(ms.y);
+				pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+
+				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+
+				velocity.x = 0;
+				velocity.y = 0;
+				velocity.z = 0;
+
+				if (kb.W)
+					velocity.z += distance * deltaSeconds;
+				if (kb.S)
+					velocity.z -= distance * deltaSeconds;
+				if (kb.A)
+					velocity.x -= distance * deltaSeconds;
+				if (kb.D)
+					velocity.x += distance * deltaSeconds;
+				if (kb.Space)
+					velocity.y += distance * deltaSeconds;
+				if (kb.LeftControl)
+					velocity.y -= distance * deltaSeconds;
+				if (kb.Home)
+					velocity = { 0.0f, 0.0f, -2.0f };
+				if (kb.Escape)
+					msg.message = WM_QUIT;
+
+				transform(velocity, rotation);
+				
+				//
+				//
 				// RENDER //
 				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
 				
@@ -1405,25 +1280,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
-				D3D11_MAPPED_SUBRESOURCE mappedMemory;
-				gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-				memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
-				gDeviceContext->Unmap(gConstantBuffer, 0);
+				//renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
 				
 				renderSecondPass();
-				updatePerFrame();
+				
+				update();
+				
 				gSwapChain->Present(0, 0);
-				gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-				memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
-				gDeviceContext->Unmap(gConstantBufferCamera, 0);
-
+				
 				ImGui::Render();
 				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-				gSwapChain->Present(0, 0); //KOLLA OM DET FINNS TVÅ
 			}
 		}
 
@@ -1434,7 +1303,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gVertexBuffer->Release();
 		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
-		//gTextureView->Release();
 		gShaderResourceDeferred[0]->Release();
 		gShaderResourceDeferred[1]->Release();
 		gShaderResourceDeferred[2]->Release();

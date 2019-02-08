@@ -9,10 +9,13 @@ struct VS_OUT
 	float2 tex : UV_COORD;
 };
 
-cbuffer FS_CONSTANT_BUFFER : register(b0)
+cbuffer FS_CONSTANT_BUFFER_LIGHT : register(b0)
 {
 	float3 lightPos;
 	float3 lightCol;
+};
+cbuffer FS_CONSTANT_BUFFER_CAMERA : register(b1)
+{
 	float3 cameraPos;
 };
 

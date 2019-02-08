@@ -6,10 +6,7 @@ struct GS_OUT
 	float4 pos : SV_POSITION;
 	float4 posWS : WORLD_POSITION;
 	float4 norWS : WORLD_NORMAL;
-	float4 worldPos : World_POSITION;
-	float4 worldNor : World_NORMAL;
 	float2 tex : TEXCOORD;
-	float3 col : COLOUR;
 };
 
 struct PS_OUT
@@ -19,21 +16,12 @@ struct PS_OUT
 	float4 col : SV_Target2;
 };
 
-float4 PS_main(GS_OUT input) : SV_Target
-{
-	float3 textureCol = txDiffuse.Sample(sampAni, input.tex).xyz;
-	float3 ambientCol = { 1.0, 1.0, 1.0 };
-	float3 fragmentCol = textureCol * ambientCol;
-	//float3 fragmentCol = input.col * ambientCol;
-	float diffuseFactor = max(dot(normalize(lightPos - input.worldPos.xyz), normalize(input.worldNor.xyz)), 0);
-	fragmentCol += input.col * diffuseFactor * lightCol;
-	return float4(fragmentCol, 1.0f);
-PS_OUT PS_main(GS_OUT input)// : SV_Target
+PS_OUT PS_main(GS_OUT input)
 {	
 	PS_OUT output;
 	output.posWS = input.posWS;
 	output.norWS = normalize(input.norWS);
-	output.col = float4(input.col,1.0);
+	output.col = float4(txDiffuse.Sample(sampAni, input.tex).xyz, 1.0);
 
 	return output;
 };
