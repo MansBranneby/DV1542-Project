@@ -2,6 +2,8 @@
 !main.cpp
 !Fragment.hlsl
 !Vertex.hlsl
+!FragmentSP.hlsl
+!VertexSP.hlsl
 !GeometryShader.hlsl
 !Resources/
 !BillboardGeometryShader.hlsl

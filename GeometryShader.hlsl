@@ -11,6 +11,8 @@ struct GS_OUT
 	float4 worldPos : World_POSITION;
 	float4 worldNor : World_NORMAL;
 	float2 tex : TEXCOORD;
+	float4 posWS : WORLD_POSITION;
+	float4 norWS : WORLD_NORMAL;
 	float3 col : COLOUR;
 };
 
@@ -27,6 +29,8 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	for (uint i = 0; i < 3; i++)
 	{
 		element.pos = mul(input[i].pos, worldViewProj);
+		element.posWS = mul(input[i].pos, world);
+		element.norWS = mul(normal, world);
 		element.worldPos = mul(input[i].pos, world);
 		element.worldNor = mul(normal, world);
 		element.tex = input[i].tex;
@@ -35,21 +39,14 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	}
 	output.RestartStrip();
 	
-	//for (uint i = 0; i < 3; i++)
-	//{
-	//	element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
-	//	element.worldPos = mul(input[i].pos + normal * 0.5, world);
-	//	element.worldNor = mul(normal, world);
-	//	element.tex = input[i].tex;
-	//	element.col = input[i].col;
-	//	output.Append(element);
-	//}
-	//output.RestartStrip();
-
-	// Billboarding
-	//float billboardHalfHeight = billboardHeight / 2.0f;
-	//float billboardHalfWidth = billboardWidth / 2.0f;
-
-	//float3 billboardNormal;
-
+	for (uint i = 0; i < 3; i++)
+	{
+		element.pos = mul(input[i].pos + normal*0.5, worldViewProj);
+		element.worldPos = mul(input[i].pos + normal * 0.5, world);
+		element.worldNor = mul(normal, world);
+		//element.tex = input[i].tex;
+		element.col = input[i].col;
+		output.Append(element);
+	}
+	output.RestartStrip();
 }
