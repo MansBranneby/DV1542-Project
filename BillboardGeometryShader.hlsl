@@ -58,7 +58,7 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 
 		element.worldNor = float4( 0.0f, 0.0f, 0.0f, 0.0f);
 		element.tex = input[0].tex;
-		element.col = float4(1.0f, 1.0f, 1.0f, 1.0f);
+		element.col = float4(0.9f, 0.1f, 0.0f, 1.0f);
 		output.Append(element);
 	}
 }

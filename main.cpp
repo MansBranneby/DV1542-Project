@@ -140,6 +140,8 @@ struct TriangleVertex
 	float u, v;
 	float normalX, normalY, normalZ;
 };
+// MESHES //
+std::vector<TriangleVertex> rendVertices;
 
 struct TriangleVertexUV
 {
@@ -152,6 +154,14 @@ struct billboardPoint
 	float x, y, z;
 	float r, g, b;
 };
+struct Camera
+{
+	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMMATRIX world;
+	XMMATRIX view;
+	XMMATRIX projection;
+};
+Camera gCamera;
 
 HRESULT createShaders()
 {
@@ -713,7 +723,7 @@ void createTriangleData()
 {
 	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
-	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture);
+	rendVertices = LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture);
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -722,12 +732,12 @@ void createTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * mesh.size();
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * rendVertices.size();
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &mesh[0];
+	data.pSysMem = &rendVertices[0];
 
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
@@ -866,8 +876,6 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 }
 
-XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
 void transform(XMFLOAT3 move, XMMATRIX rotation)
 {
 	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -882,13 +890,13 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	camUp = XMVector3TransformCoord(camUp, rotation);
 	camForward = XMVector3TransformCoord(camForward, rotation);
 
-	CamPos += move.x * camRight;
-	CamPos += move.y * camUp;
-	CamPos += move.z * camForward;
-	LookAt = CamPos + LookAt;
+	gCamera.pos += move.x * camRight;
+	gCamera.pos += move.y * camUp;
+	gCamera.pos += move.z * camForward;
+	LookAt = gCamera.pos + LookAt;
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(CamPos, LookAt, camUp);
+	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
 
 	View = XMMatrixTranspose(View);
@@ -900,7 +908,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
 
-	gCameraData.camPos = CamPos;
+	gCameraData.camPos = gCamera.pos;
 }
 
 void createDepthStencil()
@@ -970,6 +978,66 @@ void textureSetUp()
 {
 	rockTexture();
 }
+
+//float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, triangle_type tri)
+//{
+//	// IMPLEMENT HERE
+//	vec3 e1 = tri.vtx1.xyz - tri.vtx0.xyz;
+//	vec3 e2 = tri.vtx2.xyz - tri.vtx0.xyz;
+//	vec3 s = rayOrigin - tri.vtx0.xyz;
+//
+//	float a = 1 / determinant(mat3x3(-rayDir, e1, e2));
+//	float b = determinant(mat3x3(s, e1, e2));
+//	float c = determinant(mat3x3(-rayDir, s, e2));
+//	float d = determinant(mat3x3(-rayDir, e1, s));
+//
+//	float t = a * b;
+//	float u = a * c;
+//	float v = a * d;
+//	float w = 1 - u - v;
+//
+//	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
+//		t = -1;
+//
+//	return t;
+//}
+
+float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin)
+{
+	for (int i = 0; i < rendVertices.size(); i++)
+	{
+		XMVECTOR e1 = XMVectorSet(rendVertices.at(i + 1).x, rendVertices.at(i).y, rendVertices.at(i + 1).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+	    XMVECTOR e2 = XMVectorSet(rendVertices.at(i + 2).x, rendVertices.at(i).y, rendVertices.at(i + 2).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+		XMVECTOR s = rayOrigin - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+		
+		
+	}
+	return 2.0f;
+}
+
+void mousePicking(POINT cursorPos)
+{
+	float projX = XMVectorGetX(gCamera.projection.r[0]);
+	float projY = XMVectorGetY(gCamera.projection.r[1]);
+
+	float viewX = (2.0f * cursorPos.x / WIDTH - 1.0f) / projX;
+	float viewY = (2.0f * cursorPos.y / HEIGHT - 1.0f) / projY;
+
+	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 0.0f, 0.0f);
+
+	// view -> world
+	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
+	rayDirection = XMVector3Transform(rayDirection, inverseView);
+	rayOrigin = inverseView.r[4];
+
+	// world -> local 
+	rendVertices.at(0);
+	rendVertices.at(1);
+	rendVertices.at(2).x;
+}
+
+
 
 void createRenderTargets()
 {
@@ -1065,39 +1133,35 @@ void renderFirstPass()
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	gDeviceContext->Draw(69120, 0);
+	gDeviceContext->Draw(rendVertices.size(), 0);
 }
 
+void renderBillboard()
+{
+	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+	
+	UINT32 vertexSize = sizeof(billboardPoint);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
 
-//void renderBillboard()
-//{
-//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
-//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
-//	
-//	UINT32 vertexSize = sizeof(billboardPoint);
-//	UINT32 offset = 0;
-//	// specify which vertex buffer to use next.
-//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
-//
-//	// specify the topology to use when drawing
-//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-//	// specify the IA Layout (how is data passed)
-//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-//
-//	//ConstantBuffer
-//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-//
-//
-//	// issue a draw call of 3 vertices (similar to OpenGL)
-//	gDeviceContext->Draw(1, 0);
-//}
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
 
+	//ConstantBuffer
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->Draw(1, 0);
+}
 
 void renderSecondPass()
 {
@@ -1140,7 +1204,7 @@ void update()
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(CamPos), XMVectorGetY(CamPos), XMVectorGetZ(CamPos));
+	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 	ImGui::End();
 
 	ImGui::Render();
@@ -1192,20 +1256,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		keyboard = std::make_unique<Keyboard>();
 		mouse = std::make_unique<Mouse>();
 		mouse->SetWindow(wndHandle);
+		POINT cursorPos;
 		XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
 		float distance = 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
 	
-		double PCFreq = 0.0;
-		__int64 CounterStart = 0; //ANVÄNDS DESSA?
 		LARGE_INTEGER clockFreq;
 		LARGE_INTEGER startTime;
 		LARGE_INTEGER delta;
 		LARGE_INTEGER currTime;
 		QueryPerformanceFrequency(&clockFreq);
 		QueryPerformanceCounter(&startTime);
-
+	
 		while (WM_QUIT != msg.message)
 		{
 			if (PeekMessage(&msg, wndHandle, 0, 0, PM_REMOVE))
@@ -1246,6 +1309,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 
+				GetCursorPos(&cursorPos); // gets current curosr coordinates
+				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
+
+				if (ms.leftButton)
+				{
+					mousePicking(cursorPos);
+				}
+
 				velocity.x = 0;
 				velocity.y = 0;
 				velocity.z = 0;
@@ -1281,12 +1352,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
-
-				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
-				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
-
-				//renderBillboard();
+				renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
