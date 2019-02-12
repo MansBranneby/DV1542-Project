@@ -1004,15 +1004,27 @@ void textureSetUp()
 
 float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin)
 {
+	XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int i = 0; i < rendVertices.size(); i++)
 	{
 		XMVECTOR e1 = XMVectorSet(rendVertices.at(i + 1).x, rendVertices.at(i).y, rendVertices.at(i + 1).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
 	    XMVECTOR e2 = XMVectorSet(rendVertices.at(i + 2).x, rendVertices.at(i).y, rendVertices.at(i + 2).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
 		XMVECTOR s = rayOrigin - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
-		
-		
+
+		float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
+		float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
+		float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
+		float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
+
+		float t = a * b;
+		float u = a * c;
+		float v = a * d;
+		float w = 1 - u - v;
+
+		if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
+			t = -1.0f;
 	}
-	return 2.0f;
+	return t;
 }
 
 void mousePicking(POINT cursorPos)
