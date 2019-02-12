@@ -9,3 +9,8 @@
 !BillboardGeometryShader.hlsl
 !BillboardPixelShader.hlsl
 !BillboardVertexShader.hlsl
+!Mesh.h
+!OBB.h
+!TriangleVertex.h
+!Mesh.cpp
+!TriangleVertex.cpp

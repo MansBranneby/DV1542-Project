@@ -694,7 +694,8 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
 			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-			triangles.at(i).setAll(vertPos, vertUV, vertNormal);
+			TriangleVertex tempTriangle(vertPos, vertUV, vertNormal);
+			triangles.push_back(tempTriangle);
 		}
 	}
 	inFile.close();
@@ -741,7 +742,7 @@ void createTriangleData()
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &mesh.getVertInfo()[0];
+	data.pSysMem = &mesh.getVertices()[0];
 
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
