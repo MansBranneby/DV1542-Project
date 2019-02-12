@@ -14,9 +14,12 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 
-// extra
+// Extra
 #include <algorithm>
 #include <wchar.h>
+// Own classes
+#include "Mesh.h"
+#include "TriangleVertex.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -134,14 +137,14 @@ struct BillboardData
 };
 BillboardData gBillboardData;
 
-struct TriangleVertex
-{
-	float x, y, z;
-	float u, v;
-	float normalX, normalY, normalZ;
-};
+//struct TriangleVertex
+//{
+//	XMFLOAT3 pos;
+//	XMFLOAT2 UV;
+//	XMFLOAT3 norm;
+//};
 // MESHES //
-std::vector<TriangleVertex> rendVertices;
+Mesh mesh;
 
 struct TriangleVertexUV
 {
@@ -675,7 +678,8 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
 			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-			triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+			TriangleVertex tempTriangle(vertPos, vertUV, vertNormal);
+			triangles.push_back(tempTriangle);
 		}
 	}
 	else
@@ -690,7 +694,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 			XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
 			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-			triangles.push_back({ vertPos.x, vertPos.y, vertPos.z, vertUV.x, vertUV.y, vertNormal.x, vertNormal.y, vertNormal.z });
+			triangles.at(i).setAll(vertPos, vertUV, vertNormal);
 		}
 	}
 	inFile.close();
@@ -723,7 +727,7 @@ void createTriangleData()
 {
 	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
-	rendVertices = LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture);
+	mesh.setVertices(LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture));
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -732,12 +736,12 @@ void createTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * rendVertices.size();
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * mesh.getVertCount();
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &rendVertices[0];
+	data.pSysMem = &mesh.getVertInfo()[0];
 
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
@@ -1004,11 +1008,11 @@ void textureSetUp()
 
 float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
 {
-	XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+	/*XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
 	
-	XMVECTOR e1 = XMVectorSet(rendVertices.at(i + 1).x, rendVertices.at(i).y, rendVertices.at(i + 1).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
-	XMVECTOR e2 = XMVectorSet(rendVertices.at(i + 2).x, rendVertices.at(i).y, rendVertices.at(i + 2).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
-	XMVECTOR s = rayOrigin - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+	XMVECTOR e1 = XMVectorSet(mesh.getVertInfo.at(i + 1).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 1).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
+	XMVECTOR e2 = XMVectorSet(mesh.getVertInfo.at(i + 2).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 2).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
+	XMVECTOR s = rayOrigin - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
 
 	float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
 	float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
@@ -1021,9 +1025,9 @@ float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
 	float w = 1 - u - v;
 
 	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
-		t = -1.0f;
+		t = -1.0f;*/
 	
-	return t;
+	return 0.0f;
 }
 
 void mousePicking(POINT cursorPos)
@@ -1046,7 +1050,7 @@ void mousePicking(POINT cursorPos)
 
 	// 
 	float lastT = 0.0f;
-	for (int i = 0; i < rendVertices.size(); i++)
+	for (int i = 0; i < mesh.getVertCount(); i++)
 	{
 		currT = triangleTest(rayDirection, rayOrigin, i);
 		if ((currT > 0 && lastT == -1) || (currT > 0 && currT < lastT))
@@ -1153,7 +1157,7 @@ void renderFirstPass()
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	gDeviceContext->Draw(rendVertices.size(), 0);
+	gDeviceContext->Draw(mesh.getVertCount(), 0);
 }
 
 void renderBillboard()
