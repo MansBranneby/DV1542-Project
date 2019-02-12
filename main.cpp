@@ -1002,28 +1002,27 @@ void textureSetUp()
 //	return t;
 //}
 
-float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin)
+float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
 {
 	XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-	for (int i = 0; i < rendVertices.size(); i++)
-	{
-		XMVECTOR e1 = XMVectorSet(rendVertices.at(i + 1).x, rendVertices.at(i).y, rendVertices.at(i + 1).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
-	    XMVECTOR e2 = XMVectorSet(rendVertices.at(i + 2).x, rendVertices.at(i).y, rendVertices.at(i + 2).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
-		XMVECTOR s = rayOrigin - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+	
+	XMVECTOR e1 = XMVectorSet(rendVertices.at(i + 1).x, rendVertices.at(i).y, rendVertices.at(i + 1).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+	XMVECTOR e2 = XMVectorSet(rendVertices.at(i + 2).x, rendVertices.at(i).y, rendVertices.at(i + 2).z, 1.0f) - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
+	XMVECTOR s = rayOrigin - XMVectorSet(rendVertices.at(i).x, rendVertices.at(i).y, rendVertices.at(i).z, 1.0f);
 
-		float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
-		float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
-		float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
-		float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
+	float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
+	float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
+	float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
+	float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
 
-		float t = a * b;
-		float u = a * c;
-		float v = a * d;
-		float w = 1 - u - v;
+	float t = a * b;
+	float u = a * c;
+	float v = a * d;
+	float w = 1 - u - v;
 
-		if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
-			t = -1.0f;
-	}
+	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
+		t = -1.0f;
+	
 	return t;
 }
 
@@ -1035,6 +1034,8 @@ void mousePicking(POINT cursorPos)
 	float viewX = (2.0f * cursorPos.x / WIDTH - 1.0f) / projX;
 	float viewY = (2.0f * cursorPos.y / HEIGHT - 1.0f) / projY;
 
+	float currT = -1.0f;
+
 	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 0.0f, 0.0f);
 
@@ -1043,10 +1044,17 @@ void mousePicking(POINT cursorPos)
 	rayDirection = XMVector3Transform(rayDirection, inverseView);
 	rayOrigin = inverseView.r[4];
 
-	// world -> local 
-	rendVertices.at(0);
-	rendVertices.at(1);
-	rendVertices.at(2).x;
+	// 
+	float lastT = 0.0f;
+	for (int i = 0; i < rendVertices.size(); i++)
+	{
+		currT = triangleTest(rayDirection, rayOrigin, i);
+		if ((currT > 0 && lastT == -1) || (currT > 0 && currT < lastT))
+		{
+			lastT = currT;
+
+		}
+	}
 }
 
 
@@ -1325,9 +1333,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
 
 				if (ms.leftButton)
-				{
 					mousePicking(cursorPos);
-				}
+				
 
 				velocity.x = 0;
 				velocity.y = 0;
