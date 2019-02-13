@@ -110,6 +110,7 @@ float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
 float gClearColour[3] = {};
+Mesh* gPillar = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -138,15 +139,6 @@ struct BillboardData
 };
 BillboardData gBillboardData;
 
-//struct TriangleVertex
-//{
-//	XMFLOAT3 pos;
-//	XMFLOAT2 UV;
-//	XMFLOAT3 norm;
-//};
-// MESHES //
-Mesh mesh;
-
 struct TriangleVertexUV
 {
 	float x, y, z;
@@ -166,6 +158,12 @@ struct Camera
 	XMMATRIX projection;
 };
 Camera gCamera;
+
+// MESHES //
+void createMeshes()
+{	
+	gPillar = new Mesh("Resources\\Meshes\\LP_Pillar_Textured.obj", true, &gShaderResourceObjTexture, gDevice);
+}
 
 HRESULT createShaders()
 {
@@ -570,166 +568,11 @@ HRESULT createShadersSP()
 	return S_OK;
 }
 
-std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView) //UT UR FUNKTION
-{
-	std::vector<XMFLOAT3>vtxPos;
-	std::vector<XMFLOAT2>vtxUV;
-	std::vector<XMFLOAT3> vtxNormal;
-	std::vector<std::string> materialLibs;
-	std::vector<std::string> materials;
-	std::vector<int> vertexIndices;
-	std::vector<int> uvIndices;
-	std::vector<int> normalIndices;
-
-	std::ifstream inFile;
-	std::string line, special, libraries, material;
-	std::istringstream inputString;
-	DirectX::XMFLOAT3 tempPos, tempNormal;
-	DirectX::XMFLOAT2 tempUV;
-
-	inFile.open(filePath);
-	while (std::getline(inFile, line))
-	{
-		inputString.str(line);
-		if (line.substr(0, 2) == "v ")
-		{
-			inputString >> special >> tempPos.x >> tempPos.y >> tempPos.z;
-			vtxPos.push_back(tempPos);
-		}
-		else if (line.substr(0, 3) == "vt ")
-		{
-			inputString >> special >> tempUV.x >> tempUV.y;
-			vtxUV.push_back(tempUV);
-		}
-		else if (line.substr(0, 3) == "vn ")
-		{
-			inputString >> special >> tempNormal.x >> tempNormal.y >> tempNormal.z;
-			vtxNormal.push_back(tempNormal);
-		}
-		else if (line.substr(0, 2) == "f ")
-		{
-			int vertexIndex[3], uvIndex[3], normalIndex[3];
-			char skip;
-			int size = std::distance(std::istream_iterator<std::string>(inputString), std::istream_iterator<std::string>());
-			inputString.clear();
-			inputString.str(line);
-
-
-			inputString >> skip; // Fortsättning av OBJLoader
-			for (int i = 0; i < size - 1; i++)
-				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
-
-			if (size == 4)
-			{
-				vertexIndices.push_back(vertexIndex[0]);
-				vertexIndices.push_back(vertexIndex[1]);
-				vertexIndices.push_back(vertexIndex[2]);
-				uvIndices.push_back(uvIndex[0]);
-				uvIndices.push_back(uvIndex[1]);
-				uvIndices.push_back(uvIndex[2]);
-				normalIndices.push_back(normalIndex[0]);
-				normalIndices.push_back(normalIndex[1]);
-				normalIndices.push_back(normalIndex[2]);
-			}
-			else if (size == 5)
-			{
-				vertexIndices.push_back(vertexIndex[0]);
-				vertexIndices.push_back(vertexIndex[1]);
-				vertexIndices.push_back(vertexIndex[2]);
-				vertexIndices.push_back(vertexIndex[0]);
-				vertexIndices.push_back(vertexIndex[2]);
-				vertexIndices.push_back(vertexIndex[3]);
-				uvIndices.push_back(uvIndex[0]);
-				uvIndices.push_back(uvIndex[1]);
-				uvIndices.push_back(uvIndex[2]);
-				uvIndices.push_back(uvIndex[0]);
-				uvIndices.push_back(uvIndex[2]);
-				uvIndices.push_back(uvIndex[3]);
-				normalIndices.push_back(normalIndex[0]);
-				normalIndices.push_back(normalIndex[1]);
-				normalIndices.push_back(normalIndex[2]);
-				normalIndices.push_back(normalIndex[0]);
-				normalIndices.push_back(normalIndex[2]);
-				normalIndices.push_back(normalIndex[3]);
-			}
-		}
-		else if (line.substr(0, 7) == "mtllib ")
-		{
-			inputString >> special >> libraries;
-			materialLibs.push_back(libraries);
-		}
-		else if (line.substr(0, 7) == "usemtl ")
-		{
-			inputString >> special >> material;
-			materials.push_back(material);
-		}
-		inputString.clear();
-	}
-	//Sort
-	std::vector<TriangleVertex>triangles;
-	if (flippedUV)
-	{
-		for (int i = 0; i < vertexIndices.size(); i++)
-		{
-			int posIndex = vertexIndices[i];
-			int uvIndex = uvIndices[i];
-			int normalIndex = normalIndices[i];
-
-			XMFLOAT3 vertPos = vtxPos[posIndex - 1];
-			XMFLOAT2 vertUV = XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
-			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
-
-			TriangleVertex tempTriangle(vertPos, vertUV, vertNormal);
-			triangles.push_back(tempTriangle);
-		}
-	}
-	else
-	{
-		for (int i = 0; i < vertexIndices.size(); i++)
-		{
-			int posIndex = vertexIndices[i];
-			int uvIndex = uvIndices[i];
-			int normalIndex = normalIndices[i];
-
-			XMFLOAT3 vertPos = vtxPos[posIndex - 1];
-			XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
-			XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
-
-			TriangleVertex tempTriangle(vertPos, vertUV, vertNormal);
-			triangles.push_back(tempTriangle);
-		}
-	}
-	inFile.close();
-
-	// Read materials
-	filePath = "Resources\\MaterialLibraries\\" + materialLibs[0];
-	inFile.open(filePath);
-	while (std::getline(inFile, line))
-	{
-		inputString.str(line);
-		if (line.substr(0, 7) == "map_Kd ")
-		{
-			inputString >> special >> material;
-		}
-	}
-	
-	std::wstring widestr = std::wstring(material.begin(), material.end());
-	wchar_t widecstr[1000] = L"Resources\\Textures\\";
-	const wchar_t* widecstr1 = widestr.c_str();
-	const wchar_t* fileName = wcscat(widecstr, widecstr1);
-
-	HRESULT hr = CoInitialize(NULL);
-	hr = CreateWICTextureFromFile(gDevice, fileName, NULL, resourceView);
-	if (FAILED(hr))
-		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
-	return triangles;
-}
-
 void createTriangleData()
 {
-	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
+	/*std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
-	mesh.setVertices(LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture));
+	mesh.setVertices(LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture));*/
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -738,12 +581,12 @@ void createTriangleData()
 	// what type of usage (press F1, read the docs)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * mesh.getVertCount();
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * gPillar->getVertCount();
 
 	// this struct is created just to set a pointer to the
 	// data containing the vertices.
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &mesh.getVertices()[0];
+	data.pSysMem = &gPillar->getVertices()[0];
 
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
@@ -1007,30 +850,30 @@ void textureSetUp()
 //
 //	return t;
 //}
-
-float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
-{
-	/*XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-	
-	XMVECTOR e1 = XMVectorSet(mesh.getVertInfo.at(i + 1).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 1).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-	XMVECTOR e2 = XMVectorSet(mesh.getVertInfo.at(i + 2).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 2).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-	XMVECTOR s = rayOrigin - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-
-	float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
-	float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
-	float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
-	float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
-
-	float t = a * b;
-	float u = a * c;
-	float v = a * d;
-	float w = 1 - u - v;
-
-	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
-		t = -1.0f;*/
-	
-	return 0.0f;
-}
+//
+//float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
+//{
+//	XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+//	
+//	XMVECTOR e1 = XMVectorSet(mesh.getVertInfo.at(i + 1).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 1).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
+//	XMVECTOR e2 = XMVectorSet(mesh.getVertInfo.at(i + 2).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 2).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
+//	XMVECTOR s = rayOrigin - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
+//
+//	float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
+//	float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
+//	float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
+//	float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
+//
+//	float t = a * b;
+//	float u = a * c;
+//	float v = a * d;
+//	float w = 1 - u - v;
+//
+//	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
+//		t = -1.0f;
+//	
+//	return 0.0f;
+//}
 
 void mousePicking(POINT cursorPos)
 {
@@ -1051,19 +894,8 @@ void mousePicking(POINT cursorPos)
 	rayOrigin = inverseView.r[4];
 
 	// 
-	float lastT = 0.0f;
-	for (int i = 0; i < mesh.getVertCount(); i++)
-	{
-		currT = triangleTest(rayDirection, rayOrigin, i);
-		if ((currT > 0 && lastT == -1) || (currT > 0 && currT < lastT))
-		{
-			lastT = currT;
-
-		}
-	}
+	
 }
-
-
 
 void createRenderTargets()
 {
@@ -1159,7 +991,7 @@ void renderFirstPass()
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	gDeviceContext->Draw(mesh.getVertCount(), 0);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBillboard()
@@ -1256,6 +1088,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		CreateDirect3DContext(wndHandle); // Skapa och koppla SwapChain, Device och Device Context
 
 		SetViewport();
+
+		createMeshes(); // test
 
 		createRenderTargets();
 		createShaders();
@@ -1424,6 +1258,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gSwapChain->Release();
 		gDevice->Release();
 		gDeviceContext->Release();
+		delete gPillar;
 		DestroyWindow(wndHandle);
 	}
 
