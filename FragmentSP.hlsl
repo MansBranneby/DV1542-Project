@@ -28,7 +28,7 @@ float4 PS_main(VS_OUT input) : SV_Target
 	//LIGHTING//
 
 	//Ambient
-	float3 ambientCol = { 1.0, 1.0, 1.0 };
+	float3 ambientCol = { 0.1, 0.1, 0.1 };
 	float3 ambient = colour * ambientCol;
 
 	//Diffuse
