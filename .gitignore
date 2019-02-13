@@ -10,7 +10,10 @@
 !BillboardPixelShader.hlsl
 !BillboardVertexShader.hlsl
 !Mesh.h
-!OBB.h
-!TriangleVertex.h
 !Mesh.cpp
+!OBB.h
+!OBB.cpp
+!TriangleVertex.h
 !TriangleVertex.cpp
+!BoundingVolume.h
+!BoundingVolume.cpp

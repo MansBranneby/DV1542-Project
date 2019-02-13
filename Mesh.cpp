@@ -1,10 +1,11 @@
 #include "Mesh.h"
+#include "OBB.h"
 
 Mesh::Mesh()
 {
 }
 
-Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView, ID3D11Device* device)
+Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView, ID3D11Device* device, boundingVolumes boundingVolumeChoice)
 {
 	std::vector<DirectX::XMFLOAT3>vtxPos;
 	std::vector<DirectX::XMFLOAT2>vtxUV;
@@ -20,7 +21,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	std::istringstream inputString;
 	DirectX::XMFLOAT3 tempPos, tempNormal;
 	DirectX::XMFLOAT2 tempUV;
-
+	DirectX::XMFLOAT3 biggestXYZ(0.0, 0.0f, 0.0f), smallestXYZ(0.0f, 0.0f, 0.0f);
 	inFile.open(filePath);
 	while (std::getline(inFile, line))
 	{
@@ -29,6 +30,22 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 		{
 			inputString >> special >> tempPos.x >> tempPos.y >> tempPos.z;
 			vtxPos.push_back(tempPos);
+
+			if (biggestXYZ.x < tempPos.x)
+				biggestXYZ.x = tempPos.x;
+			if (biggestXYZ.y < tempPos.y)
+				biggestXYZ.y = tempPos.y;
+			if (biggestXYZ.z < tempPos.z)
+				biggestXYZ.z = tempPos.z;
+
+			if (smallestXYZ.x > tempPos.x)
+				smallestXYZ.x = tempPos.x;
+			if (smallestXYZ.y > tempPos.y)
+				smallestXYZ.y = tempPos.y;
+			if (smallestXYZ.z > tempPos.z)
+				smallestXYZ.z = tempPos.z;
+
+
 		}
 		else if (line.substr(0, 3) == "vt ")
 		{
@@ -156,7 +173,27 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	hr = DirectX::CreateWICTextureFromFile(device, fileName, NULL, resourceView);
 	if (FAILED(hr))
 		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
+	
+	DirectX::XMFLOAT3 halfXYZ;
+	halfXYZ.x = abs(smallestXYZ.x) + abs(biggestXYZ.x) / 2;
+	halfXYZ.y = abs(smallestXYZ.y) + abs(biggestXYZ.y) / 2;
+	halfXYZ.z = abs(smallestXYZ.z) + abs(biggestXYZ.z) / 2;
+	// CREATE BOUNDING VOLUME
+	//
+	switch (boundingVolumeChoice)
+	{
+	case ORIENTED_BOUNDING_BOX:
+		_boundingVolume = new OBB(DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f));
+		break;
 
+	case AXIS_ALIGNED_BOUNDING_BOX:
+		break;
+
+	case SPHERE:
+		break;
+	}
+	//
+	//
 	_vertices = triangles;
 }
 

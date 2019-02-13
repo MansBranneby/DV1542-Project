@@ -161,8 +161,8 @@ Camera gCamera;
 
 // MESHES //
 void createMeshes()
-{	
-	gPillar = new Mesh("Resources\\Meshes\\LP_Pillar_Textured.obj", true, &gShaderResourceObjTexture, gDevice);
+{
+	gPillar = new Mesh("Resources\\Meshes\\LP_Pillar_Textured.obj", true, &gShaderResourceObjTexture, gDevice, ORIENTED_BOUNDING_BOX);
 }
 
 HRESULT createShaders()
