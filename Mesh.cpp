@@ -18,7 +18,7 @@ void Mesh::setHitBox()
 
 }
 
-std::vector <TriangleVertex> Mesh::getVertices()
+std::vector <TriangleVertex> & Mesh::getVertices()
 {
 	return _vertices;
 }

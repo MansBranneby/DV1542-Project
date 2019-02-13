@@ -16,7 +16,7 @@ public:
 	void setVertices(std::vector <TriangleVertex> vertices);
 	void setHitBox();
 
-	std::vector <TriangleVertex> getVertices();
+	std::vector <TriangleVertex> & getVertices();
 	int getVertCount();
 	OBB getHitBox();
 };
