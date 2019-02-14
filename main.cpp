@@ -987,12 +987,6 @@ void renderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
-
-	// Bounding Volume
-	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	//gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBillboard()
@@ -1049,7 +1043,7 @@ void renderSecondPass()
 	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
 }
 
-void update(float lastT)
+void update(float lastT, POINT cursorPos)
 {
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
@@ -1064,6 +1058,7 @@ void update(float lastT)
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
+	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )",cursorPos.x, cursorPos.y);
 	ImGui::Text("lastT:%.2f)", lastT);
 	ImGui::End();
 
@@ -1222,7 +1217,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				
 				renderSecondPass();
 				
-				update(lastT);
+				update(lastT, cursorPos);
 				
 				gSwapChain->Present(0, 0);
 				
