@@ -6,14 +6,5 @@
 !VertexSP.hlsl
 !GeometryShader.hlsl
 !Resources/
-!BillboardGeometryShader.hlsl
-!BillboardPixelShader.hlsl
-!BillboardVertexShader.hlsl
-!Mesh.h
-!Mesh.cpp
-!OBB.h
-!OBB.cpp
-!TriangleVertex.h
-!TriangleVertex.cpp
-!BoundingVolume.h
-!BoundingVolume.cpp
+!Headers/
+!Shaders/

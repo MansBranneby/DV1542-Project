@@ -9,7 +9,6 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
-#include "bth_image.h"
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -19,8 +18,8 @@
 #include <algorithm>
 #include <wchar.h>
 // Own classes
-#include "Mesh.h"
-#include "TriangleVertex.h"
+#include "Header Files//Mesh.h"
+#include "Header Files//TriangleVertex.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -78,7 +77,7 @@ ID3D11SamplerState *gSamplerState = nullptr;
 // BUFFERS //
 ID3D11Buffer* gVertexBuffer = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
-ID3D11Buffer* gBillboardVertexBuffer = nullptr;
+ID3D11Buffer* gVertexBufferBillboard = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
 ID3D11Buffer* gConstantBufferCamera = nullptr;
@@ -98,13 +97,13 @@ ID3D11Texture2D *gTexDeferredCol = nullptr;
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11VertexShader* gVertexShaderBoundingVolume = nullptr;
 ID3D11VertexShader* gVertexShaderSP = nullptr;
-ID3D11VertexShader* gBillboardVertexShader = nullptr;
+ID3D11VertexShader* gVertexShaderBillboard = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gPixelShaderSP = nullptr;
 ID3D11PixelShader* gPixelShaderBoundingVolume = nullptr;
 ID3D11PixelShader* gPixelShaderBillboard = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
-ID3D11GeometryShader* gBillboardGeometryShader = nullptr;
+ID3D11GeometryShader* gGeometryShaderBillboard = nullptr;
 
 // GLOBALS //
 float gFloat = 1.0f;
@@ -247,7 +246,7 @@ HRESULT createShaders()
 	//Billboard vertex shader
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
 	result = D3DCompileFromFile(
-		L"BillboardVertexShader.hlsl", // filename
+		L"VertexShaderBillboard.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"VS_main",		// entry point
@@ -276,7 +275,7 @@ HRESULT createShaders()
 		pVS->GetBufferPointer(),
 		pVS->GetBufferSize(),
 		nullptr,
-		&gBillboardVertexShader
+		&gVertexShaderBillboard
 	);
 
 	// BillboardLayout
@@ -305,6 +304,39 @@ HRESULT createShaders()
 	if (FAILED(result))
 		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
+	pVS->Release();
+
+	//// Vertex shader bounding volume
+	pVS = nullptr;
+	//Billboard vertex shader
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	result = D3DCompileFromFile(
+		L"VertexShaderBoundingVolume.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"VS_main",		// entry point
+		"vs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pVS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pVS)
+			pVS->Release();
+		return result;
+	}
+
+	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderBoundingVolume);
 	pVS->Release();
 
 	////GeometryShader
@@ -354,7 +386,7 @@ HRESULT createShaders()
 	errorBlob = nullptr;
 
 	result = D3DCompileFromFile(
-		L"BillboardGeometryShader.hlsl", // filename
+		L"GeometryShaderBillboard.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"GS_main",		// entry point
@@ -383,7 +415,7 @@ HRESULT createShaders()
 		pGS->GetBufferPointer(),
 		pGS->GetBufferSize(),
 		nullptr,
-		&gBillboardGeometryShader
+		&gGeometryShaderBillboard
 	);
 
 	// we do not need anymore this COM object, so we release it.
@@ -395,7 +427,7 @@ HRESULT createShaders()
 	errorBlob = nullptr;
 
 	result = D3DCompileFromFile(
-		L"Fragment.hlsl", // filename
+		L"PixelShader.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"PS_main",		// entry point
@@ -430,7 +462,7 @@ HRESULT createShaders()
 	errorBlob = nullptr;
 
 	result = D3DCompileFromFile(
-		L"BillboardPixelShader.hlsl", // filename
+		L"PixelShaderBillboard.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"PS_main",		// entry point
@@ -457,7 +489,44 @@ HRESULT createShaders()
 
 	HRESULT hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBillboard);
 	if(FAILED(hr))
-		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"Error PixelShaderBillboard", L"Error", MB_OK | MB_ICONERROR);
+	// we do not need anymore this COM object, so we release it.
+	pPS->Release();
+
+	//// pixel shader bounding volume
+	pPS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"PixelShaderBoundingVolume.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"PS_main",		// entry point
+		"ps_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options
+		0,				// effect compile options
+		&pPS,			// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pPS)
+			pPS->Release();
+		return result;
+	}
+
+	hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBoundingVolume);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error gPixelShaderBoundingVolume", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
 
@@ -539,7 +608,7 @@ HRESULT createShadersSP()
 	errorBlob = nullptr;
 
 	result = D3DCompileFromFile(
-		L"FragmentSP.hlsl", // filename
+		L"PixelShaderSP.hlsl", // filename
 		nullptr,			// optional macros
 		nullptr,			// optional include files
 		"PS_main",			// entry point
@@ -594,7 +663,7 @@ void createTriangleData()
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
 	//Fullscreen quad
 	TriangleVertexUV fsQuad[6] =
@@ -636,7 +705,7 @@ void createTriangleData()
 	// create a Vertex Buffer
 	result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
 	// Billboard
 	TriangleVertexPosCol billboardPoint
@@ -646,13 +715,10 @@ void createTriangleData()
 	};
 
 	bufferDesc.ByteWidth = sizeof(TriangleVertex);
-	D3D11_SUBRESOURCE_DATA data2;
-	data2.pSysMem = &billboardPoint;
-	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
-	if (FAILED(hr))
-		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
-
-
+	data.pSysMem = &billboardPoint;
+	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void createConstantBuffer()
@@ -952,18 +1018,45 @@ void renderFirstPass()
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
-void renderBillboard()
+void renderBoundingVolume()
 {
-	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+	gDeviceContext->VSSetShader(gVertexShaderBoundingVolume, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderBoundingVolume, nullptr, 0);
+
+	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBillboard, &vertexSize, &offset);
+
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
+
+	//ConstantBuffer
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->Draw(1, 0);
+}
+
+void renderBillboard()
+{
+	gDeviceContext->VSSetShader(gVertexShaderBillboard, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gGeometryShaderBillboard, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderBillboard, nullptr, 0);
 	
 	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBillboard, &vertexSize, &offset);
 
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -1213,7 +1306,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gPixelShader->Release();
 		gPixelShaderSP->Release();
 		gPixelShaderBillboard->Release();
-		gBillboardGeometryShader->Release();
+		gGeometryShaderBillboard->Release();
 
 		gDSV->Release();
 		gBackbufferRTV->Release();
