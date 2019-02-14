@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <wchar.h>
 // Own classes
-#include "Header Files//Mesh.h"
-#include "Header Files//TriangleVertex.h"
+#include "Mesh.h"
+#include "TriangleVertex.h"
 
 // DirectXTK
 #include "CommonStates.h"
