@@ -707,14 +707,27 @@ void createTriangleData()
 	if (FAILED(result))
 		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
-	// Billboard
+	// billboard
 	TriangleVertexPosCol billboardPoint
 	{
 		2.0f, 8.0f, -3.0f,
 		1.0f, 1.0f, 1.0f
 	};
 
-	bufferDesc.ByteWidth = sizeof(TriangleVertex);
+	bufferDesc.ByteWidth = sizeof(billboardPoint);
+	data.pSysMem = &billboardPoint;
+	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+
+	// bounding volume
+	TriangleVertexPosCol boundingVolume
+	{
+		2.0f, 8.0f, -3.0f,
+		1.0f, 1.0f, 1.0f
+	};
+
+	bufferDesc.ByteWidth = sizeof(boundingVolume);
 	data.pSysMem = &billboardPoint;
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
 	if (FAILED(result))
