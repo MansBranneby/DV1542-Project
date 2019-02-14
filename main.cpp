@@ -86,7 +86,7 @@ ID3D11Buffer* gConstantBufferBillboard = nullptr;
 
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
-ID3D11InputLayout* gBillboardLayoutPosCol = nullptr;
+ID3D11InputLayout* gVertexLayoutPosCol = nullptr;
 
 
 //TEXTURES
@@ -96,6 +96,7 @@ ID3D11Texture2D *gTexDeferredCol = nullptr;
 
 // SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
+ID3D11VertexShader* gVertexShaderBoundingVolume = nullptr;
 ID3D11VertexShader* gVertexShaderSP = nullptr;
 ID3D11VertexShader* gBillboardVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
@@ -279,7 +280,7 @@ HRESULT createShaders()
 	);
 
 	// BillboardLayout
-	D3D11_INPUT_ELEMENT_DESC billboardInputDesc[] = {
+	D3D11_INPUT_ELEMENT_DESC inputDescPosCol[] = {
 		{
 			"POSITION",		// "semantic" name in shader
 			0,				// "semantic" index (not used)
@@ -300,9 +301,9 @@ HRESULT createShaders()
 		},
 	};
 
-	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gBillboardLayoutPosCol);
+	result = gDevice->CreateInputLayout(inputDescPosCol, ARRAYSIZE(inputDescPosCol), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutPosCol);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
 
@@ -459,44 +460,6 @@ HRESULT createShaders()
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
-
-	//// Pixel shader for boundingVolumes
-	//pPS = nullptr;
-	//if (errorBlob) errorBlob->Release();
-	//errorBlob = nullptr;
-
-	//result = D3DCompileFromFile(
-	//	L"BoundingVolumePixelShader.hlsl", // filename
-	//	nullptr,		// optional macros
-	//	nullptr,		// optional include files
-	//	"PS_main",		// entry point
-	//	"ps_5_0",		// shader model (target)
-	//	D3DCOMPILE_DEBUG,	// shader compile options
-	//	0,				// effect compile options
-	//	&pPS,			// double pointer to ID3DBlob		
-	//	&errorBlob			// pointer for Error Blob messages.
-	//);
-
-	//// compilation failed?
-	//if (FAILED(result))
-	//{
-	//	if (errorBlob)
-	//	{
-	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	//		// release "reference" to errorBlob interface object
-	//		errorBlob->Release();
-	//	}
-	//	if (pPS)
-	//		pPS->Release();
-	//	return result;
-	//}
-
-	//hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBoundingVolume);
-	//if (FAILED(hr))
-	//	MessageBox(NULL, L"Error gPixelShaderBoundingVolume", L"Error", MB_OK | MB_ICONERROR);
-	//// we do not need anymore this COM object, so we release it.
-	//pPS->Release();
-
 
 	return S_OK;
 }
@@ -1005,7 +968,7 @@ void renderBillboard()
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);

@@ -18,7 +18,7 @@ cbuffer GS_CONSTANT_BUFFER : register(b0)
 	matrix world, worldViewProj;
 };
 
-[maxvertexcount(6)]
+[maxvertexcount(3)]
 void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 {
 	GS_OUT element;
