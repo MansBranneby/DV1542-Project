@@ -146,7 +146,7 @@ struct TriangleVertexUV
 	float u, v;
 };
 
-struct billboardPoint
+struct TriangleVertexPosCol
 {
 	float x, y, z;
 	float r, g, b;
@@ -676,7 +676,7 @@ void createTriangleData()
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	// Billboard
-	billboardPoint billboardPointInfo
+	TriangleVertexPosCol billboardPoint
 	{
 		2.0f, 8.0f, -3.0f,
 		1.0f, 1.0f, 1.0f
@@ -684,7 +684,7 @@ void createTriangleData()
 
 	bufferDesc.ByteWidth = sizeof(TriangleVertex);
 	D3D11_SUBRESOURCE_DATA data2;
-	data2.pSysMem = &billboardPointInfo;
+	data2.pSysMem = &billboardPoint;
 	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
@@ -1003,7 +1003,7 @@ void renderBillboard()
 	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderBillboard, nullptr, 0);
 	
-	UINT32 vertexSize = sizeof(billboardPoint);
+	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
 	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
@@ -1124,7 +1124,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		float pitch = 0.0f;
 		float yaw = 0.0f;
 		
-		float lastT = 0.0f;
+		float lastT = -1.0f;
 		LARGE_INTEGER clockFreq;
 		LARGE_INTEGER startTime;
 		LARGE_INTEGER delta;
@@ -1156,7 +1156,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//Camera updates
 				//
 				//
-
 				QueryPerformanceCounter(&currTime);
 				delta.QuadPart = currTime.QuadPart - startTime.QuadPart;
 				float deltaSeconds = (float)delta.QuadPart / clockFreq.QuadPart;
@@ -1172,12 +1171,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 
-				GetCursorPos(&cursorPos); // gets current curosr coordinates
+				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
 
-				lastT = mousePicking(cursorPos);
+				float tempT = mousePicking(cursorPos);
+				if ((tempT > 0 && lastT == -1) || (tempT > 0 && tempT < lastT))
+				{
+					lastT = tempT;
+				}
 				
-
 				velocity.x = 0;
 				velocity.y = 0;
 				velocity.z = 0;
