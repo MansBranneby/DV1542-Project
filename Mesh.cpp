@@ -174,16 +174,16 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	if (FAILED(hr))
 		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
 	
-	DirectX::XMFLOAT3 halfXYZ;
-	halfXYZ.x = abs(smallestXYZ.x) + abs(biggestXYZ.x) / 2;
-	halfXYZ.y = abs(smallestXYZ.y) + abs(biggestXYZ.y) / 2;
-	halfXYZ.z = abs(smallestXYZ.z) + abs(biggestXYZ.z) / 2;
 	// CREATE BOUNDING VOLUME
 	//
+	DirectX::XMFLOAT3 halfXYZ;
+	halfXYZ.x = (abs(smallestXYZ.x) + abs(biggestXYZ.x)) / 2;
+	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;
+	halfXYZ.z = (abs(smallestXYZ.z) + abs(biggestXYZ.z)) / 2;
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f), DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f));
+		_boundingVolume = new OBB(DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 0.0f), DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f));
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:
@@ -219,4 +219,9 @@ std::vector <TriangleVertex> & Mesh::getVertices()
 int Mesh::getVertCount()
 {
 	return _vertices.size();
+}
+
+BoundingVolume * Mesh::getBoundingVolume()
+{
+	return _boundingVolume;
 }

@@ -22,3 +22,8 @@ void BoundingVolume::setCenter(DirectX::XMVECTOR center)
 {
 	_center = center;
 }
+
+DirectX::XMVECTOR BoundingVolume::getCenter()
+{
+	return _center;
+}

@@ -14,5 +14,8 @@ public:
 
 	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);
 	void setCenter(DirectX::XMVECTOR center);
-	virtual float intersectWithRay() = 0;
+
+	DirectX::XMVECTOR getCenter();
+
+	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;
 };

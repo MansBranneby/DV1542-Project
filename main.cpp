@@ -100,7 +100,8 @@ ID3D11VertexShader* gVertexShaderSP = nullptr;
 ID3D11VertexShader* gBillboardVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gPixelShaderSP = nullptr;
-ID3D11PixelShader* gBillboardPixelShader = nullptr;
+ID3D11PixelShader* gPixelShaderBoundingVolume = nullptr;
+ID3D11PixelShader* gPixelShaderBillboard = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gBillboardGeometryShader = nullptr;
 
@@ -150,6 +151,7 @@ struct billboardPoint
 	float x, y, z;
 	float r, g, b;
 };
+
 struct Camera
 {
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -452,11 +454,49 @@ HRESULT createShaders()
 		return result;
 	}
 
-	HRESULT hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gBillboardPixelShader);
+	HRESULT hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBillboard);
 	if(FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
+
+	//// Pixel shader for boundingVolumes
+	//pPS = nullptr;
+	//if (errorBlob) errorBlob->Release();
+	//errorBlob = nullptr;
+
+	//result = D3DCompileFromFile(
+	//	L"BoundingVolumePixelShader.hlsl", // filename
+	//	nullptr,		// optional macros
+	//	nullptr,		// optional include files
+	//	"PS_main",		// entry point
+	//	"ps_5_0",		// shader model (target)
+	//	D3DCOMPILE_DEBUG,	// shader compile options
+	//	0,				// effect compile options
+	//	&pPS,			// double pointer to ID3DBlob		
+	//	&errorBlob			// pointer for Error Blob messages.
+	//);
+
+	//// compilation failed?
+	//if (FAILED(result))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		// release "reference" to errorBlob interface object
+	//		errorBlob->Release();
+	//	}
+	//	if (pPS)
+	//		pPS->Release();
+	//	return result;
+	//}
+
+	//hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBoundingVolume);
+	//if (FAILED(hr))
+	//	MessageBox(NULL, L"Error gPixelShaderBoundingVolume", L"Error", MB_OK | MB_ICONERROR);
+	//// we do not need anymore this COM object, so we release it.
+	//pPS->Release();
+
 
 	return S_OK;
 }
@@ -648,6 +688,8 @@ void createTriangleData()
 	HRESULT hr = gDevice->CreateBuffer(&bufferDesc, &data2, &gBillboardVertexBuffer);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error billboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+
+
 }
 
 void createConstantBuffer()
@@ -828,54 +870,7 @@ void textureSetUp()
 	rockTexture();
 }
 
-//float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, triangle_type tri)
-//{
-//	// IMPLEMENT HERE
-//	vec3 e1 = tri.vtx1.xyz - tri.vtx0.xyz;
-//	vec3 e2 = tri.vtx2.xyz - tri.vtx0.xyz;
-//	vec3 s = rayOrigin - tri.vtx0.xyz;
-//
-//	float a = 1 / determinant(mat3x3(-rayDir, e1, e2));
-//	float b = determinant(mat3x3(s, e1, e2));
-//	float c = determinant(mat3x3(-rayDir, s, e2));
-//	float d = determinant(mat3x3(-rayDir, e1, s));
-//
-//	float t = a * b;
-//	float u = a * c;
-//	float v = a * d;
-//	float w = 1 - u - v;
-//
-//	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
-//		t = -1;
-//
-//	return t;
-//}
-//
-//float triangleTest(XMVECTOR rayDir, XMVECTOR rayOrigin, int i)
-//{
-//	XMVECTOR def = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
-//	
-//	XMVECTOR e1 = XMVectorSet(mesh.getVertInfo.at(i + 1).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 1).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-//	XMVECTOR e2 = XMVectorSet(mesh.getVertInfo.at(i + 2).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i + 2).pos.z, 1.0f) - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-//	XMVECTOR s = rayOrigin - XMVectorSet(mesh.getVertInfo.at(i).pos.x, mesh.getVertInfo.at(i).pos.y, mesh.getVertInfo.at(i).pos.z, 1.0f);
-//
-//	float a = 1.0f / XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, e2, def)));
-//	float b = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(s, e1, e2, def)));
-//	float c = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, s, e2, def)));
-//	float d = XMVectorGetX(XMMatrixDeterminant(XMMATRIX(-rayDir, e1, s, def)));
-//
-//	float t = a * b;
-//	float u = a * c;
-//	float v = a * d;
-//	float w = 1 - u - v;
-//
-//	if ((u < 0 || u > 1) || (v < 0 || v > 1) || (w < 0 || w > 1))
-//		t = -1.0f;
-//	
-//	return 0.0f;
-//}
-
-void mousePicking(POINT cursorPos)
+float mousePicking(POINT cursorPos)
 {
 	float projX = XMVectorGetX(gCamera.projection.r[0]);
 	float projY = XMVectorGetY(gCamera.projection.r[1]);
@@ -892,9 +887,9 @@ void mousePicking(POINT cursorPos)
 	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
 	rayDirection = XMVector3Transform(rayDirection, inverseView);
 	rayOrigin = inverseView.r[4];
-
-	// 
 	
+	currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
+	return currT;
 }
 
 void createRenderTargets()
@@ -992,6 +987,12 @@ void renderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+
+	// Bounding Volume
+	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	//gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBillboard()
@@ -1000,7 +1001,7 @@ void renderBillboard()
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderBillboard, nullptr, 0);
 	
 	UINT32 vertexSize = sizeof(billboardPoint);
 	UINT32 offset = 0;
@@ -1048,7 +1049,7 @@ void renderSecondPass()
 	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
 }
 
-void update()
+void update(float lastT)
 {
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
@@ -1063,6 +1064,7 @@ void update()
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
+	ImGui::Text("lastT:%.2f)", lastT);
 	ImGui::End();
 
 	ImGui::Render();
@@ -1121,7 +1123,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		float distance = 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
-	
+		
+		float lastT = 0.0f;
 		LARGE_INTEGER clockFreq;
 		LARGE_INTEGER startTime;
 		LARGE_INTEGER delta;
@@ -1172,8 +1175,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				GetCursorPos(&cursorPos); // gets current curosr coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
 
-				if (ms.leftButton)
-					mousePicking(cursorPos);
+				lastT = mousePicking(cursorPos);
 				
 
 				velocity.x = 0;
@@ -1218,7 +1220,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				
 				renderSecondPass();
 				
-				update();
+				update(lastT);
 				
 				gSwapChain->Present(0, 0);
 				
@@ -1250,7 +1252,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gGeometryShader->Release();
 		gPixelShader->Release();
 		gPixelShaderSP->Release();
-		gBillboardPixelShader->Release();
+		gPixelShaderBillboard->Release();
 		gBillboardGeometryShader->Release();
 
 		gDSV->Release();

@@ -15,5 +15,5 @@ public:
 	void setHalf_u_v_w(DirectX::XMVECTOR half_u_v_w);
 
 	DirectX::XMVECTOR getHalf_u_v_w();
-	virtual float intersectWithRay();
+	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin);
 };
