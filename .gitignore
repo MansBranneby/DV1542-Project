@@ -9,3 +9,5 @@
 !BillboardGeometryShader.hlsl
 !BillboardPixelShader.hlsl
 !BillboardVertexShader.hlsl
+!VertexShaderShadowMap.hlsl
+!PixelShaderShadowMap.hlsl

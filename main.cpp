@@ -112,7 +112,7 @@ float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
-float gClearColour[3] = {};
+float gClearColour[3] = {0.0,1.0,0.0};
 
 XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -125,11 +125,11 @@ ID3D11Buffer* gMatrixPerFrameBuffer = nullptr;
 struct ShadowMapData {
 	XMMATRIX worldView;
 };
-ShadowMapData* gLightView;
+ShadowMapData gLightView;
 
 struct Lights
 {
-	XMVECTOR lightPos = { 0.0f, 5.0f, -2.0f };
+	XMVECTOR lightPos = { 0.0f, 10.0f, -3.0f };
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
 };
 Lights gLight;
@@ -972,8 +972,6 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 
 	//Shadow map
-	// Fill in a buffer description.
-	cbDesc;
 	cbDesc.ByteWidth = sizeof(gLightView);
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
 	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -982,7 +980,6 @@ void createConstantBuffer()
 	cbDesc.StructureByteStride = 0;
 
 	// Fill in the subresource data.
-	InitData;
 	InitData.pSysMem = &gLightView;
 	InitData.SysMemPitch = 0;
 	InitData.SysMemSlicePitch = 0;
@@ -1063,7 +1060,7 @@ void textureSetUp()
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = WIDTH;
 	texDesc.Height = HEIGHT;
-	texDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
 	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -1126,7 +1123,7 @@ void createRenderTargets() //And textures
 	ZeroMemory(&texDescSM, sizeof(texDescSM));
 	texDescSM.Width = WIDTH;
 	texDescSM.Height = HEIGHT;
-	texDescSM.Format = DXGI_FORMAT_R32_FLOAT;
+	texDescSM.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	texDescSM.MipLevels = 1;
 	texDescSM.ArraySize = 1;
 	texDescSM.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -1165,7 +1162,14 @@ void createRenderTargets() //And textures
 		MessageBox(NULL, L"ShaderResourceDeferred[2]", L"Error", MB_OK | MB_ICONERROR);
 
 	//Shadow map
-	hr = gDevice->CreateShaderResourceView(gTexShadowMap, &shaderResourceViewDesc, &gShaderResourceShadowMap);
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDescSM;
+	ZeroMemory(&shaderResourceViewDescSM, sizeof(shaderResourceViewDescSM));
+	shaderResourceViewDescSM.Format = texDescSM.Format;
+	shaderResourceViewDescSM.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDescSM.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDescSM.Texture2D.MipLevels = texDescSM.MipLevels;
+
+	hr = gDevice->CreateShaderResourceView(gTexShadowMap, &shaderResourceViewDescSM, &gShaderResourceShadowMap);
 	if (FAILED(hr))
 		MessageBox(NULL, L"gShaderResourceShadowMap", L"Error", MB_OK | MB_ICONERROR);
 }
@@ -1190,7 +1194,10 @@ void renderShadowMap()
 	gDeviceContext->ClearRenderTargetView(gRenderTargetShadowMap, gClearColour);
 
 	gDeviceContext->VSSetShader(gVertexShaderShadowMap, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
@@ -1199,7 +1206,8 @@ void renderShadowMap()
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->VSSetConstantBuffers(1, 1, &gConstantBufferShadowMap);
 
 	gDeviceContext->Draw(69120, 0);
 }
@@ -1234,6 +1242,9 @@ void renderFirstPass()
 
 void renderSecondPass()
 {
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);		
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour); //Clear
+
 	gDeviceContext->VSSetShader(gVertexShaderSP, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
@@ -1262,14 +1273,15 @@ void renderSecondPass()
 void update()
 {
 	//Update LightView
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f); //Dåligt att göra detta i update
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(gLight.lightPos, LookAt, camUp);
-
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
 	View = XMMatrixTranspose(View);
-	XMMATRIX worldView = XMMatrixMultiply(View, gMatricesPerFrame.World);
+	Projection = XMMatrixTranspose(Projection);
+	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
 
-	gLightView->worldView = worldView;
+	gLightView.worldView = worldView;
 
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
@@ -1306,7 +1318,7 @@ void update()
 
 void transform(XMFLOAT3 move, XMMATRIX rotation)
 {
-	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); //Kanske inte ska skapas varje transform?
 	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -1485,15 +1497,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				// RENDER //
 				gClearColour[3] = 1.0;
-				renderShadowMap();
 
 				update();
+				renderShadowMap();
 				renderFirstPass();
-				//renderBillboard();
-
-				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
-				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
-				
+				//renderBillboard();				
 				renderSecondPass();
 				
 				gSwapChain->Present(0, 0);
