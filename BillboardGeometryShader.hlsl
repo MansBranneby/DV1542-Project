@@ -56,7 +56,7 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 		element.pos = mul(float4(billboardVertices[i].xyz, 1.0f), worldViewProj);
 		element.worldPos = mul(billboardVertices[i], world);
 
-		element.worldNor = float4( 0.0f, 0.0f, 0.0f, 0.0f);
+		element.worldNor = float4(0.0,0.0,0.0,1.0);//float4(billboardNormal, 1.0f);
 		element.tex = input[0].tex;
 		element.col = float4(1.0f, 1.0f, 1.0f, 1.0f);
 		output.Append(element);

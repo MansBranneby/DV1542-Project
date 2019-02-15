@@ -86,7 +86,6 @@ ID3D11Buffer* gConstantBufferShadowMap = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
 ID3D11InputLayout* gBillboardLayoutPosCol = nullptr;
-ID3D11InputLayout* gVertexLayoutPos = nullptr;
 
 //TEXTURES
 ID3D11Texture2D* gTexDeferredPos = nullptr;
@@ -101,6 +100,7 @@ ID3D11VertexShader* gVertexShaderSP = nullptr;
 ID3D11VertexShader* gBillboardVertexShader = nullptr;
 ID3D11VertexShader* gVertexShaderShadowMap = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
+ID3D11GeometryShader* gGeometryShaderShadowMap = nullptr;
 ID3D11GeometryShader* gBillboardGeometryShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gPixelShaderSP = nullptr;
@@ -112,7 +112,7 @@ float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
-float gClearColour[3] = {0.0,1.0,0.0};
+float gClearColour[3] = {0.0,0.0,0.0};
 
 XMVECTOR CamPos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -142,8 +142,8 @@ CameraData gCameraData;
 
 struct BillboardData
 {
-	float billboardHeight = 2.0f;
-	float billboardWidth = 2.0f;
+	float billboardHeight = 10.0f;
+	float billboardWidth = 10.0f;
 	float padding1, padding2;
 };
 BillboardData gBillboardData;
@@ -606,23 +606,46 @@ HRESULT createShadersShadowMap()
 	if (FAILED(result))
 		MessageBox(NULL, L"gVertexShaderShadowMap", L"Error", MB_OK | MB_ICONERROR);
 
-	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
-		{
-			"POSITION",						// "semantic" name in shader
-			0,								// "semantic" index (not used)
-			DXGI_FORMAT_R32G32B32_FLOAT,		// size of ONE element (3 floats)
-			0,								// input slot
-			0,								// offset of first element
-			D3D11_INPUT_PER_VERTEX_DATA,	// specify data PER vertex
-			0								// used for INSTANCING (ignore)
-		}
-	};
-
-	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutPos);
-	if (FAILED(result))
-		MessageBox(NULL, L"gVertexLayoutPos", L"Error", MB_OK | MB_ICONERROR);
-
 	pVS->Release();
+
+	////GeometryShader
+	ID3DBlob* pGS = nullptr;
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"GeometryShaderShadowMap.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"GS_main",		// entry point
+		"gs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pGS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pGS)
+			pGS->Release();
+		return result;
+	}
+
+	result = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderShadowMap);
+	if (FAILED(result))
+		MessageBox(NULL, L"gGeometryShaderShadowMap", L"Error", MB_OK | MB_ICONERROR);
+
+	// we do not need anymore this COM object, so we release it.
+	pGS->Release();
+
 
 	// Pixelshader //
 	ID3DBlob* pPS = nullptr;
@@ -885,7 +908,7 @@ void createTriangleData()
 	// Billboard
 	billboardPoint billboardPointInfo
 	{
-		2.0f, 8.0f, -3.0f,
+		0.0f, 0.0f, 0.0f,
 		1.0f, 1.0f, 1.0f
 	};
 
@@ -1060,7 +1083,7 @@ void textureSetUp()
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.Width = WIDTH;
 	texDesc.Height = HEIGHT;
-	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	texDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
 	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -1123,7 +1146,7 @@ void createRenderTargets() //And textures
 	ZeroMemory(&texDescSM, sizeof(texDescSM));
 	texDescSM.Width = WIDTH;
 	texDescSM.Height = HEIGHT;
-	texDescSM.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	texDescSM.Format = DXGI_FORMAT_R32_FLOAT;
 	texDescSM.MipLevels = 1;
 	texDescSM.ArraySize = 1;
 	texDescSM.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -1194,11 +1217,10 @@ void renderShadowMap()
 	gDeviceContext->ClearRenderTargetView(gRenderTargetShadowMap, gClearColour);
 
 	gDeviceContext->VSSetShader(gVertexShaderShadowMap, nullptr, 0);
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
 
@@ -1206,8 +1228,7 @@ void renderShadowMap()
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->VSSetConstantBuffers(1, 1, &gConstantBufferShadowMap);
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
 
 	gDeviceContext->Draw(69120, 0);
 }
@@ -1261,6 +1282,7 @@ void renderSecondPass()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
 
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 	gDeviceContext->PSSetConstantBuffers(1, 1, &gConstantBufferCamera);
 
@@ -1351,34 +1373,34 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	gCameraData.camPos = CamPos;
 }
 
-//void renderBillboard()
-//{
-//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
-//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
-//
-//	UINT32 vertexSize = sizeof(billboardPoint);
-//	UINT32 offset = 0;
-//	// specify which vertex buffer to use next.
-//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
-//
-//	// specify the topology to use when drawing
-//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-//	// specify the IA Layout (how is data passed)
-//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-//
-//	//ConstantBuffer
-//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-//
-//
-//	// issue a draw call of 3 vertices (similar to OpenGL)
-//	gDeviceContext->Draw(1, 0);
-//}
+void renderBillboard()
+{
+	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+
+	UINT32 vertexSize = sizeof(billboardPoint);
+	UINT32 offset = 0;
+	// specify which vertex buffer to use next.
+	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+
+	// specify the topology to use when drawing
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	// specify the IA Layout (how is data passed)
+	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+
+	//ConstantBuffer
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+
+
+	// issue a draw call of 3 vertices (similar to OpenGL)
+	gDeviceContext->Draw(1, 0);
+}
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -1395,6 +1417,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		createRenderTargets();
 		createShaders();
 		createShadersSP();
+		createShadersShadowMap();
 
 		createTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
@@ -1501,7 +1524,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				update();
 				renderShadowMap();
 				renderFirstPass();
-				//renderBillboard();				
+				renderBillboard();			
 				renderSecondPass();
 				
 				gSwapChain->Present(0, 0);
