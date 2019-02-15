@@ -34,3 +34,8 @@ std::vector<TriangleVertexPosCol>& BoundingVolume::getVertices()
 {
 	return _vertices;
 }
+
+int BoundingVolume::getVertCount()
+{
+	return _vertices.size();
+}

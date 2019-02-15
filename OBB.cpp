@@ -26,18 +26,21 @@ DirectX::XMVECTOR OBB::getHalf_u_v_w()
 
 float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin)
 {
+	DirectX::XMVECTOR defU = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, DirectX::XMVectorGetX(_half_u_v_w));
+	DirectX::XMVECTOR defV = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, DirectX::XMVectorGetY(_half_u_v_w));
+	DirectX::XMVECTOR defW = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, DirectX::XMVectorGetZ(_half_u_v_w));
 		// IMPLEMENT HERE
 		float tMin = -1000000, tMax = 1000000;
 		DirectX::XMVECTOR p = DirectX::XMVectorSubtract(getCenter(), rayOrigin);
-		DirectX::XMVECTOR arr[3] = { getHalf_u_v_w() };
+		DirectX::XMVECTOR arr[3] = {defU, defV, defW };
 
 		for (int i = 0; i < 3; i++)
 		{
-			DirectX::XMVECTOR eVec = DirectX::XMVector4Dot(arr[i], p); // Dot product with DirectXMath returns a vector with the same value copied into the xyzw positions
-			DirectX::XMVECTOR fVec = DirectX::XMVector4Dot(arr[i], rayDir); 
+			DirectX::XMVECTOR eVec = DirectX::XMVector3Dot(arr[i], p); // Dot product with DirectXMath returns a vector with the same value copied into the xyzw positions
+			DirectX::XMVECTOR fVec = DirectX::XMVector3Dot(arr[i], rayDir); 
 			float e = DirectX::XMVectorGetX(eVec);
 			float f = DirectX::XMVectorGetX(fVec);
-			float w = DirectX::XMVectorGetZ(arr[i]);
+			float w = DirectX::XMVectorGetW(arr[i]);
 			if (f != 0)
 			{
 				float t1 = (e + w) / f;
@@ -55,10 +58,10 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 				if (tMin > tMax)
 					return -1;
 				if (tMax < 0)
-					return -1;
+					return -1.0f;
 			}
 			else if ((-e - w) > 0 || (-e + w) < 0)
-				return -1;
+				return -1.0f;
 		}
 		if (tMin > 0)
 			return tMin;

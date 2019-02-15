@@ -19,6 +19,7 @@ public:
 
 	DirectX::XMVECTOR getCenter();
 	std::vector <TriangleVertexPosCol> & getVertices();
+	int getVertCount();
 
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;
 };

@@ -216,10 +216,19 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
 
 	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
+	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
 	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
 
 	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
+	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
 	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
+	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
 
 	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
 	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));

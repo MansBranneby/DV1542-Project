@@ -111,7 +111,7 @@ float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
-float gClearColour[3] = {1.0f, 1.0f, 1.0f};
+float gClearColour[3] = {};
 Mesh* gPillar = nullptr;
 
 struct PerFrameMatrices {
@@ -718,7 +718,7 @@ void createTriangleData()
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
 	// bounding volume
-	bufferDesc.ByteWidth = sizeof(TriangleVertexPosCol) * 18;
+	bufferDesc.ByteWidth = sizeof(TriangleVertexPosCol) * gPillar->getBoundingVolume()->getVertCount();
 	data.pSysMem = &gPillar->getBoundingVolume()->getVertices()[0];
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBoundingVolume);
 	if (FAILED(result))
@@ -1042,10 +1042,9 @@ void renderBoundingVolume()
 
 	//ConstantBuffer
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->VSSetConstantBuffers(1, 1, &gConstantBufferCamera);
 	
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(18, 0);
+	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
 }
 
 void renderBillboard()
@@ -1177,7 +1176,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		float distance = 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
-		
 		float lastT = -1.0f;
 		LARGE_INTEGER clockFreq;
 		LARGE_INTEGER startTime;
@@ -1227,7 +1225,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
-
+				
 				float tempT = mousePicking(cursorPos);
 				if ((tempT > 0 && lastT == -1) || (tempT > 0 && tempT < lastT))
 				{

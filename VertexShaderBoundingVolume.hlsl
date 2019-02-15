@@ -20,7 +20,7 @@ VS_OUT VS_main(VS_IN input)
 	VS_OUT output;
 
 	output.posWS = mul(float4(input.pos, 1.0f), worldViewProj);
-	output.col = float3(1.0f, 1.0f, 1.0f);
+	output.col = input.col;
 
 	return output;
 }

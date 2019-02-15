@@ -38,5 +38,8 @@ public:
 
 	std::vector <TriangleVertex> & getVertices();
 	int getVertCount();
+
+
+
 	BoundingVolume* getBoundingVolume();
 };

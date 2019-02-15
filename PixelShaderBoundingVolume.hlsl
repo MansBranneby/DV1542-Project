@@ -7,7 +7,7 @@ struct PS_IN
 struct PS_OUT
 {
 	float4 posWS : SV_Target0;
-	float4 col : SV_Target1;
+	float4 col : SV_Target2;
 };
 
 PS_OUT PS_main(PS_IN input)
@@ -15,7 +15,7 @@ PS_OUT PS_main(PS_IN input)
 	PS_OUT output;
 
 	output.posWS = input.posWS;
-	output.col = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	output.col = float4(input.col, 1.0f); 
 
 	return output;
 }
