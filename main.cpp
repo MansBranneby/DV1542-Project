@@ -78,6 +78,7 @@ ID3D11SamplerState *gSamplerState = nullptr;
 ID3D11Buffer* gVertexBuffer = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gVertexBufferBillboard = nullptr;
+ID3D11Buffer* gVertexBufferBoundingVolume = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
 ID3D11Buffer* gConstantBufferCamera = nullptr;
@@ -110,7 +111,7 @@ float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
-float gClearColour[3] = {};
+float gClearColour[3] = {1.0f, 1.0f, 1.0f};
 Mesh* gPillar = nullptr;
 
 struct PerFrameMatrices {
@@ -717,11 +718,9 @@ void createTriangleData()
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
 	// bounding volume
-	TriangleVertexPosCol boundingVolume(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
-
-	bufferDesc.ByteWidth = sizeof(boundingVolume);
-	data.pSysMem = &billboardPoint;
-	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
+	bufferDesc.ByteWidth = sizeof(TriangleVertexPosCol) * 18;
+	data.pSysMem = &gPillar->getBoundingVolume()->getVertices()[0];
+	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBoundingVolume);
 	if (FAILED(result))
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 }
@@ -1034,20 +1033,19 @@ void renderBoundingVolume()
 	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBillboard, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBoundingVolume, &vertexSize, &offset);
 
 	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 
 	//ConstantBuffer
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->VSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(1, 0);
+	gDeviceContext->Draw(18, 0);
 }
 
 void renderBillboard()
@@ -1271,6 +1269,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
+				renderBoundingVolume();
 				renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);

@@ -5,9 +5,10 @@ OBB::OBB()
 	_half_u_v_w = { 0.0f, 0.0f, 0.0f, 0.0f };
 }
 
-OBB::OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w)
-	:BoundingVolume(center)
+OBB::OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w, std::vector <TriangleVertexPosCol> vertices)
+	:BoundingVolume(center, vertices)
 {
+	_half_u_v_w = half_u_v_w;
 }
 
 OBB::~OBB()

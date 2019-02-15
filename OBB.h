@@ -9,7 +9,7 @@ private:
 
 public:
 	OBB();
-	OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w);
+	OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w, std::vector <TriangleVertexPosCol> vertices);
 	~OBB();
 
 	void setHalf_u_v_w(DirectX::XMVECTOR half_u_v_w);

@@ -19,6 +19,7 @@ struct PS_OUT
 PS_OUT PS_main(GS_OUT input)
 {	
 	PS_OUT output;
+
 	output.posWS = input.posWS;
 	output.norWS = normalize(input.norWS);
 	output.col = float4(txDiffuse.Sample(sampAni, input.tex).xyz, 1.0);

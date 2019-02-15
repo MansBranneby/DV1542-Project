@@ -15,7 +15,7 @@ PS_OUT PS_main(PS_IN input)
 	PS_OUT output;
 
 	output.posWS = input.posWS;
-	output.col = float4(input.col, 1.0f);
+	output.col = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	return output;
 }

@@ -180,10 +180,54 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	halfXYZ.x = (abs(smallestXYZ.x) + abs(biggestXYZ.x)) / 2;
 	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;
 	halfXYZ.z = (abs(smallestXYZ.z) + abs(biggestXYZ.z)) / 2;
+
+	DirectX::XMVECTOR center = DirectX::XMVectorSet(0.0f, halfXYZ.y, 0.0f, 0.0f);
+	DirectX::XMVECTOR half_u_v_w = DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f);
+
+	DirectX::XMFLOAT3 col(1.0f, 1.0f, 1.0f);
+	DirectX::XMVECTOR rightUpNear = DirectX::XMVectorSet(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);
+	DirectX::XMVECTOR rightDownNear = DirectX::XMVectorSet(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z, 0.0f);
+	DirectX::XMVECTOR leftUpNear = DirectX::XMVectorSet(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);
+	DirectX::XMVECTOR leftDownNear = DirectX::XMVectorSet(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z, 0.0f);
+
+	DirectX::XMVECTOR rightUpFar = DirectX::XMVectorSet(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z, 0.0f);
+	DirectX::XMVECTOR rightDownFar = DirectX::XMVectorSet(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z, 0.0f);
+	DirectX::XMVECTOR leftUpFar = DirectX::XMVectorSet(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z, 0.0f);
+	DirectX::XMVECTOR leftDownFar = DirectX::XMVectorSet(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z, 0.0f);
+	
+	std::vector <TriangleVertexPosCol> vertices;
+
+	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
+	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
+	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
+	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
+	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
+
+	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
+	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
+
+	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
+	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
+
+	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
+	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
+	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
+
+	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
+	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
+
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 0.0f), DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f));
+		_boundingVolume = new OBB(center, half_u_v_w, vertices);
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:

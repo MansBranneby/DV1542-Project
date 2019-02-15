@@ -4,9 +4,11 @@ BoundingVolume::BoundingVolume()
 {
 }
 
-BoundingVolume::BoundingVolume(DirectX::XMVECTOR center)
+BoundingVolume::BoundingVolume(DirectX::XMVECTOR center, std::vector <TriangleVertexPosCol> vertices)
 {
 	_center = center;
+	_vertices = vertices;
+
 }
 
 BoundingVolume::~BoundingVolume()
@@ -26,4 +28,9 @@ void BoundingVolume::setCenter(DirectX::XMVECTOR center)
 DirectX::XMVECTOR BoundingVolume::getCenter()
 {
 	return _center;
+}
+
+std::vector<TriangleVertexPosCol>& BoundingVolume::getVertices()
+{
+	return _vertices;
 }
