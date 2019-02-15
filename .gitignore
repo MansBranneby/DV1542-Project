@@ -5,7 +5,7 @@
 !VertexShaderBoundingVolume.hlsl
 !VertexSP.hlsl
 !GeometryShader.hlsl
-!GeomettryShaderBillboard.hlsl
+!GeometryShaderBillboard.hlsl
 !PixelShader.hlsl
 !PixelShaderSP.hlsl
 !PixelShaderBillboard.hlsl
@@ -17,5 +17,7 @@
 !OBB.cpp
 !TriangleVertex.h
 !TriangleVertex.cpp
+!TriangleVertexPosCol.h
+!TriangleVertexPosCol.cpp
 !BoundingVolume.h
 !BoundingVolume.cpp

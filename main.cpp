@@ -146,11 +146,11 @@ struct TriangleVertexUV
 	float u, v;
 };
 
-struct TriangleVertexPosCol
-{
-	float x, y, z;
-	float r, g, b;
-};
+//struct TriangleVertexPosCol
+//{
+//	float x, y, z;
+//	float r, g, b;
+//};
 
 struct Camera
 {
@@ -708,11 +708,7 @@ void createTriangleData()
 		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
 	// billboard
-	TriangleVertexPosCol billboardPoint
-	{
-		2.0f, 8.0f, -3.0f,
-		1.0f, 1.0f, 1.0f
-	};
+	TriangleVertexPosCol billboardPoint(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 
 	bufferDesc.ByteWidth = sizeof(billboardPoint);
 	data.pSysMem = &billboardPoint;
@@ -721,11 +717,7 @@ void createTriangleData()
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
 	// bounding volume
-	TriangleVertexPosCol boundingVolume
-	{
-		2.0f, 8.0f, -3.0f,
-		1.0f, 1.0f, 1.0f
-	};
+	TriangleVertexPosCol boundingVolume(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 
 	bufferDesc.ByteWidth = sizeof(boundingVolume);
 	data.pSysMem = &billboardPoint;
