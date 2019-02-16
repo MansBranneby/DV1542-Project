@@ -157,8 +157,8 @@ struct Camera
 {
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMMATRIX world;
-	XMMATRIX view;
-	XMMATRIX projection;
+	XMMATRIX worldView;
+	XMMATRIX worldViewProjection;
 };
 Camera gCamera;
 
@@ -829,9 +829,15 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	XMMATRIX WorldView = XMMatrixMultiply(View, World);
 	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
 	
+
+	
+	gCamera.world = World;
+	gCamera.worldView = WorldView;
+	gCamera.worldViewProjection = WorldViewProj;
+
 	gMatricesPerFrame.WorldViewProj = WorldViewProj;
 	gMatricesPerFrame.World = World;
-
+	
 	gCameraData.camPos = gCamera.pos;
 }
 
@@ -905,21 +911,23 @@ void textureSetUp()
 
 float mousePicking(POINT cursorPos)
 {
-	float projX = XMVectorGetX(gCamera.projection.r[0]);
-	float projY = XMVectorGetY(gCamera.projection.r[1]);
+	float projX = XMVectorGetX(gCamera.worldViewProjection.r[0]);
+	float projY = XMVectorGetY(gCamera.worldViewProjection.r[1]);
 
-	float viewX = (2.0f * cursorPos.x / WIDTH - 1.0f) / projX;
-	float viewY = (2.0f * cursorPos.y / HEIGHT - 1.0f) / projY;
+	float viewX = (2.0f * (float)cursorPos.x / (float)WIDTH - 1.0f) / projX;
+	float viewY = -(2.0f * (float)cursorPos.y / (float)HEIGHT - 1.0f) / projY;
 
 	float currT = -1.0f;
-
-	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 0.0f, 0.0f);
+	
+	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 1.0f, 1.0f);
 
 	// view -> world
-	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
-	rayDirection = XMVector3Transform(rayDirection, inverseView);
-	rayOrigin = inverseView.r[4];
+	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.worldView);
+	rayDirection = XMVector4Transform(rayDirection, inverseView);
+	rayDirection = XMVector4Normalize(rayDirection);
+
+ 	rayOrigin = inverseView.r[4];
 	
 	currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
 	return currT;
@@ -1196,6 +1204,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_MOUSEMOVE:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_LBUTTONDOWN:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
+				case WM_LBUTTONUP:
+					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_INPUT:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 					break;
@@ -1215,22 +1227,29 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
-				mouse->SetMode(Mouse::MODE_RELATIVE);
+				
+				if (ms.leftButton)
+				{
+					mouse->SetMode(Mouse::MODE_RELATIVE);
+					yaw += XMConvertToRadians(ms.x);
+					pitch += XMConvertToRadians(ms.y);
+					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+				}
+				else
+				{
+					mouse->SetMode(Mouse::MODE_ABSOLUTE);
 
-				yaw += XMConvertToRadians(ms.x);
-				pitch += XMConvertToRadians(ms.y);
-				pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
-
-				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+				}
+			
+					XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
 				
 				float tempT = mousePicking(cursorPos);
 				if ((tempT > 0 && lastT == -1) || (tempT > 0 && tempT < lastT))
-				{
 					lastT = tempT;
-				}
+				
 				
 				velocity.x = 0;
 				velocity.y = 0;

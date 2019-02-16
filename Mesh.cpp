@@ -64,9 +64,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 			int size = std::distance(std::istream_iterator<std::string>(inputString), std::istream_iterator<std::string>());
 			inputString.clear();
 			inputString.str(line);
-
-
-			inputString >> skip; // Fortsättning av OBJLoader
+			inputString >> skip; 
 			for (int i = 0; i < size - 1; i++)
 				inputString >> vertexIndex[i] >> skip >> uvIndex[i] >> skip >> normalIndex[i];
 
