@@ -68,6 +68,7 @@ ID3D11RenderTargetView* gRenderTargetShadowMap = nullptr;
 
 ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
 ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
+ID3D11ShaderResourceView* gShaderResourceObjPlane = nullptr;
 ID3D11ShaderResourceView* gShaderResourceShadowMap = nullptr;
 
 // SAMPLERS //
@@ -75,6 +76,7 @@ ID3D11SamplerState *gSamplerState = nullptr;
 
 // BUFFERS //
 ID3D11Buffer* gVertexBuffer = nullptr;
+ID3D11Buffer* gVertexBufferPlane = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gBillboardVertexBuffer = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
@@ -840,6 +842,7 @@ std::vector<TriangleVertex> LoadOBJ(std::string &filePath, bool flippedUV, ID3D1
 
 void createTriangleData()
 {
+	//Pillar
 	std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
 	bool flippedUV = true;
 	std::vector<TriangleVertex> mesh = LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture);
@@ -862,6 +865,28 @@ void createTriangleData()
 	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 	if (FAILED(result))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+
+	//Plane
+	filePath = "Resources\\Meshes\\plane.obj";
+	flippedUV = false;
+	std::vector<TriangleVertex> meshPlane = LoadOBJ(filePath, flippedUV, &gShaderResourceObjPlane);
+	// Describe the Vertex Buffer
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	// what type of buffer will this be?
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	// what type of usage (press F1, read the docs)
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	// how big in bytes each element in the buffer is.
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * meshPlane.size();
+
+	// this struct is created just to set a pointer to the
+	// data containing the vertices.
+	data.pSysMem = &meshPlane[0];
+
+	// create a Vertex Buffer
+	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferPlane);
+	if (FAILED(result))
+		MessageBox(NULL, L"gVertexBufferPlane", L"Error", MB_OK | MB_ICONERROR);
 
 	//Fullscreen quad
 	TriangleVertexUV fsQuad[6] =
@@ -1067,7 +1092,7 @@ void rockTexture()
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;//D3D11_COMPARISON_LESS_EQUAL;
 	sampDesc.MipLODBias = 0;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
@@ -1259,6 +1284,16 @@ void renderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	gDeviceContext->Draw(69120, 0);
+
+	//Plane
+	gDeviceContext->PSSetShaderResources(0, 1, &gShaderResourceObjPlane);
+
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferPlane, &vertexSize, &offset);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetInputLayout(gVertexLayout);
+	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
+
+	gDeviceContext->Draw(6, 0);
 }
 
 void renderSecondPass()
@@ -1281,6 +1316,7 @@ void renderSecondPass()
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
+	gDeviceContext->PSSetShaderResources(3, 1, &gShaderResourceShadowMap);
 
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
@@ -1373,34 +1409,34 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	gCameraData.camPos = CamPos;
 }
 
-void renderBillboard()
-{
-	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
-	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
-
-	UINT32 vertexSize = sizeof(billboardPoint);
-	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
-
-	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
-
-	//ConstantBuffer
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-
-
-	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(1, 0);
-}
+//void renderBillboard()
+//{
+//	gDeviceContext->VSSetShader(gBillboardVertexShader, nullptr, 0);
+//	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+//	gDeviceContext->GSSetShader(gBillboardGeometryShader, nullptr, 0);
+//	gDeviceContext->PSSetShader(gBillboardPixelShader, nullptr, 0);
+//
+//	UINT32 vertexSize = sizeof(billboardPoint);
+//	UINT32 offset = 0;
+//	// specify which vertex buffer to use next.
+//	gDeviceContext->IASetVertexBuffers(0, 1, &gBillboardVertexBuffer, &vertexSize, &offset);
+//
+//	// specify the topology to use when drawing
+//	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+//	// specify the IA Layout (how is data passed)
+//	gDeviceContext->IASetInputLayout(gBillboardLayoutPosCol);
+//
+//	//ConstantBuffer
+//	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+//	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+//	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+//	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+//
+//
+//	// issue a draw call of 3 vertices (similar to OpenGL)
+//	gDeviceContext->Draw(1, 0);
+//}
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -1524,7 +1560,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				update();
 				renderShadowMap();
 				renderFirstPass();
-				renderBillboard();			
+				//renderBillboard();			
 				renderSecondPass();
 				
 				gSwapChain->Present(0, 0);
