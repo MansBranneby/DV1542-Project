@@ -179,10 +179,10 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** reso
 	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;
 	halfXYZ.z = (abs(smallestXYZ.z) + abs(biggestXYZ.z)) / 2;
 
-	DirectX::XMVECTOR center = DirectX::XMVectorSet(0.0f, halfXYZ.y, 0.0f, 0.0f);
-	DirectX::XMVECTOR half_u_v_w = DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 1.0f);
+	DirectX::XMVECTOR center = DirectX::XMVectorSet(0.0f, halfXYZ.y, 0.0f, 1.0f);
+	DirectX::XMVECTOR half_u_v_w = DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 0.0f);
 
-	DirectX::XMFLOAT3 col(1.0f, 1.0f, 1.0f);
+	DirectX::XMFLOAT3 col(1.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR rightUpNear = DirectX::XMVectorSet(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);
 	DirectX::XMVECTOR rightDownNear = DirectX::XMVectorSet(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z, 0.0f);
 	DirectX::XMVECTOR leftUpNear = DirectX::XMVectorSet(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);

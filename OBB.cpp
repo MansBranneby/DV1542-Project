@@ -67,4 +67,6 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 		return tMin;
 	else
 		return tMax;
+
+	setHighlight(true);
 }
