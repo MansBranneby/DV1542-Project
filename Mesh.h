@@ -24,19 +24,26 @@ class Mesh
 {
 private:
 	std::vector <TriangleVertex> _vertices;
+	ID3D11ShaderResourceView* _SRV_Texture = nullptr;
+	ID3D11ShaderResourceView* _SRV_Normal = nullptr;
+
 	std::string _filePath;
+
 	DirectX::XMMATRIX _transform;
+
 	BoundingVolume* _boundingVolume = nullptr;
 
 public:
 	Mesh();
-	Mesh(std::string filePath, bool flippedUV, ID3D11ShaderResourceView** resourceView, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
+	Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
 	
 	~Mesh();
 	void setVertices(std::vector <TriangleVertex> vertices);
 	void setHitBox();
 
+
 	std::vector <TriangleVertex> & getVertices();
+	ID3D11ShaderResourceView *getSRV_Texture() const;
 	int getVertCount();
 
 

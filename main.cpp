@@ -68,8 +68,10 @@ ID3D11DepthStencilView* gDSV = nullptr;
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {};
 
+ID3D11ShaderResourceView* gSRV_Texture = nullptr;
 ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
-ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
+//ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
+//ID3D11ShaderResourceView* gShaderBrickWall = nullptr;
 
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
@@ -79,6 +81,7 @@ ID3D11Buffer* gVertexBuffer = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gVertexBufferBillboard = nullptr;
 ID3D11Buffer* gVertexBufferBoundingVolume = nullptr;
+ID3D11Buffer* gVertexBufferBrickWall = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
 ID3D11Buffer* gConstantBufferCamera = nullptr;
@@ -113,6 +116,7 @@ float gRotation = 0.0f;
 float gIncrement = 0;
 float gClearColour[3] = {};
 Mesh* gPillar = nullptr;
+Mesh* gBrickWall = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -165,7 +169,8 @@ Camera gCamera;
 // MESHES //
 void createMeshes()
 {
-	gPillar = new Mesh("Resources\\Meshes\\LP_Pillar_Textured.obj", true, &gShaderResourceObjTexture, gDevice, ORIENTED_BOUNDING_BOX);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
 }
 
 HRESULT createShaders()
@@ -666,6 +671,15 @@ void createTriangleData()
 	if (FAILED(result))
 		MessageBox(NULL, L"gVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
+
+	bufferDesc.ByteWidth = sizeof(TriangleVertex) * gBrickWall->getVertCount();
+	data.pSysMem = &gBrickWall->getVertices()[0];
+	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBrickWall);
+	if (FAILED(result))
+		MessageBox(NULL, L"gVertexBufferBrickWall", L"Error", MB_OK | MB_ICONERROR);
+
+
+
 	//Fullscreen quad
 	TriangleVertexUV fsQuad[6] =
 	{
@@ -718,6 +732,8 @@ void createTriangleData()
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 
 	// bounding volume
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	bufferDesc.ByteWidth = sizeof(TriangleVertexPosCol) * gPillar->getBoundingVolume()->getVertCount();
 	data.pSysMem = &gPillar->getBoundingVolume()->getVertices()[0];
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBoundingVolume);
@@ -930,6 +946,10 @@ float mousePicking(POINT cursorPos)
 
 	// world -> local
 	currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
+	if (currT != -1.0f)
+		gPillar->getBoundingVolume()->setHighlight(true);
+	else 
+		gPillar->getBoundingVolume()->setHighlight(false);
 
 	return currT;
 }
@@ -1017,7 +1037,8 @@ void renderFirstPass()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gShaderResourceObjTexture);
+	gSRV_Texture = gPillar->getSRV_Texture();
+	gDeviceContext->PSSetShaderResources(0, 1, &gSRV_Texture);
 	UINT32 vertexSize = sizeof(TriangleVertex);
 	UINT32 offset = 0;
 
@@ -1029,6 +1050,12 @@ void renderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+
+
+	gSRV_Texture = gBrickWall->getSRV_Texture();
+	gDeviceContext->PSSetShaderResources(0, 1, &gSRV_Texture);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBrickWall, &vertexSize, &offset);
+	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 }
 
 void renderBoundingVolume()
@@ -1140,6 +1167,10 @@ void update(float lastT, POINT cursorPos)
 	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
+
+	gDeviceContext->Map(gVertexBufferBoundingVolume, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gPillar->getBoundingVolume()->getVertices()[0], sizeof(TriangleVertexPosCol) * gPillar->getBoundingVolume()->getVertCount());
+	gDeviceContext->Unmap(gVertexBufferBoundingVolume, 0);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
@@ -1258,10 +1289,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				
 				}
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-
-				
-				
-				
+	
 				velocity.x = 0;
 				velocity.y = 0;
 				velocity.z = 0;
@@ -1287,7 +1315,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
-				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window
+				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window. upper left corner of the screen = (0,0)
 				float tempT = mousePicking(cursorPos);
 				lastT = tempT;
 

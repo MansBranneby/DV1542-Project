@@ -31,7 +31,7 @@ void BoundingVolume::setHighlight(bool highlighted)
 	if (_highlighted == true)
 	{
 		for (int i = 0; i < _vertices.size(); i++)
-			_vertices.at(i).setCol(DirectX::XMFLOAT3(0.0f, 1.0f, 1.0f));
+			_vertices.at(i).setCol(DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f));
 	}
 	else
 	{
