@@ -17,6 +17,16 @@
 !OBB.cpp
 !TriangleVertex.h
 !TriangleVertex.cpp
+
+!Vertex.h
+!Vertex.cpp
+!Vertex_Pos_UV_Normal.h
+!Vertex_Pos_UV_Normal.cpp
+!Vertex_Pos_Col.h
+!Vertex_Pos_Col.cpp
+!Vertex_Pos_UV.h
+!Vertex_Pos_UV.cpp
+
 !TriangleVertexPosCol.h
 !TriangleVertexPosCol.cpp
 !BoundingVolume.h
