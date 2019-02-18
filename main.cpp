@@ -70,18 +70,14 @@ ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {};
 
 ID3D11ShaderResourceView* gSRV_Texture = nullptr;
 ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
-//ID3D11ShaderResourceView* gShaderResourceObjTexture = nullptr;
-//ID3D11ShaderResourceView* gShaderBrickWall = nullptr;
 
 // SAMPLERS //
 ID3D11SamplerState *gSamplerState = nullptr;
 
 // BUFFERS //
-ID3D11Buffer* gVertexBuffer = nullptr;
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gVertexBufferBillboard = nullptr;
 ID3D11Buffer* gVertexBufferBoundingVolume = nullptr;
-ID3D11Buffer* gVertexBufferBrickWall = nullptr;
 ID3D11Buffer* gConstantBuffer = nullptr;
 ID3D11Buffer* gConstantBufferLight = nullptr;
 ID3D11Buffer* gConstantBufferCamera = nullptr;
@@ -151,12 +147,6 @@ struct TriangleVertexUV
 	float u, v;
 };
 
-//struct TriangleVertexPosCol
-//{
-//	float x, y, z;
-//	float r, g, b;
-//};
-
 struct Camera
 {
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
@@ -207,12 +197,7 @@ HRESULT createShaders()
 		return result;
 	}
 
-	gDevice->CreateVertexShader(
-		pVS->GetBufferPointer(),
-		pVS->GetBufferSize(),
-		nullptr,
-		&gVertexShader
-	);
+	gDevice->CreateVertexShader(pVS->GetBufferPointer(),pVS->GetBufferSize(),nullptr, &gVertexShader);
 	
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
@@ -277,12 +262,7 @@ HRESULT createShaders()
 		return result;
 	}
 
-	gDevice->CreateVertexShader(
-		pVS->GetBufferPointer(),
-		pVS->GetBufferSize(),
-		nullptr,
-		&gVertexShaderBillboard
-	);
+	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderBillboard);
 
 	// BillboardLayout
 	D3D11_INPUT_ELEMENT_DESC inputDescPosCol[] = {
@@ -417,12 +397,7 @@ HRESULT createShaders()
 		return result;
 	}
 
-	gDevice->CreateGeometryShader(
-		pGS->GetBufferPointer(),
-		pGS->GetBufferSize(),
-		nullptr,
-		&gGeometryShaderBillboard
-	);
+	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderBillboard);
 
 	// we do not need anymore this COM object, so we release it.
 	pGS->Release();
@@ -648,38 +623,6 @@ HRESULT createShadersSP()
 
 void createTriangleData()
 {
-	/*std::string filePath = "Resources\\Meshes\\LP_Pillar_Textured.obj";
-	bool flippedUV = true;
-	mesh.setVertices(LoadOBJ(filePath, flippedUV, &gShaderResourceObjTexture));*/
-	// Describe the Vertex Buffer
-	D3D11_BUFFER_DESC bufferDesc;
-	memset(&bufferDesc, 0, sizeof(bufferDesc));
-	// what type of buffer will this be?
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	// what type of usage (press F1, read the docs)
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	// how big in bytes each element in the buffer is.
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * gPillar->getVertCount();
-
-	// this struct is created just to set a pointer to the
-	// data containing the vertices.
-	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &gPillar->getVertices()[0];
-
-	// create a Vertex Buffer
-	HRESULT result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
-	if (FAILED(result))
-		MessageBox(NULL, L"gVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
-
-
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * gBrickWall->getVertCount();
-	data.pSysMem = &gBrickWall->getVertices()[0];
-	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBrickWall);
-	if (FAILED(result))
-		MessageBox(NULL, L"gVertexBufferBrickWall", L"Error", MB_OK | MB_ICONERROR);
-
-
-
 	//Fullscreen quad
 	TriangleVertexUV fsQuad[6] =
 	{
@@ -717,14 +660,20 @@ void createTriangleData()
 	D3D11_SUBRESOURCE_DATA dataFSQuad;
 	dataFSQuad.pSysMem = fsQuad;
 
+	// Describe the Vertex Buffer
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	D3D11_SUBRESOURCE_DATA data;
+
 	// create a Vertex Buffer
-	result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
+	HRESULT result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
 	if (FAILED(result))
 		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
 	// billboard
 	TriangleVertexPosCol billboardPoint(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
-
 	bufferDesc.ByteWidth = sizeof(billboardPoint);
 	data.pSysMem = &billboardPoint;
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
@@ -899,7 +848,7 @@ void createDepthStencil()
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 }
 
-void rockTexture()
+void samplerSetUp()
 {
 	//Sampler
 	D3D11_SAMPLER_DESC sampDesc;
@@ -918,11 +867,6 @@ void rockTexture()
 		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 }
 
-void textureSetUp()
-{
-	rockTexture();
-}
-
 float mousePicking(POINT cursorPos)
 {
 	float currT = -1.0f;
@@ -930,21 +874,22 @@ float mousePicking(POINT cursorPos)
 	float projY = XMVectorGetY(gCamera.projection.r[1]);
 
 	// screen -> view
-	float viewX = (2.0f * (float)cursorPos.x / (float)WIDTH - 1.0f) / projX;
-	float viewY = (-2.0f * (float)cursorPos.y / (float)HEIGHT + 1.0f) / projY;
+	float viewX = (2.0f * (float)cursorPos.x / WIDTH - 1.0f) / projX;
+	float viewY = (-2.0f * (float)cursorPos.y / HEIGHT + 1.0f) / projY;
 
 	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0);
-	//XMVECTOR rayOrigin = gCamera.pos;
 	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 1.0f, 0.0f);
 
 	// view -> world
 	XMMATRIX inverseWorldView = XMMatrixInverse(nullptr, gCamera.view);
 	rayOrigin = inverseWorldView.r[3];
-	//rayOrigin = XMVector4Transform(rayOrigin, inverseWorldView);
 	rayDirection = XMVector4Transform(rayDirection, inverseWorldView);
 	rayDirection = XMVector4Normalize(rayDirection);
 
 	// world -> local
+
+
+	// change colour of pillar when picked
 	currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
 	if (currT != -1.0f)
 		gPillar->getBoundingVolume()->setHighlight(true);
@@ -1032,29 +977,29 @@ void SetViewport()
 
 void renderFirstPass()
 {
+	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 offset = 0;
+
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gSRV_Texture = gPillar->getSRV_Texture();
-	gDeviceContext->PSSetShaderResources(0, 1, &gSRV_Texture);
-	UINT32 vertexSize = sizeof(TriangleVertex);
-	UINT32 offset = 0;
 
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
-
-	gSRV_Texture = gBrickWall->getSRV_Texture();
-	gDeviceContext->PSSetShaderResources(0, 1, &gSRV_Texture);
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBrickWall, &vertexSize, &offset);
+	// BRICK WALL
+	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 }
 
@@ -1192,7 +1137,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		createTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
-		textureSetUp();
+		samplerSetUp();
 		createConstantBuffer();
 
 		ShowWindow(wndHandle, nCmdShow);
@@ -1285,8 +1230,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					yaw += XMConvertToRadians(deltaX);
 					pitch += XMConvertToRadians(deltaY);
 					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
-
-				
 				}
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 	
@@ -1352,7 +1295,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
 
-		gVertexBuffer->Release();
 		gVertexBufferFSQuad->Release();
 		gConstantBuffer->Release();
 		gShaderResourceDeferred[0]->Release();
@@ -1399,7 +1341,6 @@ HWND InitWindow(HINSTANCE hInstance)
 
 	RECT rc = { 0, 0, (int)WIDTH, (int)HEIGHT };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-
 	HWND handle = CreateWindow(
 		L"BTH_D3D_DEMO",
 		L"BTH Direct3D Demo",
@@ -1412,6 +1353,8 @@ HWND InitWindow(HINSTANCE hInstance)
 		nullptr,
 		hInstance,
 		nullptr);
+	
+	int dab = GetClientRect(handle, &rc);
 
 	return handle;
 }

@@ -26,11 +26,8 @@ private:
 	std::vector <TriangleVertex> _vertices;
 	ID3D11ShaderResourceView* _SRV_Texture = nullptr;
 	ID3D11ShaderResourceView* _SRV_Normal = nullptr;
-
-	std::string _filePath;
-
-	DirectX::XMMATRIX _transform;
-
+	ID3D11Buffer* _vertexBuffer = nullptr;
+	DirectX::XMMATRIX _worldMatrix;
 	BoundingVolume* _boundingVolume = nullptr;
 
 public:
@@ -39,14 +36,11 @@ public:
 	
 	~Mesh();
 	void setVertices(std::vector <TriangleVertex> vertices);
-	void setHitBox();
-
 
 	std::vector <TriangleVertex> & getVertices();
-	ID3D11ShaderResourceView *getSRV_Texture() const;
+	ID3D11ShaderResourceView** getSRV_Texture();
+	ID3D11Buffer** getVertexBuffer();
 	int getVertCount();
-
-
 
 	BoundingVolume* getBoundingVolume();
 };
