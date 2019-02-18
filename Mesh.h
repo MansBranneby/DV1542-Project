@@ -1,5 +1,5 @@
 #pragma once
-#include "TriangleVertex.h"
+#include "Vertex_Pos_UV_Normal.h"
 #include "BoundingVolume.h"
 #include "OBB.h"
 
@@ -23,7 +23,7 @@ enum boundingVolumes { ORIENTED_BOUNDING_BOX, AXIS_ALIGNED_BOUNDING_BOX, SPHERE 
 class Mesh
 {
 private:
-	std::vector <TriangleVertex> _vertices;
+	std::vector <Vertex*> _vertices;
 	ID3D11ShaderResourceView* _SRV_Texture = nullptr;
 	ID3D11ShaderResourceView* _SRV_Normal = nullptr;
 	ID3D11Buffer* _vertexBuffer = nullptr;
@@ -33,11 +33,11 @@ private:
 public:
 	Mesh();
 	Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
-	
+	Mesh(std::vector <Vertex*> vertices, ID3D11Device* device);
 	~Mesh();
-	void setVertices(std::vector <TriangleVertex> vertices);
+	void setVertices(std::vector <Vertex*> vertices);
 
-	std::vector <TriangleVertex> & getVertices();
+	std::vector <Vertex*> & getVertices();
 	ID3D11ShaderResourceView** getSRV_Texture();
 	ID3D11Buffer** getVertexBuffer();
 	int getVertCount();

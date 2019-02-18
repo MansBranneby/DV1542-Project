@@ -19,7 +19,7 @@
 #include <wchar.h>
 // Own classes
 #include "Mesh.h"
-#include "TriangleVertex.h"
+#include "Vertex.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -113,6 +113,7 @@ float gIncrement = 0;
 float gClearColour[3] = {};
 Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
+Mesh* gBillboard = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -161,6 +162,12 @@ void createMeshes()
 {
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
+
+
+	std::vector <Vertex*> billboard;
+	Vertex* billboardVert = new Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
+	billboard.push_back(billboardVert);
+	gBillboard = new Mesh(billboard, gDevice);
 }
 
 HRESULT createShaders()
@@ -673,17 +680,17 @@ void createTriangleData()
 		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
 	// billboard
-	TriangleVertexPosCol billboardPoint(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
+	/*TriangleVertexPosCol billboardPoint(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
 	bufferDesc.ByteWidth = sizeof(billboardPoint);
 	data.pSysMem = &billboardPoint;
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);*/
 
 	// bounding volume
 	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bufferDesc.ByteWidth = sizeof(TriangleVertexPosCol) * gPillar->getBoundingVolume()->getVertCount();
+	bufferDesc.ByteWidth = sizeof(gPillar->getBoundingVolume()->getVertices());
 	data.pSysMem = &gPillar->getBoundingVolume()->getVertices()[0];
 	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBoundingVolume);
 	if (FAILED(result))
@@ -977,7 +984,7 @@ void SetViewport()
 
 void renderFirstPass()
 {
-	UINT32 vertexSize = sizeof(TriangleVertex);
+	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
 
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
@@ -1011,7 +1018,7 @@ void renderBoundingVolume()
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderBoundingVolume, nullptr, 0);
 
-	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
+	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
 	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBoundingVolume, &vertexSize, &offset);
@@ -1024,7 +1031,6 @@ void renderBoundingVolume()
 	//ConstantBuffer
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 	
-	// issue a draw call of 3 vertices (similar to OpenGL)
 	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
 }
 
@@ -1036,10 +1042,10 @@ void renderBillboard()
 	gDeviceContext->GSSetShader(gGeometryShaderBillboard, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderBillboard, nullptr, 0);
 	
-	UINT32 vertexSize = sizeof(TriangleVertexPosCol);
+	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBillboard, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, gBillboard->getVertexBuffer(), &vertexSize, &offset);
 
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -1052,7 +1058,7 @@ void renderBillboard()
 	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(1, 0);
+	gDeviceContext->Draw(gBillboard->getVertCount(), 0);
 }
 
 void renderSecondPass()
@@ -1114,7 +1120,7 @@ void update(float lastT, POINT cursorPos)
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
 
 	gDeviceContext->Map(gVertexBufferBoundingVolume, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gPillar->getBoundingVolume()->getVertices()[0], sizeof(TriangleVertexPosCol) * gPillar->getBoundingVolume()->getVertCount());
+	memcpy(mappedMemory.pData, &gPillar->getBoundingVolume()->getVertices()[0], sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
 	gDeviceContext->Unmap(gVertexBufferBoundingVolume, 0);
 }
 

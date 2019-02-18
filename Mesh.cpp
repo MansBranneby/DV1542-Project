@@ -45,8 +45,6 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 				smallestXYZ.y = tempPos.y;
 			if (smallestXYZ.z > tempPos.z)
 				smallestXYZ.z = tempPos.z;
-
-
 		}
 		else if (line.substr(0, 3) == "vt ")
 		{
@@ -122,7 +120,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 			DirectX::XMFLOAT2 vertUV = DirectX::XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
 			DirectX::XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-			TriangleVertex tempTriangleVertex(vertPos, vertUV, vertNormal);
+			Vertex* tempTriangleVertex = new Vertex_Pos_UV_Normal(vertPos, vertUV, vertNormal);
 			_vertices.push_back(tempTriangleVertex);
 		}
 	}
@@ -138,8 +136,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 			DirectX::XMFLOAT2 vertUV = vtxUV[uvIndex - 1];
 			DirectX::XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
-			TriangleVertex tempTriangle(vertPos, vertUV, vertNormal);
-			_vertices.push_back(tempTriangle);
+			Vertex* tempTriangleVertex = new Vertex_Pos_UV_Normal(vertPos, vertUV, vertNormal);
+			_vertices.push_back(tempTriangleVertex);
 		}
 	}
 	inFile.close();
@@ -169,7 +167,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	HRESULT hr = CoInitialize(NULL);
 	hr = DirectX::CreateWICTextureFromFile(device, fileName, NULL, &_SRV_Texture);
 	if (FAILED(hr))
-		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"ERROR TEXTURE -> Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 
 	// VERTEX BUFFER
 	//
@@ -177,7 +175,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(TriangleVertex) * _vertices.size();
+	bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices.size();
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = &_vertices[0];
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
@@ -195,41 +193,41 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	DirectX::XMVECTOR half_u_v_w = DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 0.0f);
 
 	DirectX::XMFLOAT3 col(0.0f, 0.0f, 0.0f);
-	DirectX::XMVECTOR rightUpNear = DirectX::XMVectorSet(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);
-	DirectX::XMVECTOR rightDownNear = DirectX::XMVectorSet(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z, 0.0f);
-	DirectX::XMVECTOR leftUpNear = DirectX::XMVectorSet(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z, 0.0f);
-	DirectX::XMVECTOR leftDownNear = DirectX::XMVectorSet(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z, 0.0f);
+	DirectX::XMFLOAT3 rightUpNear(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 rightDownNear(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 leftUpNear(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 leftDownNear(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z);
 
-	DirectX::XMVECTOR rightUpFar = DirectX::XMVectorSet(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z, 0.0f);
-	DirectX::XMVECTOR rightDownFar = DirectX::XMVectorSet(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z, 0.0f);
-	DirectX::XMVECTOR leftUpFar = DirectX::XMVectorSet(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z, 0.0f);
-	DirectX::XMVECTOR leftDownFar = DirectX::XMVectorSet(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z, 0.0f);
+	DirectX::XMFLOAT3 rightUpFar(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 rightDownFar(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 leftUpFar(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 leftDownFar(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z);
 	
-	std::vector <TriangleVertexPosCol> vertices;
-	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
-	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(rightDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftDownFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpNear, col));
-	vertices.push_back(TriangleVertexPosCol(leftUpFar, col));
-	vertices.push_back(TriangleVertexPosCol(rightUpFar, col));
+	std::vector <Vertex_Pos_Col> vertices;
+	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
+	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
+	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
+	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
 
 	switch (boundingVolumeChoice)
 	{
@@ -245,16 +243,34 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	}
 }
 
+Mesh::Mesh(std::vector<Vertex*> vertices, ID3D11Device* device)
+{
+	_vertices = vertices;
+
+	// Describe the Vertex Buffer
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	D3D11_SUBRESOURCE_DATA data;
+
+	bufferDesc.ByteWidth = sizeof(_vertices.size());
+	data.pSysMem = &_vertices[0];
+	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+}
+
 Mesh::~Mesh()
 {
 }
 
-void Mesh::setVertices(std::vector<TriangleVertex> vertices)
+void Mesh::setVertices(std::vector<Vertex*> vertices)
 {
 	_vertices = vertices;
 }
 
-std::vector <TriangleVertex> & Mesh::getVertices()
+std::vector <Vertex*> & Mesh::getVertices()
 {
 	return _vertices;
 }
