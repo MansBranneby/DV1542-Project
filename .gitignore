@@ -21,3 +21,9 @@
 !TriangleVertexPosCol.cpp
 !BoundingVolume.h
 !BoundingVolume.cpp
+!Vertex_Pos_UV_Normal.h
+!Vertex_Pos_UV_Normal.cpp
+!Vertex_Pos_Col.h
+!Vertex_Pos_Col.cpp
+!Vertex.h
+!Vertex.cpp

@@ -1,18 +1,18 @@
 #pragma once
 #include <DirectXMath.h>
-#include <TriangleVertexPosCol.h>
+#include <Vertex_Pos_Col.h>
 #include <vector>
 class BoundingVolume
 {
 private:
 	DirectX::XMVECTOR _center;
 	DirectX::XMMATRIX _worldMatrix;
-	std::vector <TriangleVertexPosCol> _vertices;
+	std::vector <Vertex_Pos_Col> _vertices;
 	bool _highlighted;
 
 public:
 	BoundingVolume();
-	BoundingVolume(DirectX::XMVECTOR center, std::vector <TriangleVertexPosCol> vertices);
+	BoundingVolume(DirectX::XMVECTOR center, std::vector <Vertex_Pos_Col> vertices);
 	~BoundingVolume();
 
 	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);
@@ -20,7 +20,7 @@ public:
 	void setHighlight(bool highlighted);
 
 	DirectX::XMVECTOR getCenter();
-	std::vector <TriangleVertexPosCol> & getVertices();
+	std::vector <Vertex_Pos_Col> & getVertices();
 	int getVertCount();
 
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;

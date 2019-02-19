@@ -1,7 +1,7 @@
 #pragma once
 #include <DirectXMath.h>
 
-class TriangleVertex
+class Vertex_Pos_UV_Normal
 {
 private:
 	DirectX::XMFLOAT3 _pos;
@@ -9,9 +9,9 @@ private:
 	DirectX::XMFLOAT3 _normal;
 
 public:
-	TriangleVertex();
-	TriangleVertex(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV, DirectX::XMFLOAT3 normal);
-	~TriangleVertex();
+	Vertex_Pos_UV_Normal();
+	Vertex_Pos_UV_Normal(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV, DirectX::XMFLOAT3 normal);
+	~Vertex_Pos_UV_Normal();
 
 	void setPos(float x, float y, float z);
 	void setUV(float u, float v);
