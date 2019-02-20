@@ -122,7 +122,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 			DirectX::XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
 			Vertex_Pos_UV_Normal tempTriangleVertex(vertPos, vertUV, vertNormal);
-			_vertices.push_back(tempTriangleVertex);
+			_vertices_Pos_UV_Normal.push_back(tempTriangleVertex);
 		}
 	}
 	else
@@ -138,7 +138,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 			DirectX::XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
 
 			Vertex_Pos_UV_Normal tempTriangle(vertPos, vertUV, vertNormal);
-			_vertices.push_back(tempTriangle);
+			_vertices_Pos_UV_Normal.push_back(tempTriangle);
 		}
 	}
 	inFile.close();
@@ -176,9 +176,9 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices.size();
+	bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = &_vertices[0];
+	data.pSysMem = _vertices_Pos_UV_Normal.data();
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
 	if (FAILED(result))
 		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
@@ -233,7 +233,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(center, half_u_v_w, vertices);
+		_boundingVolume = new OBB(center, half_u_v_w, vertices, device);
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:
@@ -244,7 +244,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingV
 	}
 }
 
-Mesh::Mesh(std::vector<Vertex*> vertices_Pos_Col, ID3D11Device * device)
+Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
 {
 	_vertices_Pos_Col = vertices_Pos_Col;
 
@@ -255,12 +255,17 @@ Mesh::Mesh(std::vector<Vertex*> vertices_Pos_Col, ID3D11Device * device)
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	D3D11_SUBRESOURCE_DATA data;
 	// billboard
-	bufferDesc.ByteWidth = sizeof(Vertex*) * _vertices_Pos_Col.size();
-	data.pSysMem = &_vertices_Pos_Col[0];
+	bufferDesc.ByteWidth = sizeof(Vertex_Pos_Col) * _vertices_Pos_Col.size();
+	data.pSysMem = _vertices_Pos_Col.data();
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
 	if (FAILED(result))
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 	
+}
+
+Mesh::Mesh(std::vector <Vertex_Pos_UV> vertices_Pos_UV, ID3D11Device* device)
+{
+
 }
 
 Mesh::~Mesh()
@@ -269,12 +274,12 @@ Mesh::~Mesh()
 
 void Mesh::setVertices(std::vector<Vertex_Pos_UV_Normal> vertices)
 {
-	_vertices = vertices;
+	_vertices_Pos_UV_Normal = vertices;
 }
 
 std::vector <Vertex_Pos_UV_Normal> & Mesh::getVertices()
 {
-	return _vertices;
+	return _vertices_Pos_UV_Normal;
 }
 
 ID3D11ShaderResourceView* *Mesh::getSRV_Texture()
@@ -289,7 +294,7 @@ ID3D11Buffer* *Mesh::getVertexBuffer()
 
 int Mesh::getVertCount()
 {
-	return _vertices.size();
+	return _vertices_Pos_UV_Normal.size();
 }
 
 BoundingVolume * Mesh::getBoundingVolume()

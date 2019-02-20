@@ -5,8 +5,8 @@ OBB::OBB()
 	_half_u_v_w = { 0.0f, 0.0f, 0.0f, 0.0f };
 }
 
-OBB::OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w, std::vector <Vertex_Pos_Col> vertices)
-	:BoundingVolume(center, vertices)
+OBB::OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w, std::vector <Vertex_Pos_Col> vertices, ID3D11Device* device)
+	:BoundingVolume(center, vertices, device)
 {
 	_half_u_v_w = half_u_v_w;
 }

@@ -114,6 +114,7 @@ float gClearColour[3] = {};
 Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
+Mesh* gBoundingVolume = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -163,8 +164,8 @@ void createMeshes()
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
 
-	std::vector <Vertex*> arr;
-	arr.push_back(new Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
+	std::vector <Vertex_Pos_Col> arr;
+	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 }
 
@@ -665,34 +666,10 @@ void createTriangleData()
 	D3D11_SUBRESOURCE_DATA dataFSQuad;
 	dataFSQuad.pSysMem = fsQuad;
 
-	// Describe the Vertex Buffer
-	D3D11_BUFFER_DESC bufferDesc;
-	memset(&bufferDesc, 0, sizeof(bufferDesc));
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	D3D11_SUBRESOURCE_DATA data;
-
 	// create a Vertex Buffer
 	HRESULT result = gDevice->CreateBuffer(&bufferDescFSQuad, &dataFSQuad, &gVertexBufferFSQuad);
 	if (FAILED(result))
 		MessageBox(NULL, L"gVertexBufferFSQuad", L"Error", MB_OK | MB_ICONERROR);
-
-	//// billboard
-	//Vertex_Pos_Col billboardPoint(XMVectorSet(2.0f, 8.0f, -3.0f, 0.0f), XMFLOAT3(1.0f, 1.0f, 1.0f));
-	//bufferDesc.ByteWidth = sizeof(billboardPoint);
-	//data.pSysMem = &billboardPoint;
-	//result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBillboard);
-	//if (FAILED(result))
-	//	MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
-
-	// bounding volume
-	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bufferDesc.ByteWidth = sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount();
-	data.pSysMem = &gPillar->getBoundingVolume()->getVertices()[0];
-	result = gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBufferBoundingVolume);
-	if (FAILED(result))
-		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void createConstantBuffer()
@@ -1019,7 +996,7 @@ void renderBoundingVolume()
 	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
 	UINT32 offset = 0;
 	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBufferBoundingVolume, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
 
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -1056,7 +1033,7 @@ void renderBillboard()
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
 	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-	// issue a draw call of 3 vertices (similar to OpenGL)
+
 	gDeviceContext->Draw(1, 0);
 }
 
@@ -1118,9 +1095,9 @@ void update(float lastT, POINT cursorPos)
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
 
-	gDeviceContext->Map(gVertexBufferBoundingVolume, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gPillar->getBoundingVolume()->getVertices()[0], sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
-	gDeviceContext->Unmap(gVertexBufferBoundingVolume, 0);
+	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
+	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)

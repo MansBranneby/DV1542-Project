@@ -1,7 +1,6 @@
 struct GS_IN
 {
 	float4 pos : SV_POSITION;
-	float2 tex : TEXCOORD;
 	float3 col : COLOUR;
 };
 
@@ -41,9 +40,12 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 	float3 WorldUpVector = { 0.0f, 1.0f, 0.0f };
 	float3 billboardRightVector = normalize(cross(billboardNormal, WorldUpVector));
 	float3 billboardUpVector = normalize(cross(billboardRightVector, billboardNormal));
-	billboardRightVector *= halfWidth;
+
+	// Used for calculation of quad vertices
+	billboardRightVector *= halfWidth; 
 	billboardUpVector *= halfHeight;
 
+	// Vertex positions of quad
 	float3 billboardVertices[4];
 	billboardVertices[0] = input[0].pos.xyz - billboardRightVector - billboardUpVector;
 	billboardVertices[1] = input[0].pos.xyz - billboardRightVector + billboardUpVector;
@@ -55,10 +57,12 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 	{
 		element.pos = mul(float4(billboardVertices[i].xyz, 1.0f), worldViewProj);
 		element.worldPos = mul(billboardVertices[i], world);
+		element.worldNor = mul(billboardNormal, world);
+		element.col = input[0].col;
 
-		element.worldNor = float4( 0.0f, 0.0f, 0.0f, 0.0f);
-		element.tex = input[0].tex;
-		element.col = float4(0.9f, 0.1f, 0.0f, 1.0f);
+		// Currently not used, therefore sett arbitrary value
+		element.tex = float2(0.0f, 0.0f);
+
 		output.Append(element);
 	}
 }

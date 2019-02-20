@@ -27,3 +27,5 @@
 !Vertex_Pos_Col.cpp
 !Vertex.h
 !Vertex.cpp
+!Vertex_Pos_UV.h
+!Vertex_Pos_UV.cpp
