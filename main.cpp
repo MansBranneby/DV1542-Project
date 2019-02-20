@@ -161,8 +161,8 @@ Camera gCamera;
 // MESHES //
 void createMeshes()
 {
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, gDevice, ORIENTED_BOUNDING_BOX);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
 
 	std::vector <Vertex_Pos_Col> arr;
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));

@@ -1,4 +1,5 @@
 #pragma once
+#include "Vertex_Pos_UV_Normal_Tangent_BiTangent.h"
 #include "Vertex_Pos_UV_Normal.h"
 #include "Vertex_Pos_UV.h"
 #include "BoundingVolume.h"
@@ -24,6 +25,7 @@ enum boundingVolumes { ORIENTED_BOUNDING_BOX, AXIS_ALIGNED_BOUNDING_BOX, SPHERE 
 class Mesh
 {
 private:
+	std::vector <Vertex_Pos_UV_Normal_Tangent_BiTangent> _vertices_Pos_UV_Normal_Tangent_BiTangent;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	std::vector <Vertex_Pos_Col> _vertices_Pos_Col;
 	std::vector <Vertex_Pos_UV> _vertices_Pos_UV;
@@ -36,7 +38,7 @@ private:
 
 public:
 	Mesh();
-	Mesh(std::string filePath, bool flippedUV, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
+	Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
 	Mesh(std::vector <Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device* device);
 	Mesh(std::vector <Vertex_Pos_UV> vertices_Pos_UV, ID3D11Device* device);
 	~Mesh();
