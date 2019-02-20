@@ -11,6 +11,8 @@
 !PixelShaderBillboard.hlsl
 !PixelShaderBoundingVolume.hlsl
 !VertexShaderNormalMap.hlsl
+!GeometryShaderNormalMap.hlsl
+!PixelShaderNormalMap.hlsl
 !Resources/
 !Mesh.h
 !Mesh.cpp

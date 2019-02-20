@@ -164,15 +164,25 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	if (FAILED(hr))
 		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
 
+	
 	// VERTEX BUFFER
 	//
+
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
 	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = _vertices_Pos_UV_Normal.data();
+	if (normalMapped)
+	{
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
+		data.pSysMem = _vertices_Pos_UV_Normal_Tangent_BiTangent.data();
+	}
+	else
+	{
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
+		data.pSysMem = _vertices_Pos_UV_Normal.data();
+	}
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
 	if (FAILED(result))
 		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
@@ -241,21 +251,21 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	if (normalMapped)
 	{
 		//Calculate triangle tangents
-		for (int i = 0; i < _vertices_Pos_UV_Normal.size() / 3; i += 2)
+		for (int i = 0; i <= _vertices_Pos_UV_Normal_Tangent_BiTangent.size() / 3; i += 2)
 		{
 			// Loading from XMFLOAT3 to XMVECTOR in order to use vector subtraction
-			DirectX::XMVECTOR vert1 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal.at(i).getPos());
-			DirectX::XMVECTOR vert2 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal.at(i + 1).getPos());
-			DirectX::XMVECTOR vert3 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal.at(i + 2).getPos());
+			DirectX::XMVECTOR vert1 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getPos());
+			DirectX::XMVECTOR vert2 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getPos());
+			DirectX::XMVECTOR vert3 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getPos());
 
 			// Pos
 			DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(vert2, vert1);
 			DirectX::XMVECTOR v2 = DirectX::XMVectorSubtract(vert3, vert1);
 		
 			// UV
-			vert1 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal.at(i).getUV());
-			vert2 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal.at(i + 1).getUV());
-			vert3 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal.at(i + 2).getUV());
+			vert1 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getUV());
+			vert2 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getUV());
+			vert3 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getUV());
 
 			 // U
 			float s1 = DirectX::XMVectorGetX(vert2) - DirectX::XMVectorGetX(vert1);

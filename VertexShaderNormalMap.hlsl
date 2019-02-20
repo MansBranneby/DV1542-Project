@@ -1,35 +1,26 @@
-struct DS_OUTPUT
+struct VS_IN
 {
-	float4 vPosition  : SV_POSITION;
-	// TODO: change/add other stuff
+	float3 pos : POSITION;
+	float2 tex : TEXCOORD;
+	float3 nor : NORMAL;
+	float3 tan : TANGENT;
+	float3 biTan : BI_TANGENT;
 };
 
-// Output control point
-struct HS_CONTROL_POINT_OUTPUT
+struct VS_OUT
 {
-	float3 vPosition : WORLDPOS; 
+	float4 pos : SV_POSITION;
+	float2 tex : TEXCOORD;
+	float3 col : COLOUR;
 };
 
-// Output patch constant data.
-struct HS_CONSTANT_DATA_OUTPUT
+VS_OUT VS_main(VS_IN input)
 {
-	float EdgeTessFactor[3]			: SV_TessFactor; // e.g. would be [4] for a quad domain
-	float InsideTessFactor			: SV_InsideTessFactor; // e.g. would be Inside[2] for a quad domain
-	// TODO: change/add other stuff
-};
+	VS_OUT output = (VS_OUT)0;
 
-#define NUM_CONTROL_POINTS 3
+	output.pos = float4(input.pos, 1.0f);
+	output.tex = input.tex;
+	output.col = input.nor;
 
-[domain("tri")]
-DS_OUTPUT main(
-	HS_CONSTANT_DATA_OUTPUT input,
-	float3 domain : SV_DomainLocation,
-	const OutputPatch<HS_CONTROL_POINT_OUTPUT, NUM_CONTROL_POINTS> patch)
-{
-	DS_OUTPUT Output;
-
-	Output.vPosition = float4(
-		patch[0].vPosition*domain.x+patch[1].vPosition*domain.y+patch[2].vPosition*domain.z,1);
-
-	return Output;
+	return output;
 }

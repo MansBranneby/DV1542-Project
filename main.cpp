@@ -86,6 +86,7 @@ ID3D11Buffer* gConstantBufferBillboard = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
 ID3D11InputLayout* gVertexLayoutPosCol = nullptr;
+ID3D11InputLayout* gVertexLayout_Pos_UV_Normal_Tan_BiTan = nullptr;
 
 
 //TEXTURES
@@ -96,15 +97,17 @@ ID3D11Texture2D *gTexDeferredCol = nullptr;
 // SHADERS //
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11VertexShader* gVertexShaderBoundingVolume = nullptr;
+ID3D11VertexShader* gVertexShaderNormalMap = nullptr;
 ID3D11VertexShader* gVertexShaderSP = nullptr;
 ID3D11VertexShader* gVertexShaderBillboard = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gPixelShaderSP = nullptr;
 ID3D11PixelShader* gPixelShaderBoundingVolume = nullptr;
 ID3D11PixelShader* gPixelShaderBillboard = nullptr;
+ID3D11PixelShader* gPixelShaderNormalMap = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gGeometryShaderBillboard = nullptr;
-
+ID3D11GeometryShader* gGeometryShaderNormalMap = nullptr;
 // GLOBALS //
 float gFloat = 1.0f;
 float gDist = 0.0f;
@@ -161,8 +164,8 @@ Camera gCamera;
 // MESHES //
 void createMeshes()
 {
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
 
 	std::vector <Vertex_Pos_Col> arr;
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
@@ -203,7 +206,7 @@ HRESULT createShaders()
 		return result;
 	}
 
-	gDevice->CreateVertexShader(pVS->GetBufferPointer(),pVS->GetBufferSize(),nullptr, &gVertexShader);
+	gDevice->CreateVertexShader(pVS->GetBufferPointer(),pVS->GetBufferSize(), nullptr, &gVertexShader);
 	
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
@@ -267,7 +270,6 @@ HRESULT createShaders()
 			pVS->Release();
 		return result;
 	}
-
 	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderBillboard);
 
 	// BillboardLayout
@@ -297,30 +299,16 @@ HRESULT createShaders()
 		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
+	pVS = nullptr;
 
 	//// Vertex shader bounding volume
-	pVS = nullptr;
-	//Billboard vertex shader
-	// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-	result = D3DCompileFromFile(
-		L"VertexShaderBoundingVolume.hlsl", // filename
-		nullptr,		// optional macros
-		nullptr,		// optional include files
-		"VS_main",		// entry point
-		"vs_5_0",		// shader model (target)
-		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-		0,				// IGNORE...DEPRECATED.
-		&pVS,			// double pointer to ID3DBlob		
-		&errorBlob		// pointer for Error Blob messages.
-	);
-
+	result = D3DCompileFromFile(L"VertexShaderBoundingVolume.hlsl", nullptr, nullptr, "VS_main", "vs_5_0", D3DCOMPILE_DEBUG, 0,	&pVS, &errorBlob);
 	// compilation failed?
 	if (FAILED(result))
 	{
 		if (errorBlob)
 		{
 			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			// release "reference" to errorBlob interface object
 			errorBlob->Release();
 		}
 		if (pVS)
@@ -330,6 +318,84 @@ HRESULT createShaders()
 
 	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderBoundingVolume);
 	pVS->Release();
+	pVS = nullptr;
+
+	//
+//// Vertex shader normal map
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+	result = D3DCompileFromFile(L"VertexShaderNormalMap.hlsl", nullptr, nullptr, "VS_main", "vs_5_0", D3DCOMPILE_DEBUG, 0, &pVS, &errorBlob);
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			errorBlob->Release();
+		}
+		if (pVS)
+			pVS->Release();
+		return result;
+	}
+
+	result = gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShaderNormalMap);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error VertexShadowMap", L"Error", MB_OK | MB_ICONERROR);
+
+	D3D11_INPUT_ELEMENT_DESC inputDesc_Pos_UV_Col_Tan_BiTan[] =
+	{
+		{
+			"POSITION",		// "semantic" name in shader
+			0,				// "semantic" index (not used)
+			DXGI_FORMAT_R32G32B32_FLOAT, // size of ONE element (3 floats)
+			0,							 // input slot
+			0,							 // offset of first element
+			D3D11_INPUT_PER_VERTEX_DATA, // specify data PER vertex
+			0							 // used for INSTANCING (ignore)
+		},
+		{
+			"TEXCOORD",
+			0,
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			12,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"NORMAL",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			20,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"TANGENT",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			32,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"BI_TANGENT",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			44,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+	};
+	result = gDevice->CreateInputLayout(inputDesc_Pos_UV_Col_Tan_BiTan, ARRAYSIZE(inputDesc_Pos_UV_Col_Tan_BiTan), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout_Pos_UV_Normal_Tan_BiTan);
+	if (FAILED(result))
+		MessageBox(NULL, L"ErrorVertexLayoutShadowMap", L"Error", MB_OK | MB_ICONERROR);
+
+	pVS->Release();
+	pVS = nullptr;
 
 	////GeometryShader
 	ID3DBlob* pGS = nullptr;
@@ -362,18 +428,14 @@ HRESULT createShaders()
 		return result;
 	}
 
-	gDevice->CreateGeometryShader(
-		pGS->GetBufferPointer(),
-		pGS->GetBufferSize(),
-		nullptr,
-		&gGeometryShader
-	);
-
+	result = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShader);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pGS->Release();
+	pGS = nullptr;
 
 	////GeometryShader for billboarding
-	pGS = nullptr;
 	if (errorBlob) errorBlob->Release();
 	errorBlob = nullptr;
 
@@ -402,10 +464,40 @@ HRESULT createShaders()
 			pGS->Release();
 		return result;
 	}
-
 	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderBillboard);
+	pGS->Release();
+	pGS = nullptr;
 
-	// we do not need anymore this COM object, so we release it.
+	////GeometryShader for normal mapping
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"GeometryShaderNormalMap.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"GS_main",		// entry point
+		"gs_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+		0,				// IGNORE...DEPRECATED.
+		&pGS,			// double pointer to ID3DBlob		
+		&errorBlob		// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pGS)
+			pGS->Release();
+		return result;
+	}
+	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderNormalMap);
 	pGS->Release();
 
 	////create pixel shader
@@ -440,11 +532,10 @@ HRESULT createShaders()
 	}
 
 	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
-
 	pPS->Release();
+	pPS = nullptr;
 
 	////create pixel shader billboard
-	pPS = nullptr;
 	if (errorBlob) errorBlob->Release();
 	errorBlob = nullptr;
 
@@ -473,12 +564,49 @@ HRESULT createShaders()
 			pPS->Release();
 		return result;
 	}
-
-	HRESULT hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBillboard);
-	if(FAILED(hr))
+	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBillboard);
+	if(FAILED(result))
 		MessageBox(NULL, L"Error PixelShaderBillboard", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
+	pPS = nullptr;
+
+	////create pixel shader for normal mapping
+	if (errorBlob) errorBlob->Release();
+	errorBlob = nullptr;
+
+	result = D3DCompileFromFile(
+		L"PixelShaderNormalMap.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"PS_main",		// entry point
+		"ps_5_0",		// shader model (target)
+		D3DCOMPILE_DEBUG,	// shader compile options
+		0,				// effect compile options
+		&pPS,			// double pointer to ID3DBlob		
+		&errorBlob			// pointer for Error Blob messages.
+	);
+
+	// compilation failed?
+	if (FAILED(result))
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			// release "reference" to errorBlob interface object
+			errorBlob->Release();
+		}
+		if (pPS)
+			pPS->Release();
+		return result;
+	}
+
+	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderNormalMap);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error PixelShaderNormalMap", L"Error", MB_OK | MB_ICONERROR);
+	// we do not need anymore this COM object, so we release it.
+	pPS->Release();
+	pPS = nullptr;
 
 	//// pixel shader bounding volume
 	pPS = nullptr;
@@ -511,8 +639,8 @@ HRESULT createShaders()
 		return result;
 	}
 
-	hr = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBoundingVolume);
-	if (FAILED(hr))
+	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderBoundingVolume);
+	if (FAILED(result))
 		MessageBox(NULL, L"Error gPixelShaderBoundingVolume", L"Error", MB_OK | MB_ICONERROR);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
@@ -978,6 +1106,24 @@ void renderFirstPass()
 	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+}
+
+void renderNormalMap()
+{
+	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent);
+	UINT32 offset = 0;
+
+	gDeviceContext->VSSetShader(gVertexShaderNormalMap, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(gGeometryShaderNormalMap, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderNormalMap, nullptr, 0);
+
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetInputLayout(gVertexLayout_Pos_UV_Normal_Tan_BiTan);
+	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
+
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	// BRICK WALL
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
@@ -1256,6 +1402,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
 				renderFirstPass();
+				renderNormalMap();
 				renderBoundingVolume();
 				renderBillboard();
 
