@@ -32,9 +32,10 @@ float4 PS_main(VS_OUT input) : SV_Target
 	float pixelDepth;
 	shadowTexCoords.x = 0.5f + (input.lightPos.x / input.lightPos.w * 0.5f);
 	shadowTexCoords.y = 0.5f - (input.lightPos.y / input.lightPos.w * 0.5f);
-	
-	pixelDepth = (input.lightPos.z / input.lightPos.w) -0.00001f;
-	shadowMapDepth = shadowMap.Sample(sampAni, shadowTexCoords).x;
+	float2 test = float2(shadowTexCoords.x, 1 - shadowTexCoords.y);
+
+	pixelDepth = (input.lightPos.z / input.lightPos.w) -0.001f;
+	shadowMapDepth = shadowMap.Sample(sampAni, test).x;
 	
 	//LIGHTING//
 
