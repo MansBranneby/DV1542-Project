@@ -46,6 +46,7 @@ public:
 
 	std::vector <Vertex_Pos_UV_Normal> & getVertices();
 	ID3D11ShaderResourceView** getSRV_Texture();
+	ID3D11ShaderResourceView** getSRV_Normal();
 	ID3D11Buffer** getVertexBuffer();
 	int getVertCount();
 

@@ -1116,17 +1116,18 @@ void renderNormalMap()
 	gDeviceContext->VSSetShader(gVertexShaderNormalMap, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(gGeometryShaderNormalMap, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderNormalMap, nullptr, 0);
 
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout_Pos_UV_Normal_Tan_BiTan);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
-
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	// BRICK WALL
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
 	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 }

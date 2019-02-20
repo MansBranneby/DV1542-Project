@@ -12,13 +12,12 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	std::vector<DirectX::XMFLOAT3> vtxNormal;
 	std::vector<std::string> materialLibs;
 	std::vector<std::string> materials;
-	std::vector<std::string> bump;
 	std::vector<int> vertexIndices;
 	std::vector<int> uvIndices;
 	std::vector<int> normalIndices;
 
 	std::ifstream inFile;
-	std::string line, special, libraries, material;
+	std::string line, special, libraries, material, bump;
 	std::istringstream inputString;
 	DirectX::XMFLOAT3 tempPos, tempNormal;
 	DirectX::XMFLOAT2 tempUV;
@@ -148,12 +147,14 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			inputString >> special >> material;
 
 		}
-		/*if (line.substr(0, 5) == "bump ")
+		else if (line.substr(0, 9) == "map_Bump ")
 		{
-			inputString >> special >> material;
-		}*/
+			inputString >> special >> bump;
+		}
+		inputString.clear();
 	}
 
+	// Texure
 	std::wstring widestr = std::wstring(material.begin(), material.end());
 	wchar_t widecstr[1000] = L"Resources\\Textures\\";
 	const wchar_t* widecstr1 = widestr.c_str();
@@ -163,6 +164,20 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	hr = DirectX::CreateWICTextureFromFile(device, fileName, NULL, &_SRV_Texture);
 	if (FAILED(hr))
 		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
+
+	if (normalMapped)
+	{
+		// Normal Texture
+		std::wstring widestrBump = std::wstring(bump.begin(), bump.end());
+		wchar_t widecstrBump[1000] = L"Resources\\Textures\\";
+		const wchar_t* widecstrBump1 = widestrBump.c_str();
+		const wchar_t* fileNameBump = wcscat(widecstrBump, widecstrBump1);
+
+		hr = CoInitialize(NULL);
+		hr = DirectX::CreateWICTextureFromFile(device, fileNameBump, NULL, &_SRV_Normal);
+		if (FAILED(hr))
+			MessageBox(NULL, L"ERROR NORMAL", L"Error", MB_OK | MB_ICONERROR);
+	}
 
 	
 	// VERTEX BUFFER
@@ -335,6 +350,11 @@ ID3D11ShaderResourceView* *Mesh::getSRV_Texture()
 	return &_SRV_Texture;
 }
 
+ID3D11ShaderResourceView ** Mesh::getSRV_Normal()
+{
+	return &_SRV_Normal;
+}
+
 ID3D11Buffer* *Mesh::getVertexBuffer()
 {
 	return &_vertexBuffer;
@@ -342,7 +362,16 @@ ID3D11Buffer* *Mesh::getVertexBuffer()
 
 int Mesh::getVertCount()
 {
-	return _vertices_Pos_UV_Normal.size();
+	if (_vertices_Pos_UV_Normal_Tangent_BiTangent.size() > 0)
+		return _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
+	else if (_vertices_Pos_UV_Normal.size() > 0)
+		return  _vertices_Pos_UV_Normal.size();
+	else if (_vertices_Pos_Col.size() > 0)
+		return  _vertices_Pos_Col.size();
+	else if (_vertices_Pos_UV.size() > 0)
+		return  _vertices_Pos_UV.size();
+	else
+		return 0;
 }
 
 BoundingVolume * Mesh::getBoundingVolume()
