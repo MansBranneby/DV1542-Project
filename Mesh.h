@@ -42,6 +42,7 @@ public:
 	Mesh(std::vector <Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device* device);
 	Mesh(std::vector <Vertex_Pos_UV> vertices_Pos_UV, ID3D11Device* device);
 	~Mesh();
+
 	void setVertices(std::vector <Vertex_Pos_UV_Normal> vertices);
 
 	std::vector <Vertex_Pos_UV_Normal> & getVertices();

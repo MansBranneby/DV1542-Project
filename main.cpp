@@ -1289,7 +1289,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		mouse->SetWindow(wndHandle);
 		POINT cursorPos;
 		XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
-		float distance = 5.0f;
+		float distance= 5.0f;
 		float pitch = 0.0f;
 		float yaw = 0.0f;
 		float lastT = -1.0f;
@@ -1301,10 +1301,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		QueryPerformanceCounter(&startTime);
 		
 		///////////////
-		DirectX::Mouse::State ms1 = mouse->GetState(); 
-		float lastX = ms1.x;
-		float lastY = ms1.y;
-
 		while (WM_QUIT != msg.message)
 		{
 			if (PeekMessage(&msg, wndHandle, 0, 0, PM_REMOVE))
@@ -1341,29 +1337,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
 
-				if (ms.middleButton)
+
+				mouse->SetMode(ms.middleButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+				if(ms.positionMode == Mouse::MODE_RELATIVE)
 				{
-					mouse->SetMode(Mouse::MODE_RELATIVE);
+					
 					yaw += XMConvertToRadians(ms.x);
 					pitch += XMConvertToRadians(ms.y);
 					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+					ms.x = 0;
+					ms.y = 0;
 				}
-				else
-				{
-					mouse->SetMode(Mouse::MODE_ABSOLUTE);
-					/*float currX = ms.x;
-					float currY = ms.y;
-					float deltaX = currX - lastX;
-					float deltaY = currY - lastY;
-					lastX = currX;
-					lastY = currY;
 
-					yaw += XMConvertToRadians(deltaX);
-					pitch += XMConvertToRadians(deltaY);
-					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));*/
-				}
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-	
+			
 				velocity.x = 0;
 				velocity.y = 0;
 				velocity.z = 0;
@@ -1386,7 +1373,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					msg.message = WM_QUIT;
 
 				transform(velocity, rotation);
-
 				
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window. upper left corner of the screen = (0,0)
