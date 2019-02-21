@@ -165,7 +165,7 @@ Camera gCamera;
 void createMeshes()
 {
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
 
 	std::vector <Vertex_Pos_Col> arr;
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
@@ -1102,10 +1102,10 @@ void renderFirstPass()
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	// PILLAR
-	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	//// PILLAR
+	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1130,6 +1130,12 @@ void renderNormalMap()
 	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
 	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
+
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBoundingVolume()
@@ -1223,7 +1229,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
-	ImGui::SliderFloat("lightpos", &gLight.lightPos.y, -20.0f, 20.0f);    
+	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);    
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));

@@ -23,7 +23,7 @@ PS_OUT PS_main(PS_IN input)
 {
 	PS_OUT output;
 
-	float3x3 tangentToWS = transpose(float3x3(input.tanWS, input.biTanWS, input.norWS));
+	float3x3 tangentToWS = float3x3(input.tanWS, input.biTanWS, input.norWS); //transponerad?
 	float3 normalWS = mul(normalize(float3(txNormal.Sample(sampAni, input.tex).xyz) * 2.0f - 1.0f), tangentToWS);
 	//normalWS.z *= -1.0f; //Behövs detta?
 

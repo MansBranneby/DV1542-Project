@@ -148,7 +148,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			inputString >> special >> material;
 
 		}
-		else if (line.substr(0, 9) == "map_Bump ")
+		else if (line.substr(0, 9) == "map_Bump " || line.substr(0, 5) == "bump ")
 		{
 			inputString >> special >> bump;
 		}
@@ -179,29 +179,6 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		if (FAILED(hr))
 			MessageBox(NULL, L"ERROR NORMAL", L"Error", MB_OK | MB_ICONERROR);
 	}
-
-	
-	// VERTEX BUFFER
-	//
-
-	D3D11_BUFFER_DESC bufferDesc;
-	memset(&bufferDesc, 0, sizeof(bufferDesc));
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	D3D11_SUBRESOURCE_DATA data;
-	if (normalMapped)
-	{
-		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
-		data.pSysMem = _vertices_Pos_UV_Normal_Tangent_BiTangent.data();
-	}
-	else
-	{
-		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
-		data.pSysMem = _vertices_Pos_UV_Normal.data();
-	}
-	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
-	if (FAILED(result))
-		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 
 	// BOUNDING VOLUME
 	//
@@ -310,7 +287,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			// Bitangent
 			DirectX::XMVECTOR faceBiTangent = DirectX::XMVectorSet(
 				(s1 * DirectX::XMVectorGetX(v1) - s2 * DirectX::XMVectorGetX(v0)) * r,
-				(s1 * DirectX::XMVectorGetY(v1) - s2 * DirectX::XMVectorGetY(v0)) * -r, //-r?? left/right handed?
+				(s1 * DirectX::XMVectorGetY(v1) - s2 * DirectX::XMVectorGetY(v0)) * r, //-r?? left/right handed?
 				(s1 * DirectX::XMVectorGetZ(v1) - s2 * DirectX::XMVectorGetZ(v0)) * r, 1.0f);	
 
 			tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()), faceTangent);
@@ -363,6 +340,28 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setBiTangent(biTangent);
 		}
 	}
+
+
+	// VERTEX BUFFER
+	//
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	D3D11_SUBRESOURCE_DATA data;
+	if (normalMapped)
+	{
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
+		data.pSysMem = _vertices_Pos_UV_Normal_Tangent_BiTangent.data();
+	}
+	else
+	{
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
+		data.pSysMem = _vertices_Pos_UV_Normal.data();
+	}
+	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
+	if (FAILED(result))
+		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 }
 
 Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)

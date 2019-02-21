@@ -46,5 +46,5 @@ float4 PS_main(VS_OUT input) : SV_Target
 	//Final
 	float3 fragmentCol = ambient + diffuse + specular;
 
-	return float4(fragmentCol, 1.0f);
+	return float4(normal, 1.0f);
 };
