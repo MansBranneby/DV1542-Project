@@ -127,7 +127,7 @@ ID3D11Buffer* gMatrixPerFrameBuffer = nullptr;
 
 struct Lights
 {
-	XMVECTOR lightPos = { 0.0f, 0.0f, -2.0f };
+	XMFLOAT3 lightPos = { 0.0f, 2.0f, -2.0f };
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
 };
 Lights gLight;
@@ -1223,6 +1223,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
+	ImGui::SliderFloat("lightpos", &gLight.lightPos.y, -20.0f, 20.0f);    
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
@@ -1241,6 +1242,10 @@ void update(float lastT, POINT cursorPos)
 	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
 	gDeviceContext->Unmap(gConstantBufferCamera, 0);
+
+	gDeviceContext->Map(gConstantBufferLight, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
+	gDeviceContext->Unmap(gConstantBufferLight, 0);
 
 	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());

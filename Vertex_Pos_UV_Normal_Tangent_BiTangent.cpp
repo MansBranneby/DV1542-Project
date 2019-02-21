@@ -2,13 +2,21 @@
 
 Vertex_Pos_UV_Normal_Tangent_BiTangent::Vertex_Pos_UV_Normal_Tangent_BiTangent()
 {
+	_pos = { 0.0f, 0.0f, 0.0f };
+	_UV = { 0.0f, 0.0f };
+	_normal = { 0.0f, 0.0f, 0.0f };
+	_tangent = { 0.0f, 0.0f, 0.0f };
+	_biTangent = { 0.0f, 0.0f, 0.0f };
 }
 
-Vertex_Pos_UV_Normal_Tangent_BiTangent::Vertex_Pos_UV_Normal_Tangent_BiTangent(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV, DirectX::XMFLOAT3 normal)
+Vertex_Pos_UV_Normal_Tangent_BiTangent::Vertex_Pos_UV_Normal_Tangent_BiTangent(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV, DirectX::XMFLOAT3 normal, int vertIndex)
 {
 	_pos = pos;
 	_UV = UV;
 	_normal = normal;
+	_tangent = { 0.0f, 0.0f, 0.0f };
+	_biTangent = { 0.0f, 0.0f, 0.0f };
+	_vertIndex = vertIndex;
 }
 
 Vertex_Pos_UV_Normal_Tangent_BiTangent::~Vertex_Pos_UV_Normal_Tangent_BiTangent()
@@ -48,4 +56,9 @@ DirectX::XMFLOAT2 Vertex_Pos_UV_Normal_Tangent_BiTangent::getUV() const
 DirectX::XMFLOAT3 Vertex_Pos_UV_Normal_Tangent_BiTangent::getNorm() const
 {
 	return _normal;
+}
+
+int Vertex_Pos_UV_Normal_Tangent_BiTangent::getVertIndex() const
+{
+	return _vertIndex;
 }
