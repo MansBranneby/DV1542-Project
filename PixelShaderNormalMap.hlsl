@@ -9,7 +9,6 @@ struct PS_IN
 	float2 tex : TEXCOORD;
 	float3 norWS : NORMAL;
 	float3 tanWS : TANGENT;
-	float3 biTanWS : BI_TANGENT;
 };
 
 struct PS_OUT
@@ -23,9 +22,11 @@ PS_OUT PS_main(PS_IN input)
 {
 	PS_OUT output;
 
-	float3x3 tangentToWS = float3x3(input.tanWS, input.biTanWS, input.norWS); //transponerad?
+	input.tanWS = normalize(input.tanWS - dot(input.tanWS, input.norWS)*input.norWS);
+	float3 biTanWS = cross(input.norWS, input.tanWS);
+
+	float3x3 tangentToWS = float3x3(input.tanWS, biTanWS, input.norWS);
 	float3 normalWS = mul(normalize(float3(txNormal.Sample(sampAni, input.tex).xyz) * 2.0f - 1.0f), tangentToWS);
-	//normalWS.z *= -1.0f; //Behövs detta?
 
 	output.posWS = input.posWS;
 	output.norWS = float4(normalWS, 1.0f);

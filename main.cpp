@@ -86,7 +86,7 @@ ID3D11Buffer* gConstantBufferBillboard = nullptr;
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
 ID3D11InputLayout* gVertexLayoutPosCol = nullptr;
-ID3D11InputLayout* gVertexLayout_Pos_UV_Normal_Tan_BiTan = nullptr;
+ID3D11InputLayout* gVertexLayout_Pos_UV_Normal_Tan = nullptr;
 
 
 //TEXTURES
@@ -342,7 +342,7 @@ HRESULT createShaders()
 	if (FAILED(result))
 		MessageBox(NULL, L"Error VertexShadowMap", L"Error", MB_OK | MB_ICONERROR);
 
-	D3D11_INPUT_ELEMENT_DESC inputDesc_Pos_UV_Col_Tan_BiTan[] =
+	D3D11_INPUT_ELEMENT_DESC inputDesc_Pos_UV_Col_Tan[] =
 	{
 		{
 			"POSITION",		// "semantic" name in shader
@@ -380,17 +380,8 @@ HRESULT createShaders()
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
 		},
-		{
-			"BI_TANGENT",
-			0,
-			DXGI_FORMAT_R32G32B32_FLOAT,
-			0,
-			44,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		},
 	};
-	result = gDevice->CreateInputLayout(inputDesc_Pos_UV_Col_Tan_BiTan, ARRAYSIZE(inputDesc_Pos_UV_Col_Tan_BiTan), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout_Pos_UV_Normal_Tan_BiTan);
+	result = gDevice->CreateInputLayout(inputDesc_Pos_UV_Col_Tan, ARRAYSIZE(inputDesc_Pos_UV_Col_Tan), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout_Pos_UV_Normal_Tan);
 	if (FAILED(result))
 		MessageBox(NULL, L"ErrorVertexLayoutShadowMap", L"Error", MB_OK | MB_ICONERROR);
 
@@ -1110,7 +1101,7 @@ void renderFirstPass()
 
 void renderNormalMap()
 {
-	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent);
+	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal_Tangent);
 	UINT32 offset = 0;
 
 	gDeviceContext->VSSetShader(gVertexShaderNormalMap, nullptr, 0);
@@ -1120,7 +1111,7 @@ void renderNormalMap()
 	gDeviceContext->PSSetShader(gPixelShaderNormalMap, nullptr, 0);
 
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	gDeviceContext->IASetInputLayout(gVertexLayout_Pos_UV_Normal_Tan_BiTan);
+	gDeviceContext->IASetInputLayout(gVertexLayout_Pos_UV_Normal_Tan);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
@@ -1326,9 +1317,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_MOUSEMOVE:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_LBUTTONDOWN:
+				case WM_MBUTTONDOWN:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_LBUTTONUP:
+				case WM_MBUTTONUP:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_INPUT:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
@@ -1350,7 +1341,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				DirectX::Mouse::State ms = mouse->GetState();
 				DirectX::Keyboard::State kb = keyboard->GetState();
 
-				if (ms.leftButton)
+				if (ms.middleButton)
 				{
 					mouse->SetMode(Mouse::MODE_RELATIVE);
 					yaw += XMConvertToRadians(ms.x);
@@ -1360,7 +1351,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				else
 				{
 					mouse->SetMode(Mouse::MODE_ABSOLUTE);
-					float currX = ms.x;
+					/*float currX = ms.x;
 					float currY = ms.y;
 					float deltaX = currX - lastX;
 					float deltaY = currY - lastY;
@@ -1369,7 +1360,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 					yaw += XMConvertToRadians(deltaX);
 					pitch += XMConvertToRadians(deltaY);
-					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));*/
 				}
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 	

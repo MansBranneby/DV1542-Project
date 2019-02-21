@@ -4,7 +4,6 @@ struct VS_IN
 	float2 tex : TEXCOORD;
 	float3 nor : NORMAL;
 	float3 tan : TANGENT;
-	float3 biTan : BI_TANGENT;
 };
 
 struct VS_OUT
@@ -14,7 +13,6 @@ struct VS_OUT
 	float2 tex : TEXCOORD;
 	float3 norWS : NORMAL;
 	float3 tanWS : TANGENT;
-	float3 biTanWS : BI_TANGENT;
 };
 
 cbuffer VS_CONSTANT_BUFFER : register(b0)
@@ -29,9 +27,8 @@ VS_OUT VS_main(VS_IN input)
 	output.pos = mul(float4(input.pos, 1.0f), worldViewProj);
 	output.posWS = mul(float4(input.pos, 1.0f), world);
 	output.tex = input.tex;
-	output.norWS = normalize(mul(input.nor, world));
-	output.tanWS = normalize(mul(input.tan, world));
-	output.biTanWS = normalize(mul(input.biTan, world));
+	output.norWS = normalize(mul(float4(input.nor, 1.0f), world)).xyz;
+	output.tanWS = mul(float4(input.tan, 1.0f), world).xyz;
 
 	return output;
 }

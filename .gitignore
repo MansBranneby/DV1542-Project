@@ -32,5 +32,5 @@
 !Vertex.cpp
 !Vertex_Pos_UV.h
 !Vertex_Pos_UV.cpp
-!Vertex_Pos_UV_Normal_Tangent_BiTangent.h
-!Vertex_Pos_UV_Normal_Tangent_BiTangent.cpp
+!Vertex_Pos_UV_Normal_Tangent.h
+!Vertex_Pos_UV_Normal_Tangent.cpp

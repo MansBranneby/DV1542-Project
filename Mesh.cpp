@@ -126,7 +126,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			
 		if (normalMapped)
 		{
-			Vertex_Pos_UV_Normal_Tangent_BiTangent tempTriangle(vertPos, vertUV, vertNormal, vertIndex);
+			Vertex_Pos_UV_Normal_Tangent tempTriangle(vertPos, vertUV, vertNormal, vertIndex);
 			_vertices_Pos_UV_Normal_Tangent_BiTangent.push_back(tempTriangle);
 		}
 		else
@@ -244,11 +244,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	{
 		//Initialize
 		std::vector<DirectX::XMVECTOR> tangents;
-		std::vector<DirectX::XMVECTOR> biTangents;
 		tangents.resize(_vertices_Pos_UV_Normal_Tangent_BiTangent.size());
-		biTangents.resize(_vertices_Pos_UV_Normal_Tangent_BiTangent.size());
 		std::fill(tangents.begin(), tangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
-		std::fill(biTangents.begin(), biTangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//Calculate triangle tangents
 		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent_BiTangent.size(); i += 3)
@@ -283,47 +280,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 				(t2 * DirectX::XMVectorGetY(v0) - t1 * DirectX::XMVectorGetY(v1)) * r,
 				(t2 * DirectX::XMVectorGetZ(v0) - t1 * DirectX::XMVectorGetZ(v1)) * r, 1.0f);
 
-
-			// Bitangent
-			DirectX::XMVECTOR faceBiTangent = DirectX::XMVectorSet(
-				(s1 * DirectX::XMVectorGetX(v1) - s2 * DirectX::XMVectorGetX(v0)) * r,
-				(s1 * DirectX::XMVectorGetY(v1) - s2 * DirectX::XMVectorGetY(v0)) * r, //-r?? left/right handed?
-				(s1 * DirectX::XMVectorGetZ(v1) - s2 * DirectX::XMVectorGetZ(v0)) * r, 1.0f);	
-
 			tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()), faceTangent);
-			biTangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(biTangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()), faceBiTangent);
-
-			////tangent += newTangent
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getTangent().x,
-			//	DirectX::XMVectorGetY(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getTangent().y,
-			//	DirectX::XMVectorGetZ(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getTangent().z));
-
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).setTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getTangent().x,
-			//	DirectX::XMVectorGetY(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getTangent().y,
-			//	DirectX::XMVectorGetZ(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getTangent().z));
-
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).setTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getTangent().x,
-			//	DirectX::XMVectorGetY(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getTangent().y,
-			//	DirectX::XMVectorGetZ(faceTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getTangent().z));
-			//
-			////biTangent += newBiTangent
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setBiTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getBiTangent().x,
-			//	DirectX::XMVectorGetY(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getBiTangent().y,
-			//	DirectX::XMVectorGetZ(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getBiTangent().z));
-
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).setBiTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getBiTangent().x,
-			//	DirectX::XMVectorGetY(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getBiTangent().y,
-			//	DirectX::XMVectorGetZ(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getBiTangent().z));
-
-			//_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).setBiTangent(DirectX::XMFLOAT3(
-			//	DirectX::XMVectorGetX(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getBiTangent().x,
-			//	DirectX::XMVectorGetY(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getBiTangent().y,
-			//	DirectX::XMVectorGetZ(faceBiTangent) + _vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getBiTangent().z));
 		}
 		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent_BiTangent.size(); i++)
 		{
@@ -331,13 +288,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 				DirectX::XMVectorGetX(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
 				DirectX::XMVectorGetY(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
 				DirectX::XMVectorGetZ(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())) };
-			DirectX::XMFLOAT3 biTangent = {
-				DirectX::XMVectorGetX(biTangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
-				DirectX::XMVectorGetY(biTangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
-				DirectX::XMVectorGetZ(biTangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())) };
 
 			_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setTangent(tangent);
-			_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setBiTangent(biTangent);
 		}
 	}
 
@@ -351,7 +303,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	D3D11_SUBRESOURCE_DATA data;
 	if (normalMapped)
 	{
-		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent_BiTangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
 		data.pSysMem = _vertices_Pos_UV_Normal_Tangent_BiTangent.data();
 	}
 	else
