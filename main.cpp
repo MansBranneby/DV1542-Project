@@ -184,7 +184,7 @@ void createMeshes()
 {
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
+	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX);
 
 
 	std::vector <Vertex_Pos_Col> arr;
@@ -1297,16 +1297,22 @@ void renderShadowMap()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
-	UINT32 vertexSize = sizeof(TriangleVertex);
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
+	
+	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
 
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
+	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
-	gDeviceContext->Draw(69120, 0);
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderFirstPass()
@@ -1620,14 +1626,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				//
 				// RENDER //
-				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
-
 				gClearColour[3] = 1.0;
+				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
 				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
+				renderShadowMap();
 				renderFirstPass();
 				renderNormalMap();
 				renderBoundingVolume();
