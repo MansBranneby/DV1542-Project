@@ -1302,10 +1302,10 @@ void renderShadowMap()
 	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
 
+	//Plane
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
-
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR
@@ -1317,9 +1317,6 @@ void renderShadowMap()
 
 void renderFirstPass()
 {
-	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
-	UINT32 offset = 0;
-
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
@@ -1331,6 +1328,16 @@ void renderFirstPass()
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+
+	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
+	UINT32 offset = 0;
+
+	//Plane
+	gDeviceContext->PSSetShaderResources(0, 1, gPlane->getSRV_Texture());
+
+	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
+	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	//// PILLAR
 	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
@@ -1509,6 +1516,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		createRenderTargets();
 		createShaders();
 		createShadersSP();
+		createShadersShadowMap();
 
 		createTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
@@ -1627,13 +1635,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				// RENDER //
 				gClearColour[3] = 1.0;
+				renderShadowMap();
+				
 				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
 				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
 
-				renderShadowMap();
 				renderFirstPass();
 				renderNormalMap();
 				renderBoundingVolume();
