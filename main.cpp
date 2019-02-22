@@ -20,6 +20,7 @@
 // Own classes
 #include "Mesh.h"
 #include "Vertex_Pos_UV_Normal.h"
+#include "HeightMap.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -164,12 +165,15 @@ Camera gCamera;
 // MESHES //
 void createMeshes()
 {
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX);
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
 
 	std::vector <Vertex_Pos_Col> arr;
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
+
+	HeightMap heightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm");
+
 }
 
 HRESULT createShaders()
@@ -887,7 +891,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 100.0f);
 
 	gCamera.world = World;
 	gCamera.view = View;

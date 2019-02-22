@@ -45,7 +45,6 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			if (smallestXYZ.z > tempPos.z)
 				smallestXYZ.z = tempPos.z;
 
-
 		}
 		else if (line.substr(0, 3) == "vt ")
 		{
@@ -127,7 +126,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		if (normalMapped)
 		{
 			Vertex_Pos_UV_Normal_Tangent tempTriangle(vertPos, vertUV, vertNormal, vertIndex);
-			_vertices_Pos_UV_Normal_Tangent_BiTangent.push_back(tempTriangle);
+			_vertices_Pos_UV_Normal_Tangent.push_back(tempTriangle);
 		}
 		else
 		{
@@ -179,6 +178,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		if (FAILED(hr))
 			MessageBox(NULL, L"ERROR NORMAL", L"Error", MB_OK | MB_ICONERROR);
 	}
+	inFile.close();
 
 	// BOUNDING VOLUME
 	//
@@ -244,25 +244,25 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	{
 		//Initialize
 		std::vector<DirectX::XMVECTOR> tangents;
-		tangents.resize(_vertices_Pos_UV_Normal_Tangent_BiTangent.size());
+		tangents.resize(_vertices_Pos_UV_Normal_Tangent.size());
 		std::fill(tangents.begin(), tangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//Calculate triangle tangents
-		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent_BiTangent.size(); i += 3)
+		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i += 3)
 		{
 			// Loading from XMFLOAT3 to XMVECTOR in order to use vector subtraction
-			DirectX::XMVECTOR vert0 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getPos());
-			DirectX::XMVECTOR vert1 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getPos());
-			DirectX::XMVECTOR vert2 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getPos());
+			DirectX::XMVECTOR vert0 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent.at(i).getPos());
+			DirectX::XMVECTOR vert1 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent.at(i + 1).getPos());
+			DirectX::XMVECTOR vert2 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent.at(i + 2).getPos());
 
 			// Pos
 			DirectX::XMVECTOR v0 = DirectX::XMVectorSubtract(vert1, vert0);
 			DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(vert2, vert0);
 		
 			// UV
-			DirectX::XMVECTOR uv0 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getUV());
-			DirectX::XMVECTOR uv1 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 1).getUV());
-			DirectX::XMVECTOR uv2 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i + 2).getUV());
+			DirectX::XMVECTOR uv0 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i).getUV());
+			DirectX::XMVECTOR uv1 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i + 1).getUV());
+			DirectX::XMVECTOR uv2 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i + 2).getUV());
 
 			 // U
 			float s1 = DirectX::XMVectorGetX(uv1) - DirectX::XMVectorGetX(uv0);
@@ -280,16 +280,16 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 				(t2 * DirectX::XMVectorGetY(v0) - t1 * DirectX::XMVectorGetY(v1)) * r,
 				(t2 * DirectX::XMVectorGetZ(v0) - t1 * DirectX::XMVectorGetZ(v1)) * r, 1.0f);
 
-			tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex()), faceTangent);
+			tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()), faceTangent);
 		}
-		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent_BiTangent.size(); i++)
+		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i++)
 		{
 			DirectX::XMFLOAT3 tangent = { 
-				DirectX::XMVectorGetX(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
-				DirectX::XMVectorGetY(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())),
-				DirectX::XMVectorGetZ(tangents.at(_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).getVertIndex())) };
+				DirectX::XMVectorGetX(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())),
+				DirectX::XMVectorGetY(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())),
+				DirectX::XMVectorGetZ(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())) };
 
-			_vertices_Pos_UV_Normal_Tangent_BiTangent.at(i).setTangent(tangent);
+			_vertices_Pos_UV_Normal_Tangent.at(i).setTangent(tangent);
 		}
 	}
 
@@ -303,8 +303,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	D3D11_SUBRESOURCE_DATA data;
 	if (normalMapped)
 	{
-		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent) * _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
-		data.pSysMem = _vertices_Pos_UV_Normal_Tangent_BiTangent.data();
+		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent) * _vertices_Pos_UV_Normal_Tangent.size();
+		data.pSysMem = _vertices_Pos_UV_Normal_Tangent.data();
 	}
 	else
 	{
@@ -371,8 +371,8 @@ ID3D11Buffer* *Mesh::getVertexBuffer()
 
 int Mesh::getVertCount()
 {
-	if (_vertices_Pos_UV_Normal_Tangent_BiTangent.size() > 0)
-		return _vertices_Pos_UV_Normal_Tangent_BiTangent.size();
+	if (_vertices_Pos_UV_Normal_Tangent.size() > 0)
+		return _vertices_Pos_UV_Normal_Tangent.size();
 	else if (_vertices_Pos_UV_Normal.size() > 0)
 		return  _vertices_Pos_UV_Normal.size();
 	else if (_vertices_Pos_Col.size() > 0)

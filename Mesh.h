@@ -25,7 +25,7 @@ enum boundingVolumes { ORIENTED_BOUNDING_BOX, AXIS_ALIGNED_BOUNDING_BOX, SPHERE 
 class Mesh
 {
 private:
-	std::vector <Vertex_Pos_UV_Normal_Tangent> _vertices_Pos_UV_Normal_Tangent_BiTangent;
+	std::vector <Vertex_Pos_UV_Normal_Tangent> _vertices_Pos_UV_Normal_Tangent;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	std::vector <Vertex_Pos_Col> _vertices_Pos_Col;
 	std::vector <Vertex_Pos_UV> _vertices_Pos_UV;
