@@ -1313,9 +1313,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					Keyboard::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_MOUSEMOVE:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_MBUTTONDOWN:
+				case WM_RBUTTONDOWN:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
-				case WM_MBUTTONUP:
+				case WM_RBUTTONUP:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
 				case WM_INPUT:
 					Mouse::ProcessMessage(msg.message, msg.wParam, msg.lParam);
@@ -1338,7 +1338,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				DirectX::Keyboard::State kb = keyboard->GetState();
 
 
-				mouse->SetMode(ms.middleButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+				mouse->SetMode(ms.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
 				if(ms.positionMode == Mouse::MODE_RELATIVE)
 				{
 					
