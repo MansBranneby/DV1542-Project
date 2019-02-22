@@ -34,3 +34,5 @@
 !Vertex_Pos_UV.cpp
 !Vertex_Pos_UV_Normal_Tangent.h
 !Vertex_Pos_UV_Normal_Tangent.cpp
+!HeightMap.h
+!HeightMap.cpp
