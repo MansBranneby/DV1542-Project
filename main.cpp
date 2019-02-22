@@ -183,7 +183,7 @@ Camera gCamera;
 void createMeshes()
 {
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX);
 
 
@@ -1301,16 +1301,15 @@ void renderShadowMap()
 	
 	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
+	gDeviceContext->IASetInputLayout(gVertexLayout);
 
 	//Plane
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR
 	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
@@ -1336,13 +1335,13 @@ void renderFirstPass()
 	gDeviceContext->PSSetShaderResources(0, 1, gPlane->getSRV_Texture());
 
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
+	//gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
-	//// PILLAR
-	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1368,11 +1367,11 @@ void renderNormalMap()
 	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
-	// PILLAR
-	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	//// PILLAR
+	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	//gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBoundingVolume()
@@ -1647,7 +1646,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				// RENDER //
 				gClearColour[3] = 1.0;
-				update(lastT, cursorPos);
 				renderShadowMap();
 				
 				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
@@ -1666,6 +1664,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderSecondPass();
 
+				update(lastT, cursorPos);
 
 				gSwapChain->Present(0, 0);
 
