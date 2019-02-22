@@ -1456,6 +1456,18 @@ void renderSecondPass()
 
 void update(float lastT, POINT cursorPos)
 {
+	//Update LightView
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f); //Dåligt att göra detta i update
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
+	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
+	View = XMMatrixTranspose(View);
+	Projection = XMMatrixTranspose(Projection);
+	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
+
+	gLightView.worldView = worldView;
+
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 
 	ImGui_ImplDX11_NewFrame();
@@ -1635,6 +1647,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				// RENDER //
 				gClearColour[3] = 1.0;
+				update(lastT, cursorPos);
 				renderShadowMap();
 				
 				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
@@ -1653,7 +1666,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderSecondPass();
 
-				update(lastT, cursorPos);
 
 				gSwapChain->Present(0, 0);
 
