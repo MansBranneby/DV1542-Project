@@ -25,7 +25,7 @@ enum boundingVolumes { ORIENTED_BOUNDING_BOX, AXIS_ALIGNED_BOUNDING_BOX, SPHERE 
 class Mesh
 {
 private:
-	std::vector <Vertex_Pos_UV_Normal_Tangent> _vertices_Pos_UV_Normal_Tangent_BiTangent;
+	std::vector <Vertex_Pos_UV_Normal_Tangent> _vertices_Pos_UV_Normal_Tangent;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	std::vector <Vertex_Pos_Col> _vertices_Pos_Col;
 	std::vector <Vertex_Pos_UV> _vertices_Pos_UV;
@@ -33,6 +33,7 @@ private:
 	ID3D11ShaderResourceView* _SRV_Texture;
 	ID3D11ShaderResourceView* _SRV_Normal;
 	ID3D11Buffer* _vertexBuffer;
+	ID3D11Buffer* _vertexBufferNormalMap;
 	DirectX::XMMATRIX _worldMatrix;
 	BoundingVolume* _boundingVolume;
 
@@ -49,6 +50,7 @@ public:
 	ID3D11ShaderResourceView** getSRV_Texture();
 	ID3D11ShaderResourceView** getSRV_Normal();
 	ID3D11Buffer** getVertexBuffer();
+	ID3D11Buffer** getVertexBufferNormalMap();
 	int getVertCount();
 
 	BoundingVolume* getBoundingVolume();

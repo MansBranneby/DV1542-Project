@@ -183,7 +183,7 @@ Camera gCamera;
 void createMeshes()
 {
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, false, gDevice, ORIENTED_BOUNDING_BOX);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX);
 
 
@@ -1040,45 +1040,6 @@ void setupTextures()
 		MessageBox(NULL, L"TexShadowMap", L"Error", MB_OK | MB_ICONERROR);
 }
 
-void transform(XMFLOAT3 move, XMMATRIX rotation)
-{
-	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	LookAt = XMVector3TransformCoord(camForward, rotation);
-	LookAt = XMVector3Normalize(LookAt);
-
-	camRight = XMVector3TransformCoord(camRight, rotation);
-	camUp = XMVector3TransformCoord(camUp, rotation);
-	camForward = XMVector3TransformCoord(camForward, rotation);
-
-	gCamera.pos += move.x * camRight;
-	gCamera.pos += move.y * camUp;
-	gCamera.pos += move.z * camForward;
-	LookAt = gCamera.pos + LookAt;
-
-	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
-
-	gCamera.world = World;
-	gCamera.view = View;
-	gCamera.projection = Projection;
-
-	View = XMMatrixTranspose(View);
-	Projection = XMMatrixTranspose(Projection);
-
-	XMMATRIX WorldView = XMMatrixMultiply(View, World);
-	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
-
-	gMatricesPerFrame.WorldViewProj = WorldViewProj;
-	gMatricesPerFrame.World = World;
-
-	gCameraData.camPos = gCamera.pos;
-}
-
 void createDepthStencil()
 {
 	//DepthStencil
@@ -1285,6 +1246,103 @@ void SetViewport()
 	gDeviceContext->RSSetViewports(1, &vp);
 }
 
+void transform(XMFLOAT3 move, XMMATRIX rotation)
+{
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	LookAt = XMVector3TransformCoord(camForward, rotation);
+	LookAt = XMVector3Normalize(LookAt);
+
+	camRight = XMVector3TransformCoord(camRight, rotation);
+	camUp = XMVector3TransformCoord(camUp, rotation);
+	camForward = XMVector3TransformCoord(camForward, rotation);
+
+	gCamera.pos += move.x * camRight;
+	gCamera.pos += move.y * camUp;
+	gCamera.pos += move.z * camForward;
+	LookAt = gCamera.pos + LookAt;
+
+	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
+	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
+
+	gCamera.world = World;
+	gCamera.view = View;
+	gCamera.projection = Projection;
+
+	View = XMMatrixTranspose(View);
+	Projection = XMMatrixTranspose(Projection);
+
+	XMMATRIX WorldView = XMMatrixMultiply(View, World);
+	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
+
+	gMatricesPerFrame.WorldViewProj = WorldViewProj;
+	gMatricesPerFrame.World = World;
+
+	gCameraData.camPos = gCamera.pos;
+}
+
+void update(float lastT, POINT cursorPos)
+{
+	//Update LightView
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f); //Dåligt att göra detta i update
+	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
+	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
+	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
+	XMMATRIX Projection = XMMatrixOrthographicLH(20, 20, 0.1, 200.0f);
+	View = XMMatrixTranspose(View);
+	Projection = XMMatrixTranspose(Projection);
+	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
+
+	gLightView.worldView = worldView;
+
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
+	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
+	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);
+	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
+	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )", cursorPos.x, cursorPos.y);
+	ImGui::Text("lastT:%.2f)", lastT);
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+	D3D11_MAPPED_SUBRESOURCE mappedMemory;
+	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
+	gDeviceContext->Unmap(gConstantBuffer, 0);
+
+	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
+	gDeviceContext->Unmap(gConstantBufferCamera, 0);
+
+	gDeviceContext->Map(gConstantBufferLight, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
+	gDeviceContext->Unmap(gConstantBufferLight, 0);
+
+	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
+	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);
+
+	gDeviceContext->Map(gConstantBufferShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
+	memcpy(mappedMemory.pData, &gLightView, sizeof(gLightView));
+	gDeviceContext->Unmap(gConstantBufferShadowMap, 0);
+}
+
 void renderShadowMap()
 {
 	gDeviceContext->OMSetRenderTargets(1, &gRenderTargetShadowMap, gDSV); //Set render target
@@ -1338,10 +1396,10 @@ void renderFirstPass()
 	//gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
-	// PILLAR
-	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	//// PILLAR
+	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1364,14 +1422,14 @@ void renderNormalMap()
 	// BRICK WALL
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
-	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
-	//// PILLAR
-	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	//gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
 
 void renderBoundingVolume()
@@ -1443,71 +1501,16 @@ void renderSecondPass()
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
+	gDeviceContext->PSSetShaderResources(3, 1, &gShaderResourceShadowMap);
 
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 	gDeviceContext->PSSetConstantBuffers(1, 1, &gConstantBufferCamera);
+	gDeviceContext->PSSetConstantBuffers(2, 1, &gConstantBufferShadowMap);
 
 	gDeviceContext->Draw(6, 0);
 
 	ID3D11ShaderResourceView* nullRTV = { NULL };
 	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
-}
-
-void update(float lastT, POINT cursorPos)
-{
-	//Update LightView
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f); //Dåligt att göra detta i update
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
-	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 20.0f);
-	View = XMMatrixTranspose(View);
-	Projection = XMMatrixTranspose(Projection);
-	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
-
-	gLightView.worldView = worldView;
-
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
-	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
-	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);
-	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
-	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )", cursorPos.x, cursorPos.y);
-	ImGui::Text("lastT:%.2f)", lastT);
-	ImGui::End();
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	D3D11_MAPPED_SUBRESOURCE mappedMemory;
-	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
-	gDeviceContext->Unmap(gConstantBuffer, 0);
-
-	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
-	gDeviceContext->Unmap(gConstantBufferCamera, 0);
-
-	gDeviceContext->Map(gConstantBufferLight, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
-	gDeviceContext->Unmap(gConstantBufferLight, 0);
-
-	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
-	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
-	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);
-
-	gDeviceContext->Map(gConstantBufferShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
-	memcpy(mappedMemory.pData, &gLightView, sizeof(gLightView));
-	gDeviceContext->Unmap(gConstantBufferShadowMap, 0);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
