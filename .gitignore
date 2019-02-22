@@ -10,7 +10,9 @@
 !PixelShaderSP.hlsl
 !PixelShaderBillboard.hlsl
 !PixelShaderBoundingVolume.hlsl
+!PixelShaderShadowMap.hlsl
 !VertexShaderNormalMap.hlsl
+!VertexShaderShadowMap.hlsl
 !GeometryShaderNormalMap.hlsl
 !PixelShaderNormalMap.hlsl
 !Resources/
