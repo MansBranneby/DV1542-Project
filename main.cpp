@@ -172,7 +172,7 @@ void createMeshes()
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 
-	HeightMap heightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm");
+	HeightMap heightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 10.0f);
 
 }
 

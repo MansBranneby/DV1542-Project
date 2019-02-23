@@ -243,8 +243,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	if (normalMapped)
 	{
 		//Initialize
-		std::vector<DirectX::XMVECTOR> tangents;
-		tangents.resize(_vertices_Pos_UV_Normal_Tangent.size());
+		std::vector<DirectX::XMVECTOR> tangents(_vertices_Pos_UV_Normal_Tangent.size());
 		std::fill(tangents.begin(), tangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//Calculate triangle tangents

@@ -4,8 +4,12 @@ HeightMap::HeightMap()
 {
 }
 
-HeightMap::HeightMap(std::string filePath)
+HeightMap::HeightMap(std::string filePath, float heightFactor, float widthFactor, float depthFactor)
 {
+	_heightFactor = heightFactor;
+	_widthFactor = widthFactor;
+	_depthFactor = depthFactor;
+
 	LoadHeightMap(filePath);
 }
 
@@ -38,20 +42,39 @@ void HeightMap::LoadHeightMap(std::string filePath)
 	inputString >> _terrainWidth >> _terrainHeight >> _maxValue;
 
 	// number of grey values in file
-	_imageSize = _terrainWidth * _terrainHeight;
+	_terrainSize = _terrainWidth * _terrainHeight;
 
 
 	// read grey values (brightness of pixels)
 	std::getline(inFile, line);
 	inputString.str(line);
-	for (int i = 0; i < _imageSize; i++)
+	for (int i = 0; i < _terrainSize; i++)
 	{
 		inputString >> greyValue;
-		_greyValues.push_back(greyValue);
+		_greyValues.push_back(greyValue); // divide with heightFactor to get desired scale of height. heightFactor is set in the HeightMap constructor
 	}
 	inputString.clear();
-	
 	inFile.close();
 
+	// Store vertices. Each pixel equals one vertex
+	std::vector <Vertex_Pos_UV_Normal> _vertices(_terrainSize);
 
+	for (int i = 0; i < _terrainHeight; i++)
+	{
+		for (int j = 0; j < _terrainWidth; j++)
+		{
+			float width = j / _widthFactor;		// scale x
+			float height = _greyValues.at(i);	// scale y
+			float depth = i / _depthFactor;		//scale z
+
+			int index = (i * _terrainHeight + j);
+
+			DirectX::XMFLOAT3 pos = { width, height, depth };
+			_vertices.at(index).setPos(pos);
+
+		}
+	}
+
+
+	
 }
