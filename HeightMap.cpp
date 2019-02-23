@@ -17,24 +17,42 @@ void HeightMap::LoadHeightMap(std::string filePath)
 {
 	std::string line;
 	std::istringstream inputString;
-
-	std::ifstream inFile("heightmap.pgm");
-
-	if (!inFile.is_open())
+	std::ifstream inFile(filePath);
+	int greyValue;
+	// Check if file exists
+	if (!inFile)
 		MessageBox(NULL, L"LoadHeightMap: unable to locate file.", L"Error", MB_OK | MB_ICONERROR);
+	
 
-	inFile.open(filePath);
-
-	//std::getline(inFile, line);
-	while (std::getline(inFile, line))
-
-	//inputString.str(line);
-	if(line.substr(0, 2) != "P2")
+	// CHECK VERSION, either P2 or P5 //
+	// compare() returns:
+	// zero if line and argument are equivalent
+	// value < 0 if line is shorter than argument
+	// value > 0 if line is bigger than argument
+	std::getline(inFile, line);
+	if(line.compare("P2") != 0)
 		MessageBox(NULL, L"LoadHeightMap: faulty version.", L"Error", MB_OK | MB_ICONERROR);
 
 	std::getline(inFile, line);
 	inputString.str(line);
 	inputString >> _terrainWidth >> _terrainHeight >> _maxValue;
 
+	// number of grey values in file
+	_imageSize = _terrainWidth * _terrainHeight;
+
+	while (std::getline(inFile, line))
+	{
+		inputString.str(line);
+		for (int i = 0; i < _imageSize; i++)
+		{
+			// read grey values (brightness of pixels)
+			// skip the whitespace between each value
+			inputString >> greyValue;
+			_greyValues.push_back(greyValue);
+			inputString.clear();
+		}
+	}
 	inFile.close();
+
+
 }

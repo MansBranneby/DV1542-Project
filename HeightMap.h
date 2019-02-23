@@ -8,13 +8,16 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 class HeightMap
 {
 private:
 	int _terrainWidth;
 	int _terrainHeight;
+	int _imageSize;
 	int _maxValue;
+	std::vector <int> _greyValues;
 
 	void LoadHeightMap(std::string filePath);
 
