@@ -18,7 +18,7 @@ void HeightMap::LoadHeightMap(std::string filePath)
 	std::string line;
 	std::istringstream inputString;
 	std::ifstream inFile(filePath);
-	int greyValue;
+	int greyValue = 0;
 	// Check if file exists
 	if (!inFile)
 		MessageBox(NULL, L"LoadHeightMap: unable to locate file.", L"Error", MB_OK | MB_ICONERROR);
@@ -40,18 +40,17 @@ void HeightMap::LoadHeightMap(std::string filePath)
 	// number of grey values in file
 	_imageSize = _terrainWidth * _terrainHeight;
 
-	while (std::getline(inFile, line))
+
+	// read grey values (brightness of pixels)
+	std::getline(inFile, line);
+	inputString.str(line);
+	for (int i = 0; i < _imageSize; i++)
 	{
-		inputString.str(line);
-		for (int i = 0; i < _imageSize; i++)
-		{
-			// read grey values (brightness of pixels)
-			// skip the whitespace between each value
-			inputString >> greyValue;
-			_greyValues.push_back(greyValue);
-			inputString.clear();
-		}
+		inputString >> greyValue;
+		_greyValues.push_back(greyValue);
 	}
+	inputString.clear();
+	
 	inFile.close();
 
 
