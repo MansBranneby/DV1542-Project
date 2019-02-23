@@ -62,6 +62,8 @@ IDXGISwapChain* gSwapChain = nullptr;
 ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
+ID3D11RasterizerState* gRasterizerState = nullptr;
+
 // VIEWS //
 ID3D11DepthStencilView* gDSV = nullptr;
 
@@ -1244,6 +1246,21 @@ void SetViewport()
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
 	gDeviceContext->RSSetViewports(1, &vp);
+
+	//Rasterizer state setup
+	D3D11_RASTERIZER_DESC rasterizerDesc;
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.FrontCounterClockwise = true;
+	rasterizerDesc.DepthBias = false;
+	rasterizerDesc.DepthBiasClamp = 0;
+	rasterizerDesc.SlopeScaledDepthBias = 0;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.ScissorEnable = false;
+	rasterizerDesc.MultisampleEnable = false;
+	rasterizerDesc.AntialiasedLineEnable = false;
+	
+	gDevice->CreateRasterizerState(&rasterizerDesc, &gRasterizerState);
 }
 
 void transform(XMFLOAT3 move, XMMATRIX rotation)
@@ -1522,7 +1539,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	{
 		CreateDirect3DContext(wndHandle); // Skapa och koppla SwapChain, Device och Device Context
 
-		SetViewport();
+		SetViewport(); // And rasterizer state
 
 		createMeshes(); // test
 		setupTextures();
@@ -1648,6 +1665,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				//
 				//
 				// RENDER //
+				gDeviceContext->RSSetState(gRasterizerState);
 				gClearColour[3] = 1.0;
 				renderShadowMap();
 				

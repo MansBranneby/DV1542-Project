@@ -23,9 +23,22 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 {
 	GS_OUT element;
 	float4 normal = float4(normalize(cross(input[1].pos - input[0].pos, input[2].pos - input[0].pos)), 0);
+	
+	//Backface culling
+	float4 position0VP = mul(input[0].pos, worldViewProj);
+	float4 position1VP = mul(input[1].pos, worldViewProj);
+	float4 position2VP = mul(input[2].pos, worldViewProj);
+
+	float4 normalVP = normalize(float4(cross(position1VP - position0VP, position2VP - position0VP), 1.0f));
+	bool frontFace = false;
+	if (dot(position0VP, normalVP) < 0)
+		frontFace = true;
+	////
+
 	for (uint i = 0; i < 3; i++)
 	{
-		element.pos = mul(input[i].pos, worldViewProj);
+		if (frontFace)
+			element.pos = mul(input[i].pos, worldViewProj);
 		element.posWS = mul(input[i].pos, world);
 		element.norWS = mul(normal, world);
 		element.tex = input[i].tex;
