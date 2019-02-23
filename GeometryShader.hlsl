@@ -22,14 +22,14 @@ cbuffer GS_CONSTANT_BUFFER : register(b0)
 void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 {
 	GS_OUT element;
-	float4 normal = float4(normalize(cross(input[1].pos - input[0].pos, input[2].pos - input[0].pos)), 0);
+	float4 normal = float4(normalize(cross(input[1].pos.xyz - input[0].pos.xyz, input[2].pos.xyz - input[0].pos.xyz)), 0);
 	
 	//Backface culling
 	float4 position0VP = mul(input[0].pos, worldViewProj);
 	float4 position1VP = mul(input[1].pos, worldViewProj);
 	float4 position2VP = mul(input[2].pos, worldViewProj);
 
-	float4 normalVP = normalize(float4(cross(position1VP - position0VP, position2VP - position0VP), 1.0f));
+	float4 normalVP = normalize(float4(cross(position1VP.xyz - position0VP.xyz, position2VP.xyz - position0VP.xyz), 1.0f));
 	bool frontFace = false;
 	if (dot(position0VP, normalVP) < 0)
 		frontFace = true;
