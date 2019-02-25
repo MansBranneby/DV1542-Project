@@ -21,12 +21,17 @@ private:
 	float _heightFactor;
 	float _widthFactor;
 	float _depthFactor;
+	ID3D11Buffer* _vertexBuffer;
 	std::vector <float> _greyValues;
+	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 
-	void LoadHeightMap(std::string filePath);
-
+	void loadHeightMap(std::string filePath);
+	void createVertexBuffer(ID3D11Device* device);
 public:
 	HeightMap();
-	HeightMap(std::string filePath, float heightFactor, float widthFactor, float depthFactor);
+	HeightMap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device);
 	~HeightMap();
+	
+	ID3D11Buffer** getVertexBuffer();
+	int getVertCount();
 };

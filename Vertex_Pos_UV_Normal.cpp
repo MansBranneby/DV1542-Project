@@ -28,7 +28,7 @@ void Vertex_Pos_UV_Normal::setUV(DirectX::XMFLOAT2 UV)
 	_UV = UV;
 }
 
-void Vertex_Pos_UV_Normal::setNorm(DirectX::XMFLOAT3 normal)
+void Vertex_Pos_UV_Normal::setNormal(DirectX::XMFLOAT3 normal)
 {
 	_normal = normal;
 }

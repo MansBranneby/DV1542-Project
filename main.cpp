@@ -119,6 +119,7 @@ Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
+HeightMap* gHeightMap = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -172,7 +173,7 @@ void createMeshes()
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 
-	HeightMap heightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 10.0f);
+	gHeightMap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 10.0f, 5000.0f, 10.0f, gDevice);
 
 }
 
@@ -960,9 +961,9 @@ void samplerSetUp()
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.MaxAnisotropy = 0;
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MipLODBias = 0;
 	sampDesc.MinLOD = 0;
@@ -1101,6 +1102,11 @@ void renderFirstPass()
 	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
+
+	// HEIGHTMAP
+	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	gDeviceContext->IASetVertexBuffers(0, 1, gHeightMap->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gHeightMap->getVertCount(), 0);
 }
 
 void renderNormalMap()
