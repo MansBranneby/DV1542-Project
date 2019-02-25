@@ -70,77 +70,41 @@ void HeightMap::loadHeightMap(std::string filePath)
 	// Store vertices. Each pixel equals one vertex
 	std::vector <DirectX::XMFLOAT3> _heightMap(_terrainSize);
 	int k = 0;
-	for (int i = 0; i < _terrainHeight; i++)
+	for (int i = 0; i < _terrainWidth; i++)
 	{
-		for (int j = 0; j < _terrainWidth; j++)
+		for (int j = 0; j < _terrainHeight; j++)
 		{
 			float width = j / _widthFactor;		// scale x
-			float height = _greyValues[k] / _heightFactor;	// scale y
+			float height = _greyValues[k++] / _heightFactor;	// scale y
 			float depth = i / _depthFactor;		//scale z
 
 			int index = (i * _terrainHeight + j);
 
 			DirectX::XMFLOAT3 pos = { width, height, depth };
 			_heightMap[index] = pos;
-			k++;
 		}
 	}
 
-	// Define all triangles with stored vertices
-	_vertices_Pos_UV_Normal.resize(_terrainSize);
-	for (int i = 0; i < _terrainHeight; i++)
+	// Sort and define all triangles with stored vertices
+	for (int i = 0; i < _terrainWidth - 1; i++)
 	{
-		for (int j = 0; j < _terrainWidth; j++)
+		for (int j = 0; j <= _terrainHeight; j++)
 		{
-			DirectX::XMFLOAT3 pos(_heightMap[i * _terrainWidth + j]);
-			_vertices_Pos_UV_Normal[i * _terrainWidth + j].setPos(pos);
-
-			DirectX::XMFLOAT3 normal(0.0f, 1.0f, 0.0f);
-			_vertices_Pos_UV_Normal[i * _terrainWidth + j].setNormal(normal);
+			int index = i * _terrainHeight + j;
+			DirectX::XMFLOAT3 pos = _heightMap[index];
+			Vertex_Pos_UV_Normal temp;
+			temp.setPos(pos);
+			_vertices_Pos_UV_Normal.push_back(temp);
+		}
+		for (int j = 0; j <= _terrainHeight; j++)
+		{
+			int index = i * _terrainHeight + j + 1;
+			DirectX::XMFLOAT3 pos = _heightMap[index];
+			Vertex_Pos_UV_Normal temp;
+			temp.setPos(pos);
+			_vertices_Pos_UV_Normal.push_back(temp);
 		}
 	}
-
-	int numFaces = (_terrainWidth - 1) * (_terrainHeight - 1) * 2;
-	std::vector <int> indices(numFaces * 3);
-
-	// fill UVs
-	k = 0;
-	int U = 0;
-	int V = 0;
-	for (int i = 0; i < _terrainHeight - 1; i++)
-	{
-		for (int j = 0; j < _terrainWidth - 1; j++)
-		{
-			indices[k] = i * _terrainWidth + j;
-			_vertices_Pos_UV_Normal[i * _terrainWidth + j].setUV(DirectX::XMFLOAT2(U, V + 1.0f));
-
-
-			indices[k + 1] = i * _terrainWidth + j + 1;
-			_vertices_Pos_UV_Normal[i * _terrainWidth + j + 1].setUV(DirectX::XMFLOAT2(U + 1.0f, V + 1.0f));
-
-
-			indices[k + 2] = (i + 1) * _terrainWidth + j;
-			_vertices_Pos_UV_Normal[(i + 1)* _terrainWidth + j].setUV(DirectX::XMFLOAT2(U, V));
-
-
-			indices[k + 3] = (i + 1) * _terrainWidth + j;
-			_vertices_Pos_UV_Normal[(i + 1) * _terrainWidth + j].setUV(DirectX::XMFLOAT2(U, V));
-
-
-			indices[k + 4] = i * _terrainWidth + j + 1;
-			_vertices_Pos_UV_Normal[i * _terrainWidth + j + 1].setUV(DirectX::XMFLOAT2(U + 1.0f, V + 1.0f));
-
-
-			indices[k + 5] = (i + 1) * _terrainWidth + j;
-			_vertices_Pos_UV_Normal[(i + 1)* _terrainWidth + j + 1].setUV(DirectX::XMFLOAT2(U + 1.0f, V));
-
-			k += 6;
-			U++;
-		}
-		U = 0;
-		V++;
-	}
-
 }
 
 void HeightMap::createVertexBuffer(ID3D11Device * device)

@@ -961,9 +961,9 @@ void samplerSetUp()
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sampDesc.MaxAnisotropy = 0;
-	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MipLODBias = 0;
 	sampDesc.MinLOD = 0;
@@ -1092,7 +1092,7 @@ void renderFirstPass()
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
@@ -1106,7 +1106,7 @@ void renderFirstPass()
 	// HEIGHTMAP
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightMap->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gHeightMap->getVertCount(), 0);
+	gDeviceContext->Draw(gHeightMap->getVertCount() * 2, 0);
 }
 
 void renderNormalMap()
