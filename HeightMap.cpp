@@ -23,6 +23,11 @@ ID3D11Buffer ** HeightMap::getVertexBuffer()
 	return &_vertexBuffer;
 }
 
+std::vector<Vertex_Pos_UV_Normal>& HeightMap::getVertices()
+{
+	return _vertices_Pos_UV_Normal;
+}
+
 int HeightMap::getVertCount()
 {
 	return _vertices_Pos_UV_Normal.size();
@@ -70,39 +75,50 @@ void HeightMap::loadHeightMap(std::string filePath)
 	// Store vertices. Each pixel equals one vertex
 	std::vector <DirectX::XMFLOAT3> _heightMap(_terrainSize);
 	int k = 0;
-	for (int i = 0; i < _terrainWidth; i++)
+	for (int i = 0; i < _terrainHeight; i++)
 	{
-		for (int j = 0; j < _terrainHeight; j++)
+		for (int j = 0; j < _terrainWidth; j++)
 		{
-			float width = j / _widthFactor;		// scale x
+			float width = j / _widthFactor;						// scale x
 			float height = _greyValues[k++] / _heightFactor;	// scale y
-			float depth = i / _depthFactor;		//scale z
+			float depth = i / _depthFactor;						// scale z
 
-			int index = (i * _terrainHeight + j);
+			int index = (i * _terrainWidth + j);
 
 			DirectX::XMFLOAT3 pos = { width, height, depth };
 			_heightMap[index] = pos;
 		}
 	}
 
-	// Sort and define all triangles with stored vertices
-	for (int i = 0; i < _terrainWidth - 1; i++)
+	Vertex_Pos_UV_Normal tempVert;
+
+	for (int i = 0; i < _terrainHeight - 1; i++)
 	{
-		for (int j = 0; j <= _terrainHeight; j++)
+		for (int j = 0; j < _terrainWidth - 1; j++)
 		{
-			int index = i * _terrainHeight + j;
-			DirectX::XMFLOAT3 pos = _heightMap[index];
-			Vertex_Pos_UV_Normal temp;
-			temp.setPos(pos);
-			_vertices_Pos_UV_Normal.push_back(temp);
-		}
-		for (int j = 0; j <= _terrainHeight; j++)
-		{
-			int index = i * _terrainHeight + j + 1;
-			DirectX::XMFLOAT3 pos = _heightMap[index];
-			Vertex_Pos_UV_Normal temp;
-			temp.setPos(pos);
-			_vertices_Pos_UV_Normal.push_back(temp);
+			// TL 
+			tempVert.setPos(_heightMap[i * _terrainWidth + j]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
+
+			// BL
+			tempVert.setPos(_heightMap[(i + 1) * _terrainWidth + j]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
+
+			// TR
+			tempVert.setPos(_heightMap[i * _terrainWidth + j + 1]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
+
+			// BL
+			tempVert.setPos(_heightMap[(i + 1) * _terrainWidth + j]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
+
+			// BR
+			tempVert.setPos(_heightMap[(i + 1)* _terrainWidth + j + 1]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
+		
+			//  TR
+			tempVert.setPos(_heightMap[i * _terrainWidth + j + 1]);
+			_vertices_Pos_UV_Normal.push_back(tempVert);
 		}
 	}
 }

@@ -173,7 +173,7 @@ void createMeshes()
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 
-	gHeightMap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 10.0f, 5000.0f, 10.0f, gDevice);
+	gHeightMap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
 }
 
@@ -871,7 +871,7 @@ void createConstantBuffer()
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 }
 
-void transform(XMFLOAT3 move, XMMATRIX rotation)
+void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 {
 	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
@@ -880,14 +880,18 @@ void transform(XMFLOAT3 move, XMMATRIX rotation)
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	LookAt = XMVector3TransformCoord(camForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
+	
 
 	camRight = XMVector3TransformCoord(camRight, rotation);
 	camUp = XMVector3TransformCoord(camUp, rotation);
 	camForward = XMVector3TransformCoord(camForward, rotation);
 
 	gCamera.pos += move.x * camRight;
-	gCamera.pos += move.y * camUp;
+	//gCamera.pos += move.y * camUp;
 	gCamera.pos += move.z * camForward;
+	
+	XMVectorSetY(gCamera.pos, gHeightMap->getVertices()[XMVectorGetX(gCamera.pos) * XMVectorGetZ(gCamera.pos)].getPos().y);
+	
 	LookAt = gCamera.pos + LookAt;
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
@@ -1092,7 +1096,7 @@ void renderFirstPass()
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
@@ -1106,7 +1110,7 @@ void renderFirstPass()
 	// HEIGHTMAP
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightMap->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gHeightMap->getVertCount() * 2, 0);
+	gDeviceContext->Draw(gHeightMap->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1360,6 +1364,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				}
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+				XMMATRIX rotationYPos = XMMatrixRotationRollPitchYaw(0.0f, yaw, 0.0f);
 			
 				velocity.x = 0;
 				velocity.y = 0;
@@ -1382,7 +1387,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				transform(velocity, rotation);
+				transform(velocity, rotation, rotationYPos);
 				
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window. upper left corner of the screen = (0,0)

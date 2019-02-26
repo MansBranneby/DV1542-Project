@@ -33,5 +33,6 @@ public:
 	~HeightMap();
 	
 	ID3D11Buffer** getVertexBuffer();
+	std::vector <Vertex_Pos_UV_Normal> & getVertices();
 	int getVertCount();
 };

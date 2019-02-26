@@ -4,7 +4,7 @@ Vertex_Pos_UV_Normal::Vertex_Pos_UV_Normal()
 {
 	_pos = { 0.0f, 0.0f, 0.0f };
 	_UV = { 0.0f, 0.0f };
-	_normal = { 0.0f, 0.0f, 0.0f };
+	_normal = { 0.0f, 1.0f, 0.0f };
 }
 
 Vertex_Pos_UV_Normal::Vertex_Pos_UV_Normal(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV, DirectX::XMFLOAT3 normal)
@@ -12,6 +12,13 @@ Vertex_Pos_UV_Normal::Vertex_Pos_UV_Normal(DirectX::XMFLOAT3 pos, DirectX::XMFLO
 	_pos = pos;
 	_UV = UV;
 	_normal = normal;
+}
+
+Vertex_Pos_UV_Normal::Vertex_Pos_UV_Normal(DirectX::XMFLOAT3 pos)
+{
+	_pos = pos;
+	_UV = { 0.0f, 0.0f };
+	_normal = { 0.0f, 0.0f, 0.0f };
 }
 
 Vertex_Pos_UV_Normal::~Vertex_Pos_UV_Normal()
