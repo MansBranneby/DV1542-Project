@@ -110,6 +110,7 @@ ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gGeometryShaderBillboard = nullptr;
 ID3D11GeometryShader* gGeometryShaderNormalMap = nullptr;
 // GLOBALS //
+bool gCameraWalkMode = true;
 float gFloat = 1.0f;
 float gDist = 0.0f;
 float gRotation = 0.0f;
@@ -119,7 +120,7 @@ Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
-HeightMap* gHeightMap = nullptr;
+HeightMap* gHeightmap = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -173,7 +174,7 @@ void createMeshes()
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 
-	gHeightMap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
+	gHeightmap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
 }
 
@@ -881,21 +882,32 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 	LookAt = XMVector3TransformCoord(camForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
 	
+	if (gCameraWalkMode)
+	{
+		camRight = XMVector3TransformCoord(camRight, rotationYPos);
+		camUp = XMVector3TransformCoord(camUp, rotationYPos);
+		camForward = XMVector3TransformCoord(camForward, rotationYPos);
+	}
+	else
+	{
+		camRight = XMVector3TransformCoord(camRight, rotation);
+		camUp = XMVector3TransformCoord(camUp, rotation);
+		camForward = XMVector3TransformCoord(camForward, rotation);
+	}
 
-	camRight = XMVector3TransformCoord(camRight, rotation);
-	camUp = XMVector3TransformCoord(camUp, rotation);
-	camForward = XMVector3TransformCoord(camForward, rotation);
-
+	XMVECTOR camTest = XMVectorSet(0.0f, gHeightmap->getVertices()[3744].getPos().y, 0.0f, 0.0f);
+	
 	gCamera.pos += move.x * camRight;
-	//gCamera.pos += move.y * camUp;
+	gCamera.pos += move.y * camUp;
 	gCamera.pos += move.z * camForward;
 	
-	XMVectorSetY(gCamera.pos, gHeightMap->getVertices()[XMVectorGetX(gCamera.pos) * XMVectorGetZ(gCamera.pos)].getPos().y);
-	
-	LookAt = gCamera.pos + LookAt;
+	LookAt += gCamera.pos + camTest;
+	//XMVectorSetY(gCamera.pos, gHeightmap->getVertices()[XMVectorGetX(gCamera.pos) * XMVectorGetZ(gCamera.pos)].getPos().y);
+
+
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
+	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos + camTest, LookAt, camUp);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 100.0f);
 
 	gCamera.world = World;
@@ -1109,8 +1121,8 @@ void renderFirstPass()
 
 	// HEIGHTMAP
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
-	gDeviceContext->IASetVertexBuffers(0, 1, gHeightMap->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gHeightMap->getVertCount(), 0);
+	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1236,6 +1248,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);    
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
+	ImGui::Checkbox("Walk Mode", &gCameraWalkMode);
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )",cursorPos.x, cursorPos.y);
