@@ -42,7 +42,7 @@ DirectX::XMFLOAT2 Vertex_Pos_UV_Normal_Tangent::getUV() const
 	return _UV;
 }
 
-DirectX::XMFLOAT3 Vertex_Pos_UV_Normal_Tangent::getNorm() const
+DirectX::XMFLOAT3 Vertex_Pos_UV_Normal_Tangent::getNor() const
 {
 	return _normal;
 }

@@ -16,13 +16,9 @@ public:
 
 	void setPos(DirectX::XMFLOAT3 pos);
 	void setUV(DirectX::XMFLOAT2 UV);
-	void setNormal(DirectX::XMFLOAT3 normal);
+	void setNor(DirectX::XMFLOAT3 normal);
 
 	DirectX::XMFLOAT3 getPos() const;
 	DirectX::XMFLOAT2 getUV() const;
-	DirectX::XMFLOAT3 getNorm() const;
-
-	void setPos(DirectX::XMFLOAT3 pos);
-	void setUV(DirectX::XMFLOAT2 UV);
-	void setNorm(DirectX::XMFLOAT3 normal);
+	DirectX::XMFLOAT3 getNor() const;
 };

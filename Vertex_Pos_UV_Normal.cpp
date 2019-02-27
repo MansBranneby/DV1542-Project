@@ -35,7 +35,7 @@ void Vertex_Pos_UV_Normal::setUV(DirectX::XMFLOAT2 UV)
 	_UV = UV;
 }
 
-void Vertex_Pos_UV_Normal::setNormal(DirectX::XMFLOAT3 normal)
+void Vertex_Pos_UV_Normal::setNor(DirectX::XMFLOAT3 normal)
 {
 	_normal = normal;
 }
@@ -50,22 +50,7 @@ DirectX::XMFLOAT2 Vertex_Pos_UV_Normal::getUV()  const
 	return _UV;
 }
 
-DirectX::XMFLOAT3 Vertex_Pos_UV_Normal::getNorm() const
+DirectX::XMFLOAT3 Vertex_Pos_UV_Normal::getNor() const
 {
 	return _normal;
-}
-
-void Vertex_Pos_UV_Normal::setPos(DirectX::XMFLOAT3 pos)
-{
-	_pos = pos;
-}
-
-void Vertex_Pos_UV_Normal::setUV(DirectX::XMFLOAT2 UV)
-{
-	_UV = UV;
-}
-
-void Vertex_Pos_UV_Normal::setNorm(DirectX::XMFLOAT3 normal)
-{
-	_normal = normal;
 }

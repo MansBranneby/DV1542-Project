@@ -121,12 +121,6 @@ ID3D11PixelShader* gPixelShaderBillboard = nullptr;
 ID3D11PixelShader* gPixelShaderNormalMap = nullptr;
 ID3D11PixelShader* gPixelShaderShadowMap = nullptr;
 
-//Meshes
-Mesh* gPillar = nullptr;
-Mesh* gBrickWall = nullptr;
-Mesh* gBillboard = nullptr;
-Mesh* gBoundingVolume = nullptr;
-Mesh* gPlane = nullptr;
 
 // GLOBALS //
 float gHeight = 0.0f;
@@ -136,10 +130,12 @@ float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
 float gClearColour[3] = {};
+//Meshes
 Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
+Mesh* gPlane = nullptr;
 HeightMap* gHeightmap = nullptr;
 
 struct PerFrameMatrices {
@@ -1015,11 +1011,11 @@ void createConstantBuffer()
 	// create a Constant Buffer
 	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
 
-void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
-{
-	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	// Fill in the subresource data.
+	InitData.pSysMem = &gLightView;
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+
 	//Shadow map
 	cbDesc.ByteWidth = sizeof(gLightView);
 	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -1027,39 +1023,6 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	cbDesc.MiscFlags = 0;
 	cbDesc.StructureByteStride = 0;
-
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	LookAt = XMVector3TransformCoord(camForward, rotation);
-	LookAt = XMVector3Normalize(LookAt);
-	
-	gHeight = gHeightmap->getHeight(XMVectorGetX(gCamera.pos), XMVectorGetZ(gCamera.pos));
-
-	if (gCameraWalkMode)
-	{
-		camRight = XMVector3TransformCoord(camRight, rotationYPos);
-		camUp = XMVector3TransformCoord(camUp, rotationYPos);
-		camForward = XMVector3TransformCoord(camForward, rotationYPos);
-		gCamera.pos += move.x * camRight;
-		gCamera.pos = XMVectorSetY(gCamera.pos, gHeight + 1.0f);
-		gCamera.pos += move.z * camForward;
-		LookAt += gCamera.pos;
-		gCamera.distance = 1.0f;
-	}
-	else
-	{
-		camRight = XMVector3TransformCoord(camRight, rotation);
-		camUp = XMVector3TransformCoord(camUp, rotation);
-		camForward = XMVector3TransformCoord(camForward, rotation);
-		gCamera.pos += move.x * camRight;
-		gCamera.pos += move.y * camUp;
-		gCamera.pos += move.z * camForward;
-		LookAt += gCamera.pos;
-		gCamera.distance = 5.0f;
-	}
-	// Fill in the subresource data.
-	InitData.pSysMem = &gLightView;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
 	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferShadowMap);
@@ -1082,24 +1045,6 @@ void setupTextures()
 	texDesc.MiscFlags = 0;
 	texDesc.SampleDesc.Count = 1;
 
-	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
-
-	gCamera.world = World;
-	gCamera.view = View;
-	gCamera.projection = Projection;
-
-	View = XMMatrixTranspose(View);
-	Projection = XMMatrixTranspose(Projection);
-
-	XMMATRIX WorldView = XMMatrixMultiply(View, World);
-	XMMATRIX WorldViewProj = XMMatrixMultiply(Projection, WorldView);
-	
-	gMatricesPerFrame.WorldViewProj = WorldViewProj;
-	gMatricesPerFrame.World = World;
-	
-	gCameraData.camPos = gCamera.pos;
 	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexShadowMap);
 	if (FAILED(hr))
 		MessageBox(NULL, L"TexShadowMap", L"Error", MB_OK | MB_ICONERROR);
@@ -1326,24 +1271,41 @@ void SetViewport()
 	gDevice->CreateRasterizerState(&rasterizerDesc, &gRasterizerState);
 }
 
-void transform(XMFLOAT3 move, XMMATRIX rotation)
+void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 {
 	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
+
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	LookAt = XMVector3TransformCoord(camForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
 
-	camRight = XMVector3TransformCoord(camRight, rotation);
-	camUp = XMVector3TransformCoord(camUp, rotation);
-	camForward = XMVector3TransformCoord(camForward, rotation);
+	gHeight = gHeightmap->getHeight(XMVectorGetX(gCamera.pos), XMVectorGetZ(gCamera.pos));
 
-	gCamera.pos += move.x * camRight;
-	gCamera.pos += move.y * camUp;
-	gCamera.pos += move.z * camForward;
-	LookAt = gCamera.pos + LookAt;
+	if (gCameraWalkMode)
+	{
+		camRight = XMVector3TransformCoord(camRight, rotationYPos);
+		camUp = XMVector3TransformCoord(camUp, rotationYPos);
+		camForward = XMVector3TransformCoord(camForward, rotationYPos);
+		gCamera.pos += move.x * camRight;
+		gCamera.pos = XMVectorSetY(gCamera.pos, gHeight + 1.0f);
+		gCamera.pos += move.z * camForward;
+		LookAt += gCamera.pos;
+		gCamera.distance = 1.0f;
+	}
+	else
+	{
+		camRight = XMVector3TransformCoord(camRight, rotation);
+		camUp = XMVector3TransformCoord(camUp, rotation);
+		camForward = XMVector3TransformCoord(camForward, rotation);
+		gCamera.pos += move.x * camRight;
+		gCamera.pos += move.y * camUp;
+		gCamera.pos += move.z * camForward;
+		LookAt += gCamera.pos;
+		gCamera.distance = 5.0f;
+	}
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
@@ -1392,6 +1354,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
+	ImGui::Checkbox("Walk Mode", &gCameraWalkMode);
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )", cursorPos.x, cursorPos.y);

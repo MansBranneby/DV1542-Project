@@ -21,6 +21,6 @@ public:
 
 	DirectX::XMFLOAT3 getPos() const;
 	DirectX::XMFLOAT2 getUV() const;
-	DirectX::XMFLOAT3 getNorm() const;
+	DirectX::XMFLOAT3 getNor() const;
 	int getVertIndex() const;
 };
