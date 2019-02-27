@@ -975,8 +975,9 @@ void createConstantBuffer()
 	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
-	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
-
+	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 	// CameraData
 	// Fill in a buffer description.
 	cbDesc.ByteWidth = sizeof(gCameraData);
@@ -992,7 +993,9 @@ void createConstantBuffer()
 	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
-	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferCamera);
+	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferCamera);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	// BillboardData
 	// Fill in a buffer description.
@@ -1009,7 +1012,9 @@ void createConstantBuffer()
 	InitData.SysMemSlicePitch = 0;
 
 	// create a Constant Buffer
-	gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
+	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
+	if (FAILED(result))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	// Fill in the subresource data.
 	InitData.pSysMem = &gLightView;
@@ -1067,6 +1072,8 @@ void createDepthStencil()
 	descDepth.CPUAccessFlags = 0;
 	descDepth.MiscFlags = 0;
 	HRESULT hr = gDevice->CreateTexture2D(&descDepth, NULL, &pDepthStencil);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 
@@ -1077,7 +1084,9 @@ void createDepthStencil()
 
 	// Create depth stencil state
 	ID3D11DepthStencilState * pDSState;
-	gDevice->CreateDepthStencilState(&dsDesc, &pDSState);
+	hr = gDevice->CreateDepthStencilState(&dsDesc, &pDSState);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
 	// Bind depth stencil state
 	gDeviceContext->OMSetDepthStencilState(pDSState, 1);
@@ -1268,7 +1277,10 @@ void SetViewport()
 	rasterizerDesc.MultisampleEnable = false;
 	rasterizerDesc.AntialiasedLineEnable = false;
 	
-	gDevice->CreateRasterizerState(&rasterizerDesc, &gRasterizerState);
+	HRESULT hr = gDevice->CreateRasterizerState(&rasterizerDesc, &gRasterizerState);
+	if (FAILED(hr))
+		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+
 }
 
 void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
@@ -1405,8 +1417,8 @@ void renderShadowMap()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
 	//Plane
-	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR

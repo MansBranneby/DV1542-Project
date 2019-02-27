@@ -42,7 +42,7 @@ float HeightMap::getHeight(float x, float z)
 {
 	int index = ((int)z*_depthFactor) * _terrainWidth + (int)x*_widthFactor;
 
-	if (index <= 0 || index == _terrainSize || (int)x * _widthFactor > _terrainWidth || (int)z * _depthFactor > _terrainHeight)
+	if (index < 0 || index == _terrainSize || (int)x * _widthFactor > _terrainWidth || (int)z * _depthFactor > _terrainHeight)
 		index = 0;
 
 	return _greyValues[index]/_heightFactor;
@@ -93,7 +93,7 @@ void HeightMap::loadHeightMap(std::string filePath)
 	inFile.close();
 
 	// Store vertices. Each pixel equals one vertex
-	std::vector <DirectX::XMFLOAT3> _heightMap(_terrainSize);
+	_heightmap.resize(_terrainSize);
 	int k = 0;
 	for (int i = 0; i < _terrainHeight; i++)
 	{
@@ -106,7 +106,7 @@ void HeightMap::loadHeightMap(std::string filePath)
 			int index = (i * _terrainWidth + j);
 
 			DirectX::XMFLOAT3 pos = { width, height, depth };
-			_heightMap[index] = pos;
+			_heightmap[index] = pos;
 		}
 	}
 
@@ -117,27 +117,27 @@ void HeightMap::loadHeightMap(std::string filePath)
 		for (int j = 0; j < _terrainWidth - 1; j++)
 		{
 			// TL 
-			tempVert.setPos(_heightMap[i * _terrainWidth + j]);
+			tempVert.setPos(_heightmap[i * _terrainWidth + j]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 
 			// BL
-			tempVert.setPos(_heightMap[(i + 1) * _terrainWidth + j]);
+			tempVert.setPos(_heightmap[(i + 1) * _terrainWidth + j]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 
 			// TR
-			tempVert.setPos(_heightMap[i * _terrainWidth + j + 1]);
+			tempVert.setPos(_heightmap[i * _terrainWidth + j + 1]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 
 			// BL
-			tempVert.setPos(_heightMap[(i + 1) * _terrainWidth + j]);
+			tempVert.setPos(_heightmap[(i + 1) * _terrainWidth + j]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 
 			// BR
-			tempVert.setPos(_heightMap[(i + 1)* _terrainWidth + j + 1]);
+			tempVert.setPos(_heightmap[(i + 1)* _terrainWidth + j + 1]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 		
 			//  TR
-			tempVert.setPos(_heightMap[i * _terrainWidth + j + 1]);
+			tempVert.setPos(_heightmap[i * _terrainWidth + j + 1]);
 			_vertices_Pos_UV_Normal.push_back(tempVert);
 		}
 	}
