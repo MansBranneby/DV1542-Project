@@ -54,3 +54,18 @@ DirectX::XMFLOAT3 Vertex_Pos_UV_Normal::getNorm() const
 {
 	return _normal;
 }
+
+void Vertex_Pos_UV_Normal::setPos(DirectX::XMFLOAT3 pos)
+{
+	_pos = pos;
+}
+
+void Vertex_Pos_UV_Normal::setUV(DirectX::XMFLOAT2 UV)
+{
+	_UV = UV;
+}
+
+void Vertex_Pos_UV_Normal::setNorm(DirectX::XMFLOAT3 normal)
+{
+	_normal = normal;
+}

@@ -33,6 +33,7 @@ private:
 	ID3D11ShaderResourceView* _SRV_Texture;
 	ID3D11ShaderResourceView* _SRV_Normal;
 	ID3D11Buffer* _vertexBuffer;
+	ID3D11Buffer* _vertexBufferNormalMap;
 	DirectX::XMMATRIX _worldMatrix;
 	BoundingVolume* _boundingVolume;
 
@@ -49,6 +50,7 @@ public:
 	ID3D11ShaderResourceView** getSRV_Texture();
 	ID3D11ShaderResourceView** getSRV_Normal();
 	ID3D11Buffer** getVertexBuffer();
+	ID3D11Buffer** getVertexBufferNormalMap();
 	int getVertCount();
 
 	BoundingVolume* getBoundingVolume();

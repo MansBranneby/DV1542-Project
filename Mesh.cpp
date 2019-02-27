@@ -127,6 +127,9 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		{
 			Vertex_Pos_UV_Normal_Tangent tempTriangle(vertPos, vertUV, vertNormal, vertIndex);
 			_vertices_Pos_UV_Normal_Tangent.push_back(tempTriangle);
+
+			Vertex_Pos_UV_Normal tempTriangleVertex(vertPos, vertUV, vertNormal);
+			_vertices_Pos_UV_Normal.push_back(tempTriangleVertex);
 		}
 		else
 		{
@@ -243,7 +246,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	if (normalMapped)
 	{
 		//Initialize
-		std::vector<DirectX::XMVECTOR> tangents(_vertices_Pos_UV_Normal_Tangent.size());
+		std::vector<DirectX::XMVECTOR> tangents;
+		tangents.resize(_vertices_Pos_UV_Normal_Tangent.size());
 		std::fill(tangents.begin(), tangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//Calculate triangle tangents
@@ -292,7 +296,6 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		}
 	}
 
-
 	// VERTEX BUFFER
 	//
 	D3D11_BUFFER_DESC bufferDesc;
@@ -300,19 +303,23 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	D3D11_SUBRESOURCE_DATA data;
+
+	bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
+	data.pSysMem = _vertices_Pos_UV_Normal.data();
+
+	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
+	if (FAILED(result))
+		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
+
 	if (normalMapped)
 	{
 		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal_Tangent) * _vertices_Pos_UV_Normal_Tangent.size();
 		data.pSysMem = _vertices_Pos_UV_Normal_Tangent.data();
+
+		result = device->CreateBuffer(&bufferDesc, &data, &_vertexBufferNormalMap);
+		if (FAILED(result))
+			MessageBox(NULL, L"ERROR _vertexBufferNormalMap in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 	}
-	else
-	{
-		bufferDesc.ByteWidth = sizeof(Vertex_Pos_UV_Normal) * _vertices_Pos_UV_Normal.size();
-		data.pSysMem = _vertices_Pos_UV_Normal.data();
-	}
-	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
-	if (FAILED(result))
-		MessageBox(NULL, L"ERROR _vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 }
 
 Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
@@ -366,6 +373,11 @@ ID3D11ShaderResourceView ** Mesh::getSRV_Normal()
 ID3D11Buffer* *Mesh::getVertexBuffer()
 {
 	return &_vertexBuffer;
+}
+
+ID3D11Buffer ** Mesh::getVertexBufferNormalMap()
+{
+	return &_vertexBufferNormalMap;
 }
 
 int Mesh::getVertCount()

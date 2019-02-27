@@ -22,4 +22,7 @@ public:
 	DirectX::XMFLOAT2 getUV() const;
 	DirectX::XMFLOAT3 getNorm() const;
 
+	void setPos(DirectX::XMFLOAT3 pos);
+	void setUV(DirectX::XMFLOAT2 UV);
+	void setNorm(DirectX::XMFLOAT3 normal);
 };
