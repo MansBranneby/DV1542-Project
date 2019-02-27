@@ -28,6 +28,26 @@ std::vector<Vertex_Pos_UV_Normal>& HeightMap::getVertices()
 	return _vertices_Pos_UV_Normal;
 }
 
+std::vector<DirectX::XMFLOAT3> HeightMap::getHeightmap()
+{
+	return _heightmap;
+}
+
+std::vector<float> HeightMap::getGreyValues()
+{
+	return _greyValues;
+}
+
+float HeightMap::getHeight(float x, float z)
+{
+	int index = ((int)z*_depthFactor) * _terrainWidth + (int)x*_widthFactor;
+
+	if (index <= 0 || index == _terrainSize || (int)x * _widthFactor > _terrainWidth || (int)z * _depthFactor > _terrainHeight)
+		index = 0;
+
+	return _greyValues[index]/_heightFactor;
+}
+
 int HeightMap::getVertCount()
 {
 	return _vertices_Pos_UV_Normal.size();

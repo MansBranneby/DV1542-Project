@@ -110,6 +110,7 @@ ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gGeometryShaderBillboard = nullptr;
 ID3D11GeometryShader* gGeometryShaderNormalMap = nullptr;
 // GLOBALS //
+float gHeight = 0.0f;
 bool gCameraWalkMode = true;
 float gFloat = 1.0f;
 float gDist = 0.0f;
@@ -161,6 +162,7 @@ struct Camera
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
+	float distance = 5.0f;
 };
 Camera gCamera;
 
@@ -882,33 +884,34 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 	LookAt = XMVector3TransformCoord(camForward, rotation);
 	LookAt = XMVector3Normalize(LookAt);
 	
+	gHeight = gHeightmap->getHeight(XMVectorGetX(gCamera.pos), XMVectorGetZ(gCamera.pos));
+
 	if (gCameraWalkMode)
 	{
 		camRight = XMVector3TransformCoord(camRight, rotationYPos);
 		camUp = XMVector3TransformCoord(camUp, rotationYPos);
 		camForward = XMVector3TransformCoord(camForward, rotationYPos);
+		gCamera.pos += move.x * camRight;
+		gCamera.pos = XMVectorSetY(gCamera.pos, gHeight + 1.0f);
+		gCamera.pos += move.z * camForward;
+		LookAt += gCamera.pos;
+		gCamera.distance = 1.0f;
 	}
 	else
 	{
 		camRight = XMVector3TransformCoord(camRight, rotation);
 		camUp = XMVector3TransformCoord(camUp, rotation);
 		camForward = XMVector3TransformCoord(camForward, rotation);
+		gCamera.pos += move.x * camRight;
+		gCamera.pos += move.y * camUp;
+		gCamera.pos += move.z * camForward;
+		LookAt += gCamera.pos;
+		gCamera.distance = 5.0f;
 	}
 
-	XMVECTOR camTest = XMVectorSet(0.0f, gHeightmap->getVertices()[3744].getPos().y, 0.0f, 0.0f);
-	
-	gCamera.pos += move.x * camRight;
-	gCamera.pos += move.y * camUp;
-	gCamera.pos += move.z * camForward;
-	
-	LookAt += gCamera.pos + camTest;
-	//XMVectorSetY(gCamera.pos, gHeightmap->getVertices()[XMVectorGetX(gCamera.pos) * XMVectorGetZ(gCamera.pos)].getPos().y);
-
-
-
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos + camTest, LookAt, camUp);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 100.0f);
+	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
 
 	gCamera.world = World;
 	gCamera.view = View;
@@ -1252,6 +1255,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )",cursorPos.x, cursorPos.y);
+	ImGui::Text("gHeight: %.2f)", gHeight);
 	ImGui::Text("lastT:%.2f)", lastT);
 	ImGui::End();
 
@@ -1316,7 +1320,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		mouse->SetWindow(wndHandle);
 		POINT cursorPos;
 		XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
-		float distance= 5.0f;
+		
 		float pitch = 0.0f;
 		float yaw = 0.0f;
 		float lastT = -1.0f;
@@ -1384,17 +1388,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				velocity.z = 0;
 
 				if (kb.W)
-					velocity.z += distance * deltaSeconds;
+					velocity.z += gCamera.distance * deltaSeconds;
 				if (kb.S)
-					velocity.z -= distance * deltaSeconds;
+					velocity.z -= gCamera.distance * deltaSeconds;
 				if (kb.A)
-					velocity.x -= distance * deltaSeconds;
+					velocity.x -= gCamera.distance * deltaSeconds;
 				if (kb.D)
-					velocity.x += distance * deltaSeconds;
+					velocity.x += gCamera.distance * deltaSeconds;
 				if (kb.Space)
-					velocity.y += distance * deltaSeconds;
+					velocity.y += gCamera.distance * deltaSeconds;
 				if (kb.LeftControl)
-					velocity.y -= distance * deltaSeconds;
+					velocity.y -= gCamera.distance * deltaSeconds;
 				if (kb.Home)
 					velocity = { 0.0f, 0.0f, -2.0f };
 				if (kb.Escape)

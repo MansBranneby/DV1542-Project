@@ -24,6 +24,7 @@ private:
 	ID3D11Buffer* _vertexBuffer;
 	std::vector <float> _greyValues;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
+	std::vector <DirectX::XMFLOAT3> _heightmap;
 
 	void loadHeightMap(std::string filePath);
 	void createVertexBuffer(ID3D11Device* device);
@@ -34,5 +35,9 @@ public:
 	
 	ID3D11Buffer** getVertexBuffer();
 	std::vector <Vertex_Pos_UV_Normal> & getVertices();
+	std::vector <DirectX::XMFLOAT3> getHeightmap();
+	std::vector <float> getGreyValues();
+	float getHeight(float x, float z);
+
 	int getVertCount();
 };
