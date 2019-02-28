@@ -38,3 +38,5 @@
 !Vertex_Pos_UV_Normal_Tangent.cpp
 !Heightmap.h
 !Heightmap.cpp
+!QuadtreeNode.h
+!QuadtreeNode.cpp
