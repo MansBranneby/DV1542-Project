@@ -183,57 +183,10 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	}
 	inFile.close();
 
-	// BOUNDING VOLUME
-	//
-	DirectX::XMFLOAT3 halfXYZ;
-	halfXYZ.x = (abs(smallestXYZ.x) + abs(biggestXYZ.x)) / 2;
-	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;
-	halfXYZ.z = (abs(smallestXYZ.z) + abs(biggestXYZ.z)) / 2;
-
-	DirectX::XMVECTOR center = DirectX::XMVectorSet(0.0f, halfXYZ.y, 0.0f, 1.0f);
-	DirectX::XMVECTOR half_u_v_w = DirectX::XMVectorSet(halfXYZ.x, halfXYZ.y, halfXYZ.z, 0.0f);
-
-	DirectX::XMFLOAT3 col(0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 rightUpNear(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 rightDownNear(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 leftUpNear(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 leftDownNear(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z);
-
-	DirectX::XMFLOAT3 rightUpFar(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 rightDownFar(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 leftUpFar(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 leftDownFar(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z);
-	
-	std::vector <Vertex_Pos_Col> vertices;
-	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
-	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(rightDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftDownFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpNear, col));
-	vertices.push_back(Vertex_Pos_Col(leftUpFar, col));
-	vertices.push_back(Vertex_Pos_Col(rightUpFar, col));
-
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(center, half_u_v_w, vertices, device);
+		_boundingVolume = new OBB(smallestXYZ, biggestXYZ, device);
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:
@@ -320,6 +273,8 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		if (FAILED(result))
 			MessageBox(NULL, L"ERROR _vertexBufferNormalMap in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 	}
+
+	
 }
 
 Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
@@ -337,7 +292,7 @@ Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
 	data.pSysMem = _vertices_Pos_Col.data();
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"Error vertexBuffer in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 	
 }
 

@@ -2,36 +2,83 @@
 
 OBB::OBB()
 {
-	_half_u_v_w = { 0.0f, 0.0f, 0.0f, 0.0f };
+	_half_u_v_w = { 0.0f, 0.0f, 0.0f};
 }
 
-OBB::OBB(DirectX::XMVECTOR center, DirectX::XMVECTOR half_u_v_w, std::vector <Vertex_Pos_Col> vertices, ID3D11Device* device)
-	:BoundingVolume(center, vertices, device)
+OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device)
+	:BoundingVolume(device)
 {
-	_half_u_v_w = half_u_v_w;
+	// BOUNDING VOLUME
+	//
+	DirectX::XMFLOAT3 halfXYZ;
+	halfXYZ.x = (abs(smallestXYZ.x) + abs(biggestXYZ.x)) / 2;
+	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;
+	halfXYZ.z = (abs(smallestXYZ.z) + abs(biggestXYZ.z)) / 2;
+
+	_center = { 0.0f, halfXYZ.y, 0.0f };
+	_half_u_v_w = { halfXYZ.x, halfXYZ.y, halfXYZ.z };
+
+	DirectX::XMFLOAT3 col(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 _rightUpNear(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 _rightDownNear(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 _leftUpNear(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z);
+	DirectX::XMFLOAT3 _leftDownNear(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z);
+
+	DirectX::XMFLOAT3 _rightUpFar(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 _rightDownFar(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 _leftUpFar(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z);
+	DirectX::XMFLOAT3 _leftDownFar(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z);
+
+	_vertices.push_back(Vertex_Pos_Col(_rightUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightUpFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightUpFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftDownFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpNear, col));
+	_vertices.push_back(Vertex_Pos_Col(_leftUpFar, col));
+	_vertices.push_back(Vertex_Pos_Col(_rightUpFar, col));
+
+	createVertexBuffer(device);
 }
 
 OBB::~OBB()
 {
 }
 
-void OBB::setHalf_u_v_w(DirectX::XMVECTOR half_u_v_w)
+void OBB::setHalf_u_v_w(DirectX::XMFLOAT3 half_u_v_w)
 {
 }
 
-DirectX::XMVECTOR OBB::getHalf_u_v_w()
+DirectX::XMFLOAT3 OBB::getHalf_u_v_w()
 {
 	return _half_u_v_w;
 }
 
 float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin)
 {
-	DirectX::XMVECTOR defU = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, DirectX::XMVectorGetX(_half_u_v_w));
-	DirectX::XMVECTOR defV = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, DirectX::XMVectorGetY(_half_u_v_w));
-	DirectX::XMVECTOR defW = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, DirectX::XMVectorGetZ(_half_u_v_w));
+	DirectX::XMVECTOR defU = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, _half_u_v_w.x);
+	DirectX::XMVECTOR defV = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, _half_u_v_w.y);
+	DirectX::XMVECTOR defW = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, _half_u_v_w.z);
 	// IMPLEMENT HERE
 	float tMin = -1000000, tMax = 1000000;
-	DirectX::XMVECTOR p = DirectX::XMVectorSubtract(getCenter(), rayOrigin);
+	DirectX::XMVECTOR center = DirectX::XMLoadFloat3(&getCenter());
+	DirectX::XMVECTOR p = DirectX::XMVectorSubtract(center, rayOrigin);
 	DirectX::XMVECTOR arr[3] = {defU, defV, defW };
 
 	for (int i = 0; i < 3; i++)
@@ -67,4 +114,12 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 		return tMin;
 	else
 		return tMax;
+}
+
+void OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
+{
+	DirectX::XMFLOAT3 test1 = { _half_u_v_w.x , 0.0f, 0.0f };
+	DirectX::XMVECTOR test = DirectX::XMLoadFloat3(&test1);
+
+	//if ((center.x + halfLength) > _center.x + DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(_half_u_v_w.x, 0.0f, 0.0f)), DirectX::XMMatrixInverse(nullptr, _worldMatrix)));
 }

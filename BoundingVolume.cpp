@@ -1,14 +1,7 @@
 #include "BoundingVolume.h"
 
-BoundingVolume::BoundingVolume()
+void BoundingVolume::createVertexBuffer(ID3D11Device* device)
 {
-}
-
-BoundingVolume::BoundingVolume(DirectX::XMVECTOR center, std::vector <Vertex_Pos_Col> vertices, ID3D11Device* device)
-{
-	_center = center;
-	_vertices = vertices;
-
 	// Describe the Vertex Buffer
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
@@ -24,6 +17,14 @@ BoundingVolume::BoundingVolume(DirectX::XMVECTOR center, std::vector <Vertex_Pos
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
 	if (FAILED(result))
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
+}
+
+BoundingVolume::BoundingVolume()
+{
+}
+
+BoundingVolume::BoundingVolume(ID3D11Device* device)
+{
 
 }
 
@@ -36,7 +37,7 @@ void BoundingVolume::setWorldMatrix(DirectX::XMMATRIX worldMatrix)
 	_worldMatrix = worldMatrix;
 }
 
-void BoundingVolume::setCenter(DirectX::XMVECTOR center)
+void BoundingVolume::setCenter(DirectX::XMFLOAT3 center)
 {
 	_center = center;
 }
@@ -61,7 +62,7 @@ ID3D11Buffer ** BoundingVolume::getVertexBuffer()
 	return &_vertexBuffer;
 }
 
-DirectX::XMVECTOR BoundingVolume::getCenter()
+DirectX::XMFLOAT3 BoundingVolume::getCenter() const
 {
 	return _center;
 }

@@ -7,25 +7,30 @@
 class BoundingVolume
 {
 private:
-	DirectX::XMVECTOR _center;
 	DirectX::XMMATRIX _worldMatrix;
-	std::vector <Vertex_Pos_Col> _vertices;
 	ID3D11Buffer* _vertexBuffer;
 	bool _highlighted;
+	
+protected:
+	DirectX::XMFLOAT3 _center;
+	std::vector <Vertex_Pos_Col> _vertices;
 
 public:
 	BoundingVolume();
-	BoundingVolume(DirectX::XMVECTOR center, std::vector <Vertex_Pos_Col> vertices, ID3D11Device* device);
+	BoundingVolume(ID3D11Device* device);
 	~BoundingVolume();
 
 	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);
-	void setCenter(DirectX::XMVECTOR center);
+	void setCenter(DirectX::XMFLOAT3 center);
 	void setHighlight(bool highlighted);
 
+	virtual void createVertexBuffer(ID3D11Device* device);
+	
 	ID3D11Buffer** getVertexBuffer();
-	DirectX::XMVECTOR getCenter();
+	DirectX::XMFLOAT3 getCenter() const;
 	std::vector <Vertex_Pos_Col> & getVertices();
 	int getVertCount();
 
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;
+	virtual void intersectWithBox(DirectX::XMFLOAT3 center, float halfLength) = 0;
 };
