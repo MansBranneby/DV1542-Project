@@ -1,59 +1,59 @@
-#include "HeightMap.h"
+#include "Heightmap.h"
 
-HeightMap::HeightMap()
+Heightmap::Heightmap()
 {
 }
 
-HeightMap::HeightMap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device)
+Heightmap::Heightmap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device)
 {
 	_widthFactor = widthFactor;
 	_heightFactor = heightFactor;
 	_depthFactor = depthFactor;
 
-	loadHeightMap(filePath);
+	loadHeightmap(filePath);
 	createVertexBuffer(device);
 }
 
-HeightMap::~HeightMap()
+Heightmap::~Heightmap()
 {
 }
 
-ID3D11Buffer ** HeightMap::getVertexBuffer()
+ID3D11Buffer ** Heightmap::getVertexBuffer()
 {
 	return &_vertexBuffer;
 }
 
-std::vector<Vertex_Pos_UV_Normal>& HeightMap::getVertices()
+std::vector<Vertex_Pos_UV_Normal>& Heightmap::getVertices()
 {
 	return _vertices_Pos_UV_Normal;
 }
 
-std::vector<DirectX::XMFLOAT3> HeightMap::getHeightmap()
+std::vector<DirectX::XMFLOAT3> Heightmap::getHeightmap()
 {
 	return _heightmap;
 }
 
-std::vector<float> HeightMap::getGreyValues()
+std::vector<float> Heightmap::getGreyValues()
 {
 	return _greyValues;
 }
 
-float HeightMap::getHeight(float x, float z)
+float Heightmap::getHeight(float x, float z)
 {
-	int index = ((int)z*_depthFactor) * _terrainWidth + (int)x*_widthFactor;
+	int index = ((int)(z*_depthFactor)) * _terrainWidth + (int)(x*_widthFactor);
 
-	if (index < 0 || index == _terrainSize || (int)x * _widthFactor > _terrainWidth || (int)z * _depthFactor > _terrainHeight)
+	if (index < 0 || index >= _terrainSize || (int)(x * _widthFactor) > _terrainWidth || (int)(z * _depthFactor) > _terrainHeight)
 		index = 0;
 
 	return _greyValues[index]/_heightFactor;
 }
 
-int HeightMap::getVertCount()
+int Heightmap::getVertCount()
 {
 	return _vertices_Pos_UV_Normal.size();
 }
 
-void HeightMap::loadHeightMap(std::string filePath)
+void Heightmap::loadHeightmap(std::string filePath)
 {
 	std::string line;
 	std::istringstream inputString;
@@ -71,7 +71,7 @@ void HeightMap::loadHeightMap(std::string filePath)
 	// value > 0 if line is bigger than argument
 	std::getline(inFile, line);
 	if(line.compare("P2") != 0)
-		MessageBox(NULL, L"LoadHeightMap: faulty version.", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"LoadHeightmap: faulty version.", L"Error", MB_OK | MB_ICONERROR);
 
 	std::getline(inFile, line);
 	inputString.str(line);
@@ -99,7 +99,7 @@ void HeightMap::loadHeightMap(std::string filePath)
 	{
 		for (int j = 0; j < _terrainWidth; j++)
 		{
-			float width = j / _widthFactor;						// scale x
+			float width = j	/ _widthFactor;						// scale x
 			float height = _greyValues[k++] / _heightFactor;	// scale y
 			float depth = i / _depthFactor;						// scale z
 
@@ -111,7 +111,6 @@ void HeightMap::loadHeightMap(std::string filePath)
 	}
 
 	Vertex_Pos_UV_Normal tempVert;
-
 	for (int i = 0; i < _terrainHeight - 1; i++)
 	{
 		for (int j = 0; j < _terrainWidth - 1; j++)
@@ -143,7 +142,7 @@ void HeightMap::loadHeightMap(std::string filePath)
 	}
 }
 
-void HeightMap::createVertexBuffer(ID3D11Device * device)
+void Heightmap::createVertexBuffer(ID3D11Device * device)
 {
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));

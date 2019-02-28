@@ -11,7 +11,7 @@
 #include <sstream>
 #include <vector>
 
-class HeightMap
+class Heightmap
 {
 private:
 	int _terrainWidth;
@@ -23,15 +23,15 @@ private:
 	float _depthFactor;
 	ID3D11Buffer* _vertexBuffer;
 	std::vector <float> _greyValues;
-	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	std::vector <DirectX::XMFLOAT3> _heightmap;
+	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 
-	void loadHeightMap(std::string filePath);
+	void loadHeightmap(std::string filePath);
 	void createVertexBuffer(ID3D11Device* device);
 public:
-	HeightMap();
-	HeightMap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device);
-	~HeightMap();
+	Heightmap();
+	Heightmap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device);
+	~Heightmap();
 	
 	ID3D11Buffer** getVertexBuffer();
 	std::vector <Vertex_Pos_UV_Normal> & getVertices();

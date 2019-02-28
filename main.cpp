@@ -20,7 +20,7 @@
 // Own classes
 #include "Mesh.h"
 #include "Vertex_Pos_UV_Normal.h"
-#include "HeightMap.h"
+#include "Heightmap.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -136,7 +136,7 @@ Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
 Mesh* gPlane = nullptr;
-HeightMap* gHeightmap = nullptr;
+Heightmap* gHeightmap = nullptr;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -198,7 +198,7 @@ void createMeshes()
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	gBillboard = new Mesh(arr, gDevice);
 
-	gHeightmap = new HeightMap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
+	gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
 }
 
@@ -815,43 +815,43 @@ HRESULT createShadersShadowMap()
 
 	pVS->Release();
 
-	////GeometryShader
-	ID3DBlob* pGS = nullptr;
-	if (errorBlob) errorBlob->Release();
-	errorBlob = nullptr;
+	//////GeometryShader
+	//ID3DBlob* pGS = nullptr;
+	//if (errorBlob) errorBlob->Release();
+	//errorBlob = nullptr;
 
-	result = D3DCompileFromFile(
-		L"GeometryShaderShadowMap.hlsl", // filename
-		nullptr,		// optional macros
-		nullptr,		// optional include files
-		"GS_main",		// entry point
-		"gs_5_0",		// shader model (target)
-		D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-		0,				// IGNORE...DEPRECATED.
-		&pGS,			// double pointer to ID3DBlob		
-		&errorBlob		// pointer for Error Blob messages.
-	);
+	//result = D3DCompileFromFile(
+	//	L"GeometryShaderShadowMap.hlsl", // filename
+	//	nullptr,		// optional macros
+	//	nullptr,		// optional include files
+	//	"GS_main",		// entry point
+	//	"gs_5_0",		// shader model (target)
+	//	D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
+	//	0,				// IGNORE...DEPRECATED.
+	//	&pGS,			// double pointer to ID3DBlob		
+	//	&errorBlob		// pointer for Error Blob messages.
+	//);
 
-	// compilation failed?
-	if (FAILED(result))
-	{
-		if (errorBlob)
-		{
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-			// release "reference" to errorBlob interface object
-			errorBlob->Release();
-		}
-		if (pGS)
-			pGS->Release();
-		return result;
-	}
+	//// compilation failed?
+	//if (FAILED(result))
+	//{
+	//	if (errorBlob)
+	//	{
+	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	//		// release "reference" to errorBlob interface object
+	//		errorBlob->Release();
+	//	}
+	//	if (pGS)
+	//		pGS->Release();
+	//	return result;
+	//}
 
-	result = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderShadowMap);
-	if (FAILED(result))
-		MessageBox(NULL, L"gGeometryShaderShadowMap", L"Error", MB_OK | MB_ICONERROR);
+	//result = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderShadowMap);
+	//if (FAILED(result))
+	//	MessageBox(NULL, L"gGeometryShaderShadowMap", L"Error", MB_OK | MB_ICONERROR);
 
-	// we do not need anymore this COM object, so we release it.
-	pGS->Release();
+	//// we do not need anymore this COM object, so we release it.
+	//pGS->Release();
 
 
 	// Pixelshader //
@@ -1305,7 +1305,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 		gCamera.pos = XMVectorSetY(gCamera.pos, gHeight + 1.0f);
 		gCamera.pos += move.z * camForward;
 		LookAt += gCamera.pos;
-		gCamera.distance = 1.0f;
+		gCamera.distance = 5.0f;
 	}
 	else
 	{
@@ -1316,7 +1316,7 @@ void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
 		gCamera.pos += move.y * camUp;
 		gCamera.pos += move.z * camForward;
 		LookAt += gCamera.pos;
-		gCamera.distance = 5.0f;
+		gCamera.distance = 10.0f;
 	}
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
@@ -1411,18 +1411,17 @@ void renderShadowMap()
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 
 	//Plane
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR
-	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 }
@@ -1446,9 +1445,7 @@ void renderFirstPass()
 
 	//Plane
 	gDeviceContext->PSSetShaderResources(0, 1, gPlane->getSRV_Texture());
-
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	//// PILLAR

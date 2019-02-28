@@ -2,6 +2,8 @@
 
 Vertex_Pos_Col::Vertex_Pos_Col()
 {
+	_pos = { 0.0f, 0.0f, 0.0f };
+	_col = { 0.0f, 0.0f, 0.0f };
 }
 
 Vertex_Pos_Col::Vertex_Pos_Col(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT3 col)

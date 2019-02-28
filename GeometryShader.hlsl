@@ -29,7 +29,7 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	float4 position1VP = mul(input[1].pos, worldViewProj);
 	float4 position2VP = mul(input[2].pos, worldViewProj);
 
-	float4 normalVP = normalize(float4(cross(position1VP.xyz - position0VP.xyz, position2VP.xyz - position0VP.xyz), 1.0f));
+	float4 normalVP = normalize(float4(cross(position1VP.xyz - position0VP.xyz, position2VP.xyz - position0VP.xyz), 0.0f));
 	bool frontFace = false;
 	if (dot(position0VP, normalVP) < 0)
 		frontFace = true;
@@ -39,6 +39,7 @@ void GS_main( triangle GS_IN input[3], inout TriangleStream< GS_OUT > output)
 	{
 		if (frontFace)
 			element.pos = mul(input[i].pos, worldViewProj);
+
 		element.posWS = mul(input[i].pos, world);
 		element.norWS = mul(normal, world);
 		element.tex = input[i].tex;
