@@ -22,6 +22,11 @@ Vertex_Pos_UV_Normal_Tangent::~Vertex_Pos_UV_Normal_Tangent()
 {
 }
 
+void Vertex_Pos_UV_Normal_Tangent::setPos(DirectX::XMFLOAT3 pos)
+{
+	_pos = pos;
+}
+
 void Vertex_Pos_UV_Normal_Tangent::setTangent(DirectX::XMFLOAT3 tangent)
 {
 	_tangent = tangent;

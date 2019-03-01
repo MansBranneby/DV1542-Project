@@ -27,6 +27,7 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 {
 	using namespace DirectX;
 	
+	_quadTreeLevels = quadtreeLevels;
 	_halfLength = halfLength;
 	_centerPos = centerPos;
 
@@ -44,12 +45,12 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 
 		for (int i = 0; i < 4; i++)
 		{
-			_children->push_back(new QuadtreeNode(_halfLength / 2, centers[i], intersectedMeshes, quadtreeLevels, currentLevel + 1));
+			_children.push_back(new QuadtreeNode(_halfLength / 2, centers[i], intersectedMeshes, quadtreeLevels, currentLevel + 1));
 		}
 	}
 }
 
-bool QuadtreeNode::intersectWithFrustum(DirectX::XMVECTOR camPos, DirectX::XMVECTOR lookAt, DirectX::XMVECTOR up, float nearDist, float farDist, float FOV, float aspectRatio)
+std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, DirectX::XMVECTOR lookAt, DirectX::XMVECTOR up, float nearDist, float farDist, float FOV, float aspectRatio)
 {
 	using namespace DirectX;
 	up = XMVector3Normalize(up);
@@ -61,7 +62,7 @@ bool QuadtreeNode::intersectWithFrustum(DirectX::XMVECTOR camPos, DirectX::XMVEC
 	float wNear = hNear * aspectRatio;
 	float hFar = 2 * tan(FOV / 2) * nearDist;
 	float wFar = hFar * aspectRatio;
-	
+
 	//Points
 	XMVECTOR farCenter = camPos + lookAt * farDist;
 	XMVECTOR farTopLeft = farCenter + (up * hFar / 2) - (right * wFar / 2);
@@ -86,6 +87,12 @@ bool QuadtreeNode::intersectWithFrustum(DirectX::XMVECTOR camPos, DirectX::XMVEC
 	std::vector<XMVECTOR> normals{ normalUp, normalDown, normalRight, normalLeft, normalNear, normalFar };
 	std::vector<XMVECTOR> points{ camPos, camPos, camPos, camPos, nearCenter, farCenter };
 
+	return getMeshes(normals, points, 1);
+}
+
+bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points)
+{
+	using namespace DirectX;
 	//Intersecton for each plane
 	for (int i = 0; i < 6; i++)
 	{
@@ -104,24 +111,91 @@ bool QuadtreeNode::intersectWithFrustum(DirectX::XMVECTOR camPos, DirectX::XMVEC
 		}
 
 		//Test Intersection
+		XMVECTOR centerPosVector = XMLoadFloat3(&_centerPos);
 		switch (sIndex)
 		{
 		case 0:
 		{
-			XMVECTOR n =
-			XMVECTOR p =
+			float n, p;
+			XMVECTOR point1 = centerPosVector + XMVECTOR({ _halfLength, _halfLength, _halfLength, 0.0f });
+			XMVECTOR point2 = centerPosVector + XMVECTOR({ -_halfLength, -_halfLength, -_halfLength, 0.0f });
+			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			if (length1 < length2)
+			{
+				n = length1;
+				p = length2;
+			}
+			else
+			{
+				n = length2;
+				p = length1;
+			}
+			if (n > 0)
+				return false;
 			break;
 		}
 		case 1:
 		{
+			float n, p;
+			XMVECTOR point1 = centerPosVector + XMVECTOR({ _halfLength, -_halfLength, _halfLength, 0.0f });
+			XMVECTOR point2 = centerPosVector + XMVECTOR({ -_halfLength, _halfLength, -_halfLength, 0.0f });
+			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			if (length1 < length2)
+			{
+				n = length1;
+				p = length2;
+			}
+			else
+			{
+				n = length2;
+				p = length1;
+			}
+			if (n > 0)
+				return false;
 			break;
 		}
 		case 2:
 		{
+			float n, p;
+			XMVECTOR point1 = centerPosVector + XMVECTOR({ -_halfLength, -_halfLength, _halfLength, 0.0f });
+			XMVECTOR point2 = centerPosVector + XMVECTOR({ _halfLength, _halfLength, -_halfLength, 0.0f });
+			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			if (length1 < length2)
+			{
+				n = length1;
+				p = length2;
+			}
+			else
+			{
+				n = length2;
+				p = length1;
+			}
+			if (n > 0)
+				return false;
 			break;
 		}
 		case 3:
 		{
+			float n, p;
+			XMVECTOR point1 = centerPosVector + XMVECTOR({ -_halfLength, _halfLength, _halfLength, 0.0f });
+			XMVECTOR point2 = centerPosVector + XMVECTOR({ _halfLength, -_halfLength, -_halfLength, 0.0f });
+			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			if (length1 < length2)
+			{
+				n = length1;
+				p = length2;
+			}
+			else
+			{
+				n = length2;
+				p = length1;
+			}
+			if (n > 0)
+				return false;
 			break;
 		}
 		default:
@@ -129,5 +203,23 @@ bool QuadtreeNode::intersectWithFrustum(DirectX::XMVECTOR camPos, DirectX::XMVEC
 		}
 	}
 
-	return false;
+	return true;
+}
+
+std::vector<Mesh*> QuadtreeNode::getMeshes(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, int currentLevel)
+{
+	std::vector<Mesh*> returnMeshes;
+	std::vector<Mesh*> tempMeshes;
+	if (intersectWithFrustum(normals, points) && currentLevel < _quadTreeLevels)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			tempMeshes = _children[i]->getMeshes(normals, points, currentLevel + 1);
+			for (int j = 0; j < tempMeshes.size(); j++)
+				returnMeshes.push_back(tempMeshes[j]);
+		}
+	}
+	else if (intersectWithFrustum(normals, points) && currentLevel == _quadTreeLevels)
+		returnMeshes = _meshes;
+	return returnMeshes;
 }

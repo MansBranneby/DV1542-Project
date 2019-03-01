@@ -34,12 +34,13 @@ private:
 	ID3D11ShaderResourceView* _SRV_Normal;
 	ID3D11Buffer* _vertexBuffer;
 	ID3D11Buffer* _vertexBufferNormalMap;
-	DirectX::XMMATRIX _worldMatrix;
+	DirectX::XMMATRIX _modelMatrix;
 	BoundingVolume* _boundingVolume;
+	void transform();
 
 public:
 	Mesh();
-	Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, boundingVolumes boundingVolumeChoice);
+	Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, boundingVolumes boundingVolumeChoice, DirectX::XMMATRIX modelMatrix);
 	Mesh(std::vector <Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device* device);
 	Mesh(std::vector <Vertex_Pos_UV> vertices_Pos_UV, ID3D11Device* device);
 	~Mesh();

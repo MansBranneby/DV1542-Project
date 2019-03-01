@@ -11,4 +11,8 @@ public:
 	Vertex_Pos_UV();
 	Vertex_Pos_UV(DirectX::XMFLOAT3 pos, DirectX::XMFLOAT2 UV);
 	~Vertex_Pos_UV();
+
+	void setPos(DirectX::XMFLOAT3 pos);
+
+	DirectX::XMFLOAT3 getPos() const;
 };

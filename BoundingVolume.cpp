@@ -23,7 +23,7 @@ void BoundingVolume::transform(DirectX::XMMATRIX worldMatrix)
 {
 	for (int i = 0; i < _vertices.size(); i++)
 	{
-		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(_vertices[i].getPos);
+		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&_vertices[i].getPos());
 		pos = DirectX::XMVector3Transform(pos, worldMatrix);
 		
 		float x = DirectX::XMVectorGetX(pos);

@@ -132,11 +132,13 @@ float gIncrement = 0;
 float gClearColour[3] = {};
 //Meshes
 Mesh* gPillar = nullptr;
+Mesh* gPillar2 = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
 Mesh* gPlane = nullptr;
 Heightmap* gHeightmap = nullptr;
+std::vector<Mesh*> gPillars;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -189,10 +191,22 @@ Camera gCamera;
 // MESHES //
 void createMeshes()
 {
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX);
-	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX);
+	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 
+	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixTranslation(-5.0f, 0.0f, 0.0f);
+	gPillar2 = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix);
+
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			modelMatrix = DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f);
+			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix));
+		}
+	}
 
 	std::vector <Vertex_Pos_Col> arr;
 	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
@@ -1457,10 +1471,10 @@ void renderFirstPass()
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
-	// HEIGHTMAP
-	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
-	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
+	//// HEIGHTMAP
+	//gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1486,11 +1500,24 @@ void renderNormalMap()
 	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
-	// PILLAR
-	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	//// PILLAR
+	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	//gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
+
+	//gDeviceContext->PSSetShaderResources(0, 1, gPillar2->getSRV_Texture());
+	//gDeviceContext->PSSetShaderResources(1, 1, gPillar2->getSRV_Normal());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar2->getVertexBufferNormalMap(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
+
+	for (int i = 0; i < gPillars.size(); i++)
+	{
+		gDeviceContext->PSSetShaderResources(0, 1, gPillars[i]->getSRV_Texture());
+		gDeviceContext->PSSetShaderResources(1, 1, gPillars[i]->getSRV_Normal());
+		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
+		gDeviceContext->Draw(gPillars[i]->getVertCount(), 0);
+	}
 }
 
 void renderBoundingVolume()
