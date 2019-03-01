@@ -26,6 +26,11 @@ void Vertex_Pos_Col::setCol(DirectX::XMFLOAT3 col)
 	_col = col;
 }
 
+DirectX::XMFLOAT3 Vertex_Pos_Col::getPos()
+{
+	return _pos;
+}
+
 DirectX::XMFLOAT3 Vertex_Pos_Col::getCol()
 {
 	return _col;

@@ -1424,6 +1424,10 @@ void renderShadowMap()
 	// PILLAR
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+
+	// Heightmap
+	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 }
 
 void renderFirstPass()
@@ -1667,7 +1671,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 					yaw += XMConvertToRadians(ms.x);
 					pitch += XMConvertToRadians(ms.y);
-					pitch = min(XM_PI / 2, max(-XM_PI / 2, pitch));
+					pitch = min(XM_PI / 2 - 0.0001, max(-XM_PI / 2, pitch));
 					ms.x = 0;
 					ms.y = 0;
 				}

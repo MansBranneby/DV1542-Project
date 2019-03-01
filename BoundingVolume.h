@@ -25,12 +25,13 @@ public:
 	void setHighlight(bool highlighted);
 
 	virtual void createVertexBuffer(ID3D11Device* device);
-	
+	virtual void transform(DirectX::XMMATRIX worldMatrix);
+
 	ID3D11Buffer** getVertexBuffer();
 	DirectX::XMFLOAT3 getCenter() const;
 	std::vector <Vertex_Pos_Col> & getVertices();
 	int getVertCount();
 
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;
-	virtual void intersectWithBox(DirectX::XMFLOAT3 center, float halfLength) = 0;
+	virtual bool intersectWithBox(DirectX::XMFLOAT3 center, float halfLength) = 0;
 };

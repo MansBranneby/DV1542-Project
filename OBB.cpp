@@ -19,15 +19,15 @@ OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Devi
 	_half_u_v_w = { halfXYZ.x, halfXYZ.y, halfXYZ.z };
 
 	DirectX::XMFLOAT3 col(0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 _rightUpNear(biggestXYZ.x, biggestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 _rightDownNear(biggestXYZ.x, smallestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 _leftUpNear(smallestXYZ.x, biggestXYZ.y, smallestXYZ.z);
-	DirectX::XMFLOAT3 _leftDownNear(smallestXYZ.x, smallestXYZ.y, smallestXYZ.z);
+	_rightUpNear = { biggestXYZ.x, biggestXYZ.y, smallestXYZ.z };
+	_rightDownNear = { biggestXYZ.x, smallestXYZ.y, smallestXYZ.z };
+	_leftUpNear = { smallestXYZ.x, biggestXYZ.y, smallestXYZ.z };
+	_leftDownNear = { smallestXYZ.x, smallestXYZ.y, smallestXYZ.z };
 
-	DirectX::XMFLOAT3 _rightUpFar(biggestXYZ.x, biggestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 _rightDownFar(biggestXYZ.x, smallestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 _leftUpFar(smallestXYZ.x, biggestXYZ.y, biggestXYZ.z);
-	DirectX::XMFLOAT3 _leftDownFar(smallestXYZ.x, smallestXYZ.y, biggestXYZ.z);
+	_rightUpFar = { biggestXYZ.x, biggestXYZ.y, biggestXYZ.z };
+	_rightDownFar = {biggestXYZ.x, smallestXYZ.y, biggestXYZ.z};
+	_leftUpFar = { smallestXYZ.x, biggestXYZ.y, biggestXYZ.z };
+	_leftDownFar = { smallestXYZ.x, smallestXYZ.y, biggestXYZ.z };
 
 	_vertices.push_back(Vertex_Pos_Col(_rightUpNear, col));
 	_vertices.push_back(Vertex_Pos_Col(_rightDownNear, col));
@@ -116,10 +116,37 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 		return tMax;
 }
 
-void OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
+bool OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
 {
-	DirectX::XMFLOAT3 test1 = { _half_u_v_w.x , 0.0f, 0.0f };
-	DirectX::XMVECTOR test = DirectX::XMLoadFloat3(&test1);
+	if ((center.x + halfLength) > _rightUpNear.x || (center.x + halfLength) > _leftUpNear.x || (center.x + halfLength) > _rightDownNear.x || (center.x + halfLength) > _leftDownNear.x ||
+		(center.x + halfLength) > _rightUpFar.x || (center.x + halfLength) > _leftUpFar.x || (center.x + halfLength) > _rightDownFar.x || (center.x + halfLength) > _leftDownFar.x)
+	{
+		if ((center.x - halfLength) < _rightUpNear.x || (center.x - halfLength) < _leftUpNear.x || (center.x - halfLength) < _rightDownNear.x || (center.x - halfLength) < _leftDownNear.x ||
+			(center.x - halfLength) < _rightUpFar.x || (center.x - halfLength) < _leftUpFar.x || (center.x - halfLength) < _rightDownFar.x || (center.x - halfLength) < _leftDownFar.x)
+		{
+			if ((center.y + halfLength) > _rightUpNear.y || (center.y + halfLength) > _leftUpNear.y || (center.y + halfLength) > _rightDownNear.y || (center.y + halfLength) > _leftDownNear.y ||
+				(center.y + halfLength) > _rightUpFar.y || (center.y + halfLength) > _leftUpFar.y || (center.y + halfLength) > _rightDownFar.y || (center.y + halfLength) > _leftDownFar.y)
+			{
+				if ((center.y - halfLength) < _rightUpNear.y || (center.y - halfLength) < _leftUpNear.y || (center.y - halfLength) < _rightDownNear.y || (center.y - halfLength) < _leftDownNear.y ||
+					(center.y - halfLength) < _rightUpFar.y || (center.y - halfLength) < _leftUpFar.y || (center.y - halfLength) < _rightDownFar.y || (center.y - halfLength) < _leftDownFar.y)
+				{
+					if ((center.z + halfLength) > _rightUpNear.z || (center.y + halfLength) > _leftUpNear.z || (center.z + halfLength) > _rightDownNear.z || (center.z + halfLength) > _leftDownNear.z ||
+						(center.z + halfLength) > _rightUpFar.z || (center.y + halfLength) > _leftUpFar.z || (center.z + halfLength) > _rightDownFar.z || (center.z + halfLength) > _leftDownFar.z)
+					{
+						if ((center.z - halfLength) < _rightUpNear.z || (center.z - halfLength) < _leftUpNear.z || (center.z - halfLength) < _rightDownNear.z || (center.z - halfLength) < _leftDownNear.z ||
+							(center.z - halfLength) < _rightUpFar.z || (center.z - halfLength) < _leftUpFar.z || (center.z - halfLength) < _rightDownFar.z || (center.z - halfLength) < _leftDownFar.z)
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
 
-	//if ((center.x + halfLength) > _center.x + DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(_half_u_v_w.x, 0.0f, 0.0f)), DirectX::XMMatrixInverse(nullptr, _worldMatrix)));
+
+void OBB::transform(DirectX::XMMATRIX worldMatrix)
+{
 }

@@ -15,5 +15,6 @@ public:
 	void setPos(DirectX::XMFLOAT3 pos);
 	void setCol(DirectX::XMFLOAT3 col);
 
+	DirectX::XMFLOAT3 getPos();
 	DirectX::XMFLOAT3 getCol();
 };
