@@ -180,11 +180,17 @@ struct TriangleVertexUV
 
 struct Camera
 {
+	XMVECTOR forward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR right = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR lookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
 	float distance = 5.0f;
+	XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
 };
 Camera gCamera;
 
@@ -192,12 +198,12 @@ Camera gCamera;
 void createMeshes()
 {
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	//gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	//gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 
 	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixTranslation(-5.0f, 0.0f, 0.0f);
-	gPillar2 = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix);
+	//gPillar2 = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix);
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -208,11 +214,11 @@ void createMeshes()
 		}
 	}
 
-	std::vector <Vertex_Pos_Col> arr;
-	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
-	gBillboard = new Mesh(arr, gDevice);
+	//std::vector <Vertex_Pos_Col> arr;
+	//arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
+	//gBillboard = new Mesh(arr, gDevice);
 
-	gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
+	//gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
 }
 
@@ -1159,11 +1165,11 @@ float mousePicking(POINT cursorPos)
 
 
 	// change colour of pillar when picked
-	currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
-	if (currT != -1.0f)
-		gPillar->getBoundingVolume()->setHighlight(true);
-	else
-		gPillar->getBoundingVolume()->setHighlight(false);
+	//currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
+	//if (currT != -1.0f)
+	//	gPillar->getBoundingVolume()->setHighlight(true);
+	//else
+	//	gPillar->getBoundingVolume()->setHighlight(false);
 
 	return currT;
 }
@@ -1297,44 +1303,46 @@ void SetViewport()
 
 }
 
-void transform(XMFLOAT3 move, XMMATRIX rotation, XMMATRIX rotationYPos)
+void transform(XMMATRIX rotation, XMMATRIX rotationYPos)
 {
-	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	gCamera.forward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	gCamera.right = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	gCamera.up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	gCamera.lookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
+	gCamera.lookAt = XMVector3TransformCoord(gCamera.forward, rotation);
+	gCamera.lookAt = XMVector3Normalize(gCamera.lookAt);
 
-	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	LookAt = XMVector3TransformCoord(camForward, rotation);
-	LookAt = XMVector3Normalize(LookAt);
-
-	gHeight = gHeightmap->getHeight(XMVectorGetX(gCamera.pos), XMVectorGetZ(gCamera.pos));
+	if(gHeightmap != nullptr)
+	{
+		gHeight = gHeightmap->getHeight(XMVectorGetX(gCamera.pos), XMVectorGetZ(gCamera.pos));
+	}
 
 	if (gCameraWalkMode)
 	{
-		camRight = XMVector3TransformCoord(camRight, rotationYPos);
-		camUp = XMVector3TransformCoord(camUp, rotationYPos);
-		camForward = XMVector3TransformCoord(camForward, rotationYPos);
-		gCamera.pos += move.x * camRight;
+		gCamera.right = XMVector3TransformCoord(gCamera.right, rotationYPos);
+		gCamera.up = XMVector3TransformCoord(gCamera.up, rotationYPos);
+		gCamera.forward = XMVector3TransformCoord(gCamera.forward, rotationYPos);
+		gCamera.pos += gCamera.velocity.x * gCamera.right;
 		gCamera.pos = XMVectorSetY(gCamera.pos, gHeight + 1.0f);
-		gCamera.pos += move.z * camForward;
-		LookAt += gCamera.pos;
+		gCamera.pos += gCamera.velocity.z * gCamera.forward;
+		gCamera.lookAt += gCamera.pos;
 		gCamera.distance = 5.0f;
 	}
 	else
 	{
-		camRight = XMVector3TransformCoord(camRight, rotation);
-		camUp = XMVector3TransformCoord(camUp, rotation);
-		camForward = XMVector3TransformCoord(camForward, rotation);
-		gCamera.pos += move.x * camRight;
-		gCamera.pos += move.y * camUp;
-		gCamera.pos += move.z * camForward;
-		LookAt += gCamera.pos;
+		gCamera.right = XMVector3TransformCoord(gCamera.right, rotation);
+		gCamera.up = XMVector3TransformCoord(gCamera.up, rotation);
+		gCamera.forward = XMVector3TransformCoord(gCamera.forward, rotation);
+		gCamera.pos += gCamera.velocity.x * gCamera.right;
+		gCamera.pos += gCamera.velocity.y * gCamera.up;
+		gCamera.pos += gCamera.velocity.z * gCamera.forward;
+		gCamera.lookAt += gCamera.pos;
 		gCamera.distance = 10.0f;
 	}
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
-	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, LookAt, camUp);
+	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, gCamera.lookAt, gCamera.up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
 
 	gCamera.world = World;
@@ -1403,9 +1411,9 @@ void update(float lastT, POINT cursorPos)
 	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
 	gDeviceContext->Unmap(gConstantBufferLight, 0);
 
-	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	/*gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
-	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);
+	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);*/
 
 	gDeviceContext->Map(gConstantBufferShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
 	memcpy(mappedMemory.pData, &gLightView, sizeof(gLightView));
@@ -1436,12 +1444,12 @@ void renderShadowMap()
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// Heightmap
-	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
+	//gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 }
 
 void renderFirstPass()
@@ -1494,11 +1502,11 @@ void renderNormalMap()
 
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	// BRICK WALL
-	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
-	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
-	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
-	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
+	//// BRICK WALL
+	//gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	//gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
+	//gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
+	//gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
 	//// PILLAR
 	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
@@ -1642,7 +1650,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		mouse = std::make_unique<Mouse>();
 		mouse->SetWindow(wndHandle);
 		POINT cursorPos;
-		XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
 		
 		float pitch = 0.0f;
 		float yaw = 0.0f;
@@ -1695,39 +1702,36 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				mouse->SetMode(ms.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
 				if (ms.positionMode == Mouse::MODE_RELATIVE)
 				{
-
 					yaw += XMConvertToRadians(ms.x);
 					pitch += XMConvertToRadians(ms.y);
-					pitch = min(XM_PI / 2 - 0.0001, max(-XM_PI / 2, pitch));
-					ms.x = 0;
-					ms.y = 0;
+					pitch = min(XM_PI / 2 - 0.0001, max(-XM_PI / 2 + 0.0001, pitch));
 				}
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
 				XMMATRIX rotationYPos = XMMatrixRotationRollPitchYaw(0.0f, yaw, 0.0f);
 			
-				velocity.x = 0;
-				velocity.y = 0;
-				velocity.z = 0;
+				gCamera.velocity.x = 0;
+				gCamera.velocity.y = 0;
+				gCamera.velocity.z = 0;
 
 				if (kb.W)
-					velocity.z += gCamera.distance * deltaSeconds;
+					gCamera.velocity.z += gCamera.distance * deltaSeconds;
 				if (kb.S)
-					velocity.z -= gCamera.distance * deltaSeconds;
+					gCamera.velocity.z -= gCamera.distance * deltaSeconds;
 				if (kb.A)
-					velocity.x -= gCamera.distance * deltaSeconds;
+					gCamera.velocity.x -= gCamera.distance * deltaSeconds;
 				if (kb.D)
-					velocity.x += gCamera.distance * deltaSeconds;
+					gCamera.velocity.x += gCamera.distance * deltaSeconds;
 				if (kb.Space)
-					velocity.y += gCamera.distance * deltaSeconds;
+					gCamera.velocity.y += gCamera.distance * deltaSeconds;
 				if (kb.LeftControl)
-					velocity.y -= gCamera.distance * deltaSeconds;
+					gCamera.velocity.y -= gCamera.distance * deltaSeconds;
 				if (kb.Home)
-					velocity = { 0.0f, 0.0f, -2.0f };
+					gCamera.pos = { 0.0f, 0.0f, -2.0f };
 				if (kb.Escape)
 					msg.message = WM_QUIT;
 
-				transform(velocity, rotation, rotationYPos);
+				transform(rotation, rotationYPos);
 				
 				GetCursorPos(&cursorPos); // gets current cursor coordinates
 				ScreenToClient(wndHandle, &cursorPos); // sets cursor coordinates relative to the program window. upper left corner of the screen = (0,0)
@@ -1749,8 +1753,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderFirstPass();
 				renderNormalMap();
-				renderBoundingVolume();
-				renderBillboard();
+				//renderBoundingVolume();
+				//renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);

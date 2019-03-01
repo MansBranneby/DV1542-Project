@@ -41,7 +41,7 @@ std::vector<float> Heightmap::getGreyValues()
 float Heightmap::getHeight(float x, float z)
 {
 	int index = ((int)(z*_depthFactor)) * _terrainWidth + (int)(x*_widthFactor);
-
+		
 	if (index < 0 || index >= _terrainSize || (int)(x * _widthFactor) > _terrainWidth || (int)(z * _depthFactor) > _terrainHeight)
 		index = 0;
 
