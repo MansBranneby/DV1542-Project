@@ -5,8 +5,8 @@ OBB::OBB()
 	_half_u_v_w = { 0.0f, 0.0f, 0.0f};
 }
 
-OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device)
-	:BoundingVolume(device)
+OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
+	:BoundingVolume(device, modelMatrix)
 {
 	// BOUNDING VOLUME
 	//
@@ -53,6 +53,7 @@ OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Devi
 	_vertices.push_back(Vertex_Pos_Col(_leftUpNear, col));
 	_vertices.push_back(Vertex_Pos_Col(_leftUpFar, col));
 	_vertices.push_back(Vertex_Pos_Col(_rightUpFar, col));
+	transform(modelMatrix);
 
 	createVertexBuffer(device);
 }
@@ -147,6 +148,19 @@ bool OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
 }
 
 
-void OBB::transform(DirectX::XMMATRIX worldMatrix)
+void OBB::transform(DirectX::XMMATRIX modelMatrix)
 {
+	for (int i = 0; i < _vertices.size(); i++)
+	{
+		DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices[i].getPos()), modelMatrix);
+		_vertices[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
+	}
+	_rightUpNear = _vertices[0].getPos(); //Spagetti
+	_rightDownNear = _vertices[1].getPos();
+	_leftDownNear = _vertices[3].getPos();
+	_leftUpNear = _vertices[5].getPos();
+	_rightUpFar = _vertices[9].getPos();
+	_rightDownFar = _vertices[11].getPos();
+	_leftDownFar = _vertices[15].getPos();
+	_leftUpFar = _vertices[19].getPos();
 }

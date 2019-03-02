@@ -21,6 +21,7 @@
 #include "Mesh.h"
 #include "Vertex_Pos_UV_Normal.h"
 #include "Heightmap.h"
+#include "QuadtreeNode.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -139,6 +140,9 @@ Mesh* gBoundingVolume = nullptr;
 Mesh* gPlane = nullptr;
 Heightmap* gHeightmap = nullptr;
 std::vector<Mesh*> gPillars;
+// Quadtree //
+QuadtreeNode* gRoot;
+int gQuadtreeLevels = 4;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -184,17 +188,17 @@ struct Camera
 	XMVECTOR right = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR lookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+
 	XMMATRIX world;
 	XMMATRIX view;
 	XMMATRIX projection;
+
 	float distance = 5.0f;
 	XMFLOAT3 velocity{ 0.0f, 0.0f, 0.0f };
 };
 Camera gCamera;
 
-// MESHES //
 void createMeshes()
 {
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
@@ -1518,14 +1522,22 @@ void renderNormalMap()
 	//gDeviceContext->PSSetShaderResources(1, 1, gPillar2->getSRV_Normal());
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar2->getVertexBufferNormalMap(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
-
-	for (int i = 0; i < gPillars.size(); i++)
+	
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, 0.1f, 200.0f, 0.45f * XM_PI, HEIGHT / WIDTH);
+	for (int i = 0; i < intersectedMeshes.size(); i++)
 	{
-		gDeviceContext->PSSetShaderResources(0, 1, gPillars[i]->getSRV_Texture());
-		gDeviceContext->PSSetShaderResources(1, 1, gPillars[i]->getSRV_Normal());
-		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
-		gDeviceContext->Draw(gPillars[i]->getVertCount(), 0);
+		gDeviceContext->PSSetShaderResources(0, 1, intersectedMeshes[i]->getSRV_Texture());
+		gDeviceContext->PSSetShaderResources(1, 1, intersectedMeshes[i]->getSRV_Normal());
+		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
+		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
 	}
+	//for (int i = 0; i < gPillars.size(); i++)
+	//{
+	//	gDeviceContext->PSSetShaderResources(0, 1, gPillars[i]->getSRV_Texture());
+	//	gDeviceContext->PSSetShaderResources(1, 1, gPillars[i]->getSRV_Normal());
+	//	gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
+	//	gDeviceContext->Draw(gPillars[i]->getVertCount(), 0);
+	//}
 }
 
 void renderBoundingVolume()
@@ -1538,8 +1550,7 @@ void renderBoundingVolume()
 
 	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
 	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
+	
 
 	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -1550,7 +1561,11 @@ void renderBoundingVolume()
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 
 	// issue a draw call of 3 vertices (similar to OpenGL)
-	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
+	for (int i = 0; i < gPillars.size(); i++)
+	{
+		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
+		gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
+	}
 }
 
 void renderBillboard()
@@ -1621,6 +1636,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		SetViewport(); // And rasterizer state
 
 		createMeshes(); // test
+		gRoot = new QuadtreeNode(40.0f, { 0.0f, 0.0f, 0.0f }, gPillars, gQuadtreeLevels, 1);
+
 		setupTextures();
 
 		createRenderTargets();
@@ -1753,7 +1770,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderFirstPass();
 				renderNormalMap();
-				//renderBoundingVolume();
+				renderBoundingVolume();
 				//renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);

@@ -59,6 +59,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	DirectX::XMFLOAT2 tempUV;
 	DirectX::XMFLOAT3 biggestXYZ(0.0, 0.0f, 0.0f), smallestXYZ(0.0f, 0.0f, 0.0f);
 	inFile.open(filePath);
+
 	while (std::getline(inFile, line))
 	{
 		inputString.str(line);
@@ -222,7 +223,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(smallestXYZ, biggestXYZ, device);
+		_boundingVolume = new OBB(smallestXYZ, biggestXYZ, device, modelMatrix);
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:

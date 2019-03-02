@@ -16,7 +16,7 @@ private:
 
 public:
 	OBB();
-	OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device);
+	OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device, DirectX::XMMATRIX modelMatrix);
 	~OBB();
 
 	void setHalf_u_v_w(DirectX::XMFLOAT3 half_u_v_w);
@@ -25,5 +25,5 @@ public:
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin);
 	virtual bool intersectWithBox(DirectX::XMFLOAT3 center, float halfLength);
 
-	void transform(DirectX::XMMATRIX worldMatrix);
+	void transform(DirectX::XMMATRIX modelMatrix);
 };

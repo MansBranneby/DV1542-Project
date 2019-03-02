@@ -7,17 +7,17 @@
 class BoundingVolume
 {
 private:
-	DirectX::XMMATRIX _worldMatrix;
 	ID3D11Buffer* _vertexBuffer;
 	bool _highlighted;
 	
 protected:
+	DirectX::XMMATRIX _modelMatrix;
 	DirectX::XMFLOAT3 _center;
 	std::vector <Vertex_Pos_Col> _vertices;
 
 public:
 	BoundingVolume();
-	BoundingVolume(ID3D11Device* device);
+	BoundingVolume(ID3D11Device* device, DirectX::XMMATRIX modelMatrix);
 	~BoundingVolume();
 
 	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);
@@ -25,7 +25,7 @@ public:
 	void setHighlight(bool highlighted);
 
 	virtual void createVertexBuffer(ID3D11Device* device);
-	virtual void transform(DirectX::XMMATRIX worldMatrix);
+	virtual void transform(DirectX::XMMATRIX modelMatrix);
 
 	ID3D11Buffer** getVertexBuffer();
 	DirectX::XMFLOAT3 getCenter() const;

@@ -23,13 +23,15 @@ std::vector<DirectX::XMFLOAT3> QuadtreeNode::calculateCenter()
 	return newCenterPos;
 }
 
-QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::vector<Mesh*> _meshes, int quadtreeLevels, int currentLevel)
+QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::vector<Mesh*> meshes, int quadtreeLevels, int currentLevel)
 {
 	using namespace DirectX;
 	
 	_quadTreeLevels = quadtreeLevels;
 	_halfLength = halfLength;
 	_centerPos = centerPos;
+	_meshes = meshes;
+	_diagonals.resize(4);
 
 	//Diagonals
 	XMVECTOR centerPosVector = XMLoadFloat3(&_centerPos);

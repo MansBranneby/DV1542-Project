@@ -38,9 +38,9 @@ BoundingVolume::BoundingVolume()
 {
 }
 
-BoundingVolume::BoundingVolume(ID3D11Device* device)
+BoundingVolume::BoundingVolume(ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
 {
-
+	//_modelMatrix = modelMatrix;
 }
 
 BoundingVolume::~BoundingVolume()
@@ -49,7 +49,7 @@ BoundingVolume::~BoundingVolume()
 
 void BoundingVolume::setWorldMatrix(DirectX::XMMATRIX worldMatrix)
 {
-	_worldMatrix = worldMatrix;
+	_modelMatrix = worldMatrix;
 }
 
 void BoundingVolume::setCenter(DirectX::XMFLOAT3 center)
