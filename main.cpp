@@ -1800,7 +1800,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gSwapChain->Release();
 		gDevice->Release();
 		gDeviceContext->Release();
-		delete gPillar;
 		DestroyWindow(wndHandle);
 	}
 
@@ -1832,8 +1831,6 @@ HWND InitWindow(HINSTANCE hInstance)
 		nullptr,
 		hInstance,
 		nullptr);
-
-	int dab = GetClientRect(handle, &rc);
 
 	return handle;
 }
