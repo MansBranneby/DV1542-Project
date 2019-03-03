@@ -10,7 +10,7 @@ private:
 	std::vector <Mesh*> _meshes;
 	std::vector <QuadtreeNode*> _children;
 	std::vector <DirectX::XMVECTOR> _diagonals;
-	std::vector<Mesh*> intersectWith();
+	std::vector<Mesh*> boundingVolumeMeshTest(std::vector<Mesh*> meshes);
 	std::vector <DirectX::XMFLOAT3> calculateCenter();
 	
 	bool intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points);

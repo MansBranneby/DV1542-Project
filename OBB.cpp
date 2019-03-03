@@ -131,8 +131,8 @@ bool OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
 				if ((center.y - halfLength) < _rightUpNear.y || (center.y - halfLength) < _leftUpNear.y || (center.y - halfLength) < _rightDownNear.y || (center.y - halfLength) < _leftDownNear.y ||
 					(center.y - halfLength) < _rightUpFar.y || (center.y - halfLength) < _leftUpFar.y || (center.y - halfLength) < _rightDownFar.y || (center.y - halfLength) < _leftDownFar.y)
 				{
-					if ((center.z + halfLength) > _rightUpNear.z || (center.y + halfLength) > _leftUpNear.z || (center.z + halfLength) > _rightDownNear.z || (center.z + halfLength) > _leftDownNear.z ||
-						(center.z + halfLength) > _rightUpFar.z || (center.y + halfLength) > _leftUpFar.z || (center.z + halfLength) > _rightDownFar.z || (center.z + halfLength) > _leftDownFar.z)
+					if ((center.z + halfLength) > _rightUpNear.z || (center.z + halfLength) > _leftUpNear.z || (center.z + halfLength) > _rightDownNear.z || (center.z + halfLength) > _leftDownNear.z ||
+						(center.z + halfLength) > _rightUpFar.z || (center.z + halfLength) > _leftUpFar.z || (center.z + halfLength) > _rightDownFar.z || (center.z + halfLength) > _leftDownFar.z)
 					{
 						if ((center.z - halfLength) < _rightUpNear.z || (center.z - halfLength) < _leftUpNear.z || (center.z - halfLength) < _rightDownNear.z || (center.z - halfLength) < _leftDownNear.z ||
 							(center.z - halfLength) < _rightUpFar.z || (center.z - halfLength) < _leftUpFar.z || (center.z - halfLength) < _rightDownFar.z || (center.z - halfLength) < _leftDownFar.z)

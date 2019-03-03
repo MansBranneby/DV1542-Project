@@ -143,6 +143,7 @@ std::vector<Mesh*> gPillars;
 // Quadtree //
 QuadtreeNode* gRoot;
 int gQuadtreeLevels = 4;
+int gNrOfrenderedMeshes;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -1396,6 +1397,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("Your location: X:%.2f, Y:%.2f, Z:%.2f )", XMVectorGetX(gCamera.pos), XMVectorGetY(gCamera.pos), XMVectorGetZ(gCamera.pos));
 	ImGui::Text("Cursor location: X:%.2ld, Y:%.2ld )", cursorPos.x, cursorPos.y);
+	ImGui::Text("Nr of rendered meshes: %d", gNrOfrenderedMeshes);
 	ImGui::Text("lastT:%.2f)", lastT);
 	ImGui::End();
 
@@ -1524,6 +1526,7 @@ void renderNormalMap()
 	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
 	
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, 0.1f, 200.0f, 0.45f * XM_PI, HEIGHT / WIDTH);
+	gNrOfrenderedMeshes = intersectedMeshes.size();
 	for (int i = 0; i < intersectedMeshes.size(); i++)
 	{
 		gDeviceContext->PSSetShaderResources(0, 1, intersectedMeshes[i]->getSRV_Texture());

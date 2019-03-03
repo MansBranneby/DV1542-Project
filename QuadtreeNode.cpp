@@ -1,12 +1,12 @@
 #include "QuadtreeNode.h"
 
-std::vector<Mesh*> QuadtreeNode::intersectWith()
+std::vector<Mesh*> QuadtreeNode::boundingVolumeMeshTest(std::vector<Mesh*> meshes)
 {
 	std::vector<Mesh*> intersectedMeshes;
-	for (int i = 0; i < _meshes.size(); i++)
+	for (int i = 0; i < meshes.size(); i++)
 	{
-		if (_meshes[i]->getBoundingVolume()->intersectWithBox(_centerPos, _halfLength))
-			intersectedMeshes.push_back(_meshes[i]);
+		if (meshes[i]->getBoundingVolume()->intersectWithBox(_centerPos, _halfLength))
+			intersectedMeshes.push_back(meshes[i]);
 	}
 
 	return intersectedMeshes;
@@ -30,7 +30,7 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 	_quadTreeLevels = quadtreeLevels;
 	_halfLength = halfLength;
 	_centerPos = centerPos;
-	_meshes = meshes;
+	_meshes = boundingVolumeMeshTest(meshes);
 	_diagonals.resize(4);
 
 	//Diagonals
@@ -43,11 +43,10 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 	if (currentLevel < quadtreeLevels)
 	{
 		std::vector<DirectX::XMFLOAT3> centers = calculateCenter();
-		std::vector<Mesh*> intersectedMeshes = intersectWith();
 
 		for (int i = 0; i < 4; i++)
 		{
-			_children.push_back(new QuadtreeNode(_halfLength / 2, centers[i], intersectedMeshes, quadtreeLevels, currentLevel + 1));
+			_children.push_back(new QuadtreeNode(_halfLength / 2, centers[i], _meshes, quadtreeLevels, currentLevel + 1));
 		}
 	}
 }
@@ -62,7 +61,7 @@ std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, 
 	//Heights and widths
 	float hNear = 2 * tan(FOV / 2) * nearDist;
 	float wNear = hNear * aspectRatio;
-	float hFar = 2 * tan(FOV / 2) * nearDist;
+	float hFar = 2 * tan(FOV / 2) * farDist;
 	float wFar = hFar * aspectRatio;
 
 	//Points
@@ -79,15 +78,19 @@ std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, 
 	XMVECTOR nearBottomRight = nearCenter - (up * hNear / 2) + (right * wNear / 2);
 
 	//Plane normals
-	XMVECTOR normalUp = -XMVector3Cross(farTopLeft - farTopRight, camPos - farTopRight);
-	XMVECTOR normalDown = -normalUp;
-	XMVECTOR normalRight = XMVector3Cross(farTopRight - farBottomRight, camPos - farBottomRight);
-	XMVECTOR normalLeft = -normalRight;
-	XMVECTOR normalNear = lookAt;
-	XMVECTOR normalFar = -lookAt;
+	XMVECTOR normalUp = -XMVector3Normalize(XMVector3Cross(farTopRight - farTopLeft, camPos - farTopLeft));
+	XMVECTOR normalDown = XMVector3Normalize(XMVector3Cross(farBottomLeft - camPos, farBottomRight - camPos));
+	XMVECTOR normalRight = XMVector3Normalize(XMVector3Cross(farBottomRight - farTopRight, camPos - farTopRight));
+	XMVECTOR normalLeft = XMVector3Normalize(XMVector3Cross(farTopLeft - camPos, farBottomLeft - camPos));
+	/*XMVECTOR normalNear = lookAt;
+	XMVECTOR normalFar = -lookAt;*/
+	XMVECTOR normalNear = XMVector3Normalize(XMVector3Cross(nearTopRight - nearBottomRight, nearBottomLeft - nearBottomRight));
+	XMVECTOR normalFar = XMVector3Normalize(XMVector3Cross(farTopLeft - farBottomLeft, farBottomRight - farBottomLeft));
 
 	std::vector<XMVECTOR> normals{ normalUp, normalDown, normalRight, normalLeft, normalNear, normalFar };
-	std::vector<XMVECTOR> points{ camPos, camPos, camPos, camPos, nearCenter, farCenter };
+	std::vector<XMVECTOR> points{ farTopLeft, camPos, farTopRight, camPos, nearBottomRight, farBottomLeft };
+	/*std::vector<float> planeConstant{ -(XMVectorGetX(normalUp)*XMVectorGetX(farTopLeft) + XMVectorGetY(normalUp)*XMVectorGetY(farTopLeft) + XMVectorGetZ(normalUp)*XMVectorGetZ(farTopLeft)), 
+										-(XMVectorGetX(normalDown)*XMVectorGetX(farTopLeft) + XMVectorGetY(normalDown)*XMVectorGetY(farTopLeft) + XMVectorGetZ(normalDown)*XMVectorGetZ(farTopLeft))	, farTopRight, farTopRight, nearBottomRight, farBottomLeft };*/
 
 	return getMeshes(normals, points, 1);
 }
@@ -102,7 +105,7 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 		int sIndex = -1;
 
 		//Find best diagonal
-		for (int j = 1; j < 4; j++)
+		for (int j = 0; j < 4; j++)
 		{
 			float newDotValue = XMVectorGetX(XMVector3Dot(normals[i], _diagonals[j]));
 			if (newDotValue > dotValue)
@@ -121,8 +124,10 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 			float n, p;
 			XMVECTOR point1 = centerPosVector + XMVECTOR({ _halfLength, _halfLength, _halfLength, 0.0f });
 			XMVECTOR point2 = centerPosVector + XMVECTOR({ -_halfLength, -_halfLength, -_halfLength, 0.0f });
-			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
-			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			float length1 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point2 to frustrum plane
+			length1 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length1;
+			length2 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length2;
 			if (length1 < length2)
 			{
 				n = length1;
@@ -133,7 +138,7 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 				n = length2;
 				p = length1;
 			}
-			if (n > 0)
+			if (n < 0 && p < 0)
 				return false;
 			break;
 		}
@@ -142,8 +147,10 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 			float n, p;
 			XMVECTOR point1 = centerPosVector + XMVECTOR({ _halfLength, -_halfLength, _halfLength, 0.0f });
 			XMVECTOR point2 = centerPosVector + XMVECTOR({ -_halfLength, _halfLength, -_halfLength, 0.0f });
-			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
-			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			float length1 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point2 to frustrum plane
+			length1 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length1;
+			length2 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length2;
 			if (length1 < length2)
 			{
 				n = length1;
@@ -154,7 +161,7 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 				n = length2;
 				p = length1;
 			}
-			if (n > 0)
+			if (n < 0 && p < 0)
 				return false;
 			break;
 		}
@@ -163,8 +170,10 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 			float n, p;
 			XMVECTOR point1 = centerPosVector + XMVECTOR({ -_halfLength, -_halfLength, _halfLength, 0.0f });
 			XMVECTOR point2 = centerPosVector + XMVECTOR({ _halfLength, _halfLength, -_halfLength, 0.0f });
-			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
-			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			float length1 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point2 to frustrum plane
+			length1 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length1;
+			length2 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length2;
 			if (length1 < length2)
 			{
 				n = length1;
@@ -175,7 +184,7 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 				n = length2;
 				p = length1;
 			}
-			if (n > 0)
+			if (n < 0 && p < 0)
 				return false;
 			break;
 		}
@@ -184,8 +193,10 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 			float n, p;
 			XMVECTOR point1 = centerPosVector + XMVECTOR({ -_halfLength, _halfLength, _halfLength, 0.0f });
 			XMVECTOR point2 = centerPosVector + XMVECTOR({ _halfLength, -_halfLength, -_halfLength, 0.0f });
-			float length1 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point1, normals[i])) / XMVectorGetX(XMVector3Length(point1)) * normals[i])); // distance from point1 to frustrum plane
-			float length2 = XMVectorGetX(XMVector3Length(XMVectorGetX(XMVector3Dot(point2, normals[i])) / XMVectorGetX(XMVector3Length(point2)) * normals[i])); // distance from point2 to frustrum plane
+			float length1 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point1 to frustrum plane
+			float length2 = XMVectorGetX(XMVector3Length((XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i])); // distance from point2 to frustrum plane
+			length1 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point1 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length1;
+			length2 = XMVectorGetX(XMVector3Dot(normals[i], (XMVectorGetX(XMVector3Dot(point2 - points[i], normals[i])) / (XMVectorGetX(XMVector3Length(normals[i])) * XMVectorGetX(XMVector3Length(normals[i])))) * normals[i]))* length2;
 			if (length1 < length2)
 			{
 				n = length1;
@@ -196,7 +207,7 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 				n = length2;
 				p = length1;
 			}
-			if (n > 0)
+			if (n < 0 && p < 0)
 				return false;
 			break;
 		}
@@ -223,5 +234,6 @@ std::vector<Mesh*> QuadtreeNode::getMeshes(std::vector<DirectX::XMVECTOR> normal
 	}
 	else if (intersectWithFrustum(normals, points) && currentLevel == _quadTreeLevels)
 		returnMeshes = _meshes;
+
 	return returnMeshes;
 }
