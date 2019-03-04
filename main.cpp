@@ -153,7 +153,7 @@ ID3D11Buffer* gMatrixPerFrameBuffer = nullptr;
 
 struct Lights
 {
-	XMFLOAT3 lightPos = { 0.0f, 10.0f, -3.0f };
+	XMFLOAT3 lightPos = { 0.0f, 10.0f, -50.0f };
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f };
 };
 Lights gLight;
@@ -203,7 +203,7 @@ Camera gCamera;
 void createMeshes()
 {
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
-	//gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 	//gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 
@@ -223,7 +223,7 @@ void createMeshes()
 	//arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
 	//gBillboard = new Mesh(arr, gDevice);
 
-	//gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
+	gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
 }
 
@@ -1374,7 +1374,7 @@ void update(float lastT, POINT cursorPos)
 	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
 	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
-	XMMATRIX Projection = XMMatrixOrthographicLH(20, 20, 0.1, 200.0f);
+	XMMATRIX Projection = XMMatrixOrthographicLH(200, 200, 0.1, 200.0f);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
@@ -1391,7 +1391,7 @@ void update(float lastT, POINT cursorPos)
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
 	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
-	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 20.0f);
+	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 100.0f);
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Checkbox("Walk Mode", &gCameraWalkMode);
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -1454,8 +1454,16 @@ void renderShadowMap()
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// Heightmap
-	//gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
+	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
+
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	gNrOfrenderedMeshes = intersectedMeshes.size();
+	for (int i = 0; i < intersectedMeshes.size(); i++)
+	{
+		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
+		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
+	}
 }
 
 void renderFirstPass()
@@ -1485,10 +1493,10 @@ void renderFirstPass()
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
-	//// HEIGHTMAP
-	//gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
+	// HEIGHTMAP
+	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 }
 
 void renderNormalMap()
@@ -1525,7 +1533,7 @@ void renderNormalMap()
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar2->getVertexBufferNormalMap(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
 	
-	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
 	for (int i = 0; i < intersectedMeshes.size(); i++)
 	{

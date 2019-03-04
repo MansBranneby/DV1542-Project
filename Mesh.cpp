@@ -11,7 +11,7 @@ void Mesh::transform()
 			_vertices_Pos_UV_Normal_Tangent[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
 		}
 	}
-	else if (_vertices_Pos_UV_Normal.size() > 0)
+	if (_vertices_Pos_UV_Normal.size() > 0)
 	{
 		for (int i = 0; i < getVertCount(); i++)
 		{
@@ -19,7 +19,7 @@ void Mesh::transform()
 			_vertices_Pos_UV_Normal[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
 		}
 	}
-	else if (_vertices_Pos_Col.size() > 0)
+	if (_vertices_Pos_Col.size() > 0)
 	{
 		for (int i = 0; i < getVertCount(); i++)
 		{
@@ -27,7 +27,7 @@ void Mesh::transform()
 			_vertices_Pos_Col[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
 		}
 	}
-	else if (_vertices_Pos_UV.size() > 0)
+	if (_vertices_Pos_UV.size() > 0)
 	{
 		for (int i = 0; i < getVertCount(); i++)
 		{
