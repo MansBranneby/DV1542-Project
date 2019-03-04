@@ -1525,7 +1525,7 @@ void renderNormalMap()
 	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar2->getVertexBufferNormalMap(), &vertexSize, &offset);
 	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
 	
-	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, 0.1f, 200.0f, 0.45f * XM_PI, HEIGHT / WIDTH);
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
 	for (int i = 0; i < intersectedMeshes.size(); i++)
 	{

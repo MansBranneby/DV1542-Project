@@ -13,8 +13,8 @@ private:
 	std::vector<Mesh*> boundingVolumeMeshTest(std::vector<Mesh*> meshes);
 	std::vector <DirectX::XMFLOAT3> calculateCenter();
 	
-	bool intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points);
-	std::vector<Mesh*> getMeshes(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, int currentLevel);
+	bool intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, std::vector<float> planeConstants);
+	std::vector<Mesh*> getMeshes(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, std::vector<float> planeConstants, int currentLevel);
 
 public:
 	QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::vector <Mesh*> meshes, int quadtreeLevels, int currentLevel);
