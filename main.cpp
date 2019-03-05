@@ -202,18 +202,18 @@ Camera gCamera;
 void createMeshes()
 {
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
-	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
-	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
-	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, identityMatrix);
 
-	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixTranslation(-5.0f, 0.0f, 0.0f);
-
+	int k = 0;
+	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixRotationY(XM_PI * 0.25f);
 	for (int i = 0; i < 8; i++)
 	{
 		for (int j = 0; j < 8; j++)
 		{
-			modelMatrix = DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f);
-			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix));
+			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, modelMatrix));
+			gPillars[k++]->setModelMatrix(gDevice, gDeviceContext, DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f), true);
 		}
 	}
 

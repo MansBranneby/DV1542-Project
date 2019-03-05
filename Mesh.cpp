@@ -1,47 +1,7 @@
 #include "Mesh.h"
 #include "OBB.h"
 
-void Mesh::transform()
-{
-	if (_vertices_Pos_UV_Normal_Tangent.size() > 0)
-	{
-		for (int i = 0; i < getVertCount(); i++)
-		{
-			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent[i].getPos()), _modelMatrix);
-			_vertices_Pos_UV_Normal_Tangent[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
-		}
-	}
-	if (_vertices_Pos_UV_Normal.size() > 0)
-	{
-		for (int i = 0; i < getVertCount(); i++)
-		{
-			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal[i].getPos()), _modelMatrix);
-			_vertices_Pos_UV_Normal[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
-		}
-	}
-	if (_vertices_Pos_Col.size() > 0)
-	{
-		for (int i = 0; i < getVertCount(); i++)
-		{
-			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_Col[i].getPos()), _modelMatrix);
-			_vertices_Pos_Col[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
-		}
-	}
-	if (_vertices_Pos_UV.size() > 0)
-	{
-		for (int i = 0; i < getVertCount(); i++)
-		{
-			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV[i].getPos()), _modelMatrix);
-			_vertices_Pos_UV[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
-		}
-	}
-}
-
-Mesh::Mesh()
-{
-}
-
-Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, boundingVolumes boundingVolumeChoice, DirectX::XMMATRIX modelMatrix)
+void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, bool normalMapped, boundingVolumes boundingVolumeChoice)
 {
 	std::vector<DirectX::XMFLOAT3>vtxPos;
 	std::vector<DirectX::XMFLOAT2>vtxUV;
@@ -155,11 +115,11 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		DirectX::XMFLOAT2 vertUV;
 		int vertIndex = posIndex - 1;
 
-		if(flippedUV)
+		if (flippedUV)
 			vertUV = DirectX::XMFLOAT2(vtxUV[uvIndex - 1].x, 1 - vtxUV[uvIndex - 1].y);
 		else
 			vertUV = vtxUV[uvIndex - 1];
-			
+
 		if (normalMapped)
 		{
 			Vertex_Pos_UV_Normal_Tangent tempTriangle(vertPos, vertUV, vertNormal, vertIndex);
@@ -223,7 +183,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	switch (boundingVolumeChoice)
 	{
 	case ORIENTED_BOUNDING_BOX:
-		_boundingVolume = new OBB(smallestXYZ, biggestXYZ, device, modelMatrix);
+		_boundingVolume = new OBB(smallestXYZ, biggestXYZ, device, _modelMatrix);
 		break;
 
 	case AXIS_ALIGNED_BOUNDING_BOX:
@@ -251,17 +211,17 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			// Pos
 			DirectX::XMVECTOR v0 = DirectX::XMVectorSubtract(vert1, vert0);
 			DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(vert2, vert0);
-		
+
 			// UV
 			DirectX::XMVECTOR uv0 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i).getUV());
 			DirectX::XMVECTOR uv1 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i + 1).getUV());
 			DirectX::XMVECTOR uv2 = DirectX::XMLoadFloat2(&_vertices_Pos_UV_Normal_Tangent.at(i + 2).getUV());
 
-			 // U
+			// U
 			float s1 = DirectX::XMVectorGetX(uv1) - DirectX::XMVectorGetX(uv0);
 			float s2 = DirectX::XMVectorGetX(uv2) - DirectX::XMVectorGetX(uv0);
 
-			 // V
+			// V
 			float t1 = DirectX::XMVectorGetY(uv1) - DirectX::XMVectorGetY(uv0);
 			float t2 = DirectX::XMVectorGetY(uv2) - DirectX::XMVectorGetY(uv0);
 
@@ -277,7 +237,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		}
 		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i++)
 		{
-			DirectX::XMFLOAT3 tangent = { 
+			DirectX::XMFLOAT3 tangent = {
 				DirectX::XMVectorGetX(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())),
 				DirectX::XMVectorGetY(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())),
 				DirectX::XMVectorGetZ(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())) };
@@ -285,12 +245,50 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 			_vertices_Pos_UV_Normal_Tangent.at(i).setTangent(tangent);
 		}
 	}
-	// Apply modelMatrix
-	_modelMatrix = modelMatrix;
-	transform();
+}
 
+void Mesh::transform(ID3D11Device* device, bool normalMapped)
+{
+	if (_vertices_Pos_UV_Normal_Tangent.size() > 0)
+	{
+		for (int i = 0; i < getVertCount(); i++)
+		{
+			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent[i].getPos()), _modelMatrix);
+			_vertices_Pos_UV_Normal_Tangent[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
+		}
+	}
+	if (_vertices_Pos_UV_Normal.size() > 0)
+	{
+		for (int i = 0; i < getVertCount(); i++)
+		{
+			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal[i].getPos()), _modelMatrix);
+			_vertices_Pos_UV_Normal[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
+		}
+	}
+	if (_vertices_Pos_Col.size() > 0)
+	{
+		for (int i = 0; i < getVertCount(); i++)
+		{
+			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_Col[i].getPos()), _modelMatrix);
+			_vertices_Pos_Col[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
+		}
+	}
+	if (_vertices_Pos_UV.size() > 0)
+	{
+		for (int i = 0; i < getVertCount(); i++)
+		{
+			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV[i].getPos()), _modelMatrix);
+			_vertices_Pos_UV[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
+		}
+	}
+
+	getBoundingVolume()->setWorldMatrix(device, _modelMatrix);
+}
+
+void Mesh::createVertexBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, bool normalMapped)
+{
 	// VERTEX BUFFER
-	//
+//
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -313,8 +311,20 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 		if (FAILED(result))
 			MessageBox(NULL, L"ERROR _vertexBufferNormalMap in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 	}
+}
 
+Mesh::Mesh()
+{
+}
+
+Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, ID3D11DeviceContext* deviceContext, boundingVolumes boundingVolumeChoice, DirectX::XMMATRIX modelMatrix)
+{
+	_modelMatrix = modelMatrix;
 	
+	loadOBJ(filePath, device, flippedUV, normalMapped, boundingVolumeChoice);
+	transform(device, normalMapped);
+	getBoundingVolume()->setWorldMatrix(device, modelMatrix);
+	createVertexBuffer(device, deviceContext, normalMapped);
 }
 
 Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
@@ -343,6 +353,13 @@ Mesh::~Mesh()
 void Mesh::setVertices(std::vector<Vertex_Pos_UV_Normal> vertices)
 {
 	_vertices_Pos_UV_Normal = vertices;
+}
+
+void Mesh::setModelMatrix(ID3D11Device* device, ID3D11DeviceContext* deviceContext, DirectX::XMMATRIX modelMatrix, bool normalMapped)
+{
+	_modelMatrix = modelMatrix;
+	transform(device, normalMapped);
+	createVertexBuffer(device, deviceContext, normalMapped);
 }
 
 std::vector <Vertex_Pos_UV_Normal> & Mesh::getVertices()

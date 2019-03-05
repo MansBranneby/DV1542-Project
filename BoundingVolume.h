@@ -19,18 +19,18 @@ public:
 	BoundingVolume();
 	~BoundingVolume();
 
-	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);
 	void setCenter(DirectX::XMFLOAT3 center);
 	void setHighlight(bool highlighted);
 
 	virtual void createVertexBuffer(ID3D11Device* device);
-	virtual void transform(DirectX::XMMATRIX modelMatrix);
 
 	ID3D11Buffer** getVertexBuffer();
 	DirectX::XMFLOAT3 getCenter() const;
 	std::vector <Vertex_Pos_Col> & getVertices();
 	int getVertCount();
 
+	virtual void setWorldMatrix(ID3D11Device* device, DirectX::XMMATRIX worldMatrix) = 0;
+	virtual void transform(ID3D11Device* device, DirectX::XMMATRIX modelMatrix) = 0;
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin) = 0;
 	virtual bool intersectWithBox(DirectX::XMFLOAT3 center, float halfLength) = 0;
 };

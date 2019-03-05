@@ -19,20 +19,20 @@ void BoundingVolume::createVertexBuffer(ID3D11Device* device)
 		MessageBox(NULL, L"Error gBillboardVertexBuffer", L"Error", MB_OK | MB_ICONERROR);
 }
 
-void BoundingVolume::transform(DirectX::XMMATRIX worldMatrix)
-{
-	for (int i = 0; i < _vertices.size(); i++)
-	{
-		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&_vertices[i].getPos());
-		pos = DirectX::XMVector3Transform(pos, worldMatrix);
-		
-		float x = DirectX::XMVectorGetX(pos);
-		float y = DirectX::XMVectorGetY(pos);
-		float z = DirectX::XMVectorGetZ(pos);
-
-		_vertices[i].setPos({ x,y,z });
-	}
-}
+//void BoundingVolume::transform(ID3D11Device* device, DirectX::XMMATRIX worldMatrix)
+//{
+//	for (int i = 0; i < _vertices.size(); i++)
+//	{
+//		DirectX::XMVECTOR pos = DirectX::XMLoadFloat3(&_vertices[i].getPos());
+//		pos = DirectX::XMVector3Transform(pos, worldMatrix);
+//		
+//		float x = DirectX::XMVectorGetX(pos);
+//		float y = DirectX::XMVectorGetY(pos);
+//		float z = DirectX::XMVectorGetZ(pos);
+//
+//		_vertices[i].setPos({ x,y,z });
+//	}
+//}
 
 BoundingVolume::BoundingVolume()
 {
@@ -42,10 +42,12 @@ BoundingVolume::~BoundingVolume()
 {
 }
 
-void BoundingVolume::setWorldMatrix(DirectX::XMMATRIX worldMatrix)
-{
-	_modelMatrix = worldMatrix;
-}
+//void BoundingVolume::setWorldMatrix(ID3D11Device* device, DirectX::XMMATRIX worldMatrix)
+//{
+//	_modelMatrix = worldMatrix;
+//	transform(device, _modelMatrix);
+//	createVertexBuffer(device);
+//}
 
 void BoundingVolume::setCenter(DirectX::XMFLOAT3 center)
 {

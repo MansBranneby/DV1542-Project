@@ -24,6 +24,6 @@ public:
 	DirectX::XMFLOAT3 getHalf_u_v_w();
 	virtual float intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigin);
 	virtual bool intersectWithBox(DirectX::XMFLOAT3 center, float halfLength);
-
-	void transform(DirectX::XMMATRIX modelMatrix);
+	virtual void setWorldMatrix(ID3D11Device* device, DirectX::XMMATRIX worldMatrix);
+	void transform(ID3D11Device* device, DirectX::XMMATRIX modelMatrix);
 };
