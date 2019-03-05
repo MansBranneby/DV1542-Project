@@ -1150,8 +1150,9 @@ float mousePicking(POINT cursorPos)
 	float currT = -1.0f;
 	float projX = XMVectorGetX(gCamera.projection.r[0]);
 	float projY = XMVectorGetY(gCamera.projection.r[1]);
+
 	// ABBREVIATIONS ////
-	// VS = view space///
+	// VS = view space //
 	// WS = World space//
 	// MS = Model space//
 	/////////////////////
