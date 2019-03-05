@@ -320,7 +320,7 @@ Mesh::Mesh()
 Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device* device, ID3D11DeviceContext* deviceContext, boundingVolumes boundingVolumeChoice, DirectX::XMMATRIX modelMatrix)
 {
 	_modelMatrix = modelMatrix;
-	
+
 	loadOBJ(filePath, device, flippedUV, normalMapped, boundingVolumeChoice);
 	transform(device, normalMapped);
 	getBoundingVolume()->setWorldMatrix(device, modelMatrix);

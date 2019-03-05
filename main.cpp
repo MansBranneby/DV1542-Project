@@ -122,7 +122,6 @@ ID3D11PixelShader* gPixelShaderBillboard = nullptr;
 ID3D11PixelShader* gPixelShaderNormalMap = nullptr;
 ID3D11PixelShader* gPixelShaderShadowMap = nullptr;
 
-
 // GLOBALS //
 float gHeight = 0.0f;
 bool gCameraWalkMode = true;
@@ -1396,8 +1395,6 @@ void update(float lastT, POINT cursorPos)
 
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	ImGui::SliderFloat("float", &gFloat, 0.0f, 2 * 3.1415);            // Edit 1 float using a slider from 0.0f to 1.0f    
-	ImGui::SliderFloat("dist", &gRotation, 0.0f, 10.0f);
 	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 100.0f);
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Checkbox("Walk Mode", &gCameraWalkMode);
@@ -1559,36 +1556,6 @@ void renderNormalMap()
 	}
 }
 
-void renderBoundingVolume()
-{
-	gDeviceContext->VSSetShader(gVertexShaderBoundingVolume, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->PSSetShader(gPixelShaderBoundingVolume, nullptr, 0);
-
-	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
-	UINT32 offset = 0;
-	
-
-	// specify the topology to use when drawing
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	// specify the IA Layout (how is data passed)
-	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
-
-	//ConstantBuffer
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
-
-	for (int i = 0; i < gPillars.size(); i++)
-	{
-		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
-		gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
-	}
-
-	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
-	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
-}
-
 void renderBillboard()
 {
 	gDeviceContext->VSSetShader(gVertexShaderBillboard, nullptr, 0);
@@ -1614,6 +1581,31 @@ void renderBillboard()
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 
 	gDeviceContext->Draw(1, 0);
+}
+
+void renderBoundingVolume()
+{
+	gDeviceContext->VSSetShader(gVertexShaderBoundingVolume, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gPixelShaderBoundingVolume, nullptr, 0);
+
+	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
+	UINT32 offset = 0;
+
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
+	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+
+	for (int i = 0; i < gPillars.size(); i++)
+	{
+		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
+		gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
+	}
+
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
 }
 
 void renderSecondPass()
@@ -1791,13 +1783,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderFirstPass();
 				renderNormalMap();
-				renderBoundingVolume();
 				renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
 
 				renderSecondPass();
+				renderBoundingVolume();
 
 				update(lastT, cursorPos);
 
