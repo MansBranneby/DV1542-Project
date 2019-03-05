@@ -17,7 +17,6 @@ protected:
 
 public:
 	BoundingVolume();
-	BoundingVolume(ID3D11Device* device, DirectX::XMMATRIX modelMatrix);
 	~BoundingVolume();
 
 	void setWorldMatrix(DirectX::XMMATRIX worldMatrix);

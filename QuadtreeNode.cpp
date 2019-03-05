@@ -111,13 +111,9 @@ std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, 
 		viewProj.r[3] - viewProj.r[2], // Far
 	}; 
 
-	;
-	
 	// Normalize planes
 	for (int i = 0; i < frustumPlanes.size(); i++)
 		frustumPlanes[i] = XMPlaneNormalize(frustumPlanes[i]);
-
-
 
 	return getMeshes(frustumPlanes, 1);
 }

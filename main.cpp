@@ -133,7 +133,6 @@ float gIncrement = 0;
 float gClearColour[3] = {};
 //Meshes
 Mesh* gPillar = nullptr;
-Mesh* gPillar2 = nullptr;
 Mesh* gBrickWall = nullptr;
 Mesh* gBillboard = nullptr;
 Mesh* gBoundingVolume = nullptr;
@@ -204,11 +203,10 @@ void createMeshes()
 {
 	DirectX::XMMATRIX identityMatrix = DirectX::XMMatrixIdentity();
 	gBrickWall = new Mesh("Resources\\OBJ files\\brick.obj", false, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
-	//gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
+	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, ORIENTED_BOUNDING_BOX, identityMatrix);
 
 	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixTranslation(-5.0f, 0.0f, 0.0f);
-	//gPillar2 = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, ORIENTED_BOUNDING_BOX, modelMatrix);
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -219,9 +217,9 @@ void createMeshes()
 		}
 	}
 
-	//std::vector <Vertex_Pos_Col> arr;
-	//arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
-	//gBillboard = new Mesh(arr, gDevice);
+	std::vector <Vertex_Pos_Col> arr;
+	arr.push_back(Vertex_Pos_Col(XMFLOAT3(2.0f, 8.0f, -3.0f), XMFLOAT3(1.0f, 1.0f, 1.0f)));
+	gBillboard = new Mesh(arr, gDevice);
 
 	gHeightmap = new Heightmap("Resources\\Assets_Project\\heightmaps\\heightmap.pgm", 15.0f, 5000.0f, 15.0f, gDevice);
 
@@ -1152,29 +1150,37 @@ float mousePicking(POINT cursorPos)
 	float currT = -1.0f;
 	float projX = XMVectorGetX(gCamera.projection.r[0]);
 	float projY = XMVectorGetY(gCamera.projection.r[1]);
+	// ABBREVIATIONS ////
+	// VS = view space///
+	// WS = World space//
+	// MS = Model space//
+	/////////////////////
 
 	// screen -> view
 	float viewX = (2.0f * (float)cursorPos.x / WIDTH - 1.0f) / projX;
 	float viewY = (-2.0f * (float)cursorPos.y / HEIGHT + 1.0f) / projY;
 
-	XMVECTOR rayOrigin = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0);
-	XMVECTOR rayDirection = XMVectorSet(viewX, viewY, 1.0f, 0.0f);
+	XMVECTOR rayOriginVS = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0);
+	XMVECTOR rayDirVS = XMVectorSet(viewX, viewY, 1.0f, 0.0f);
 
 	// view -> world
-	XMMATRIX inverseWorldView = XMMatrixInverse(nullptr, gCamera.view);
-	rayOrigin = inverseWorldView.r[3];
-	rayDirection = XMVector4Transform(rayDirection, inverseWorldView);
-	rayDirection = XMVector4Normalize(rayDirection);
+	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
+	XMVECTOR rayOriginWS = inverseView.r[3];
+	XMVECTOR rayDirWS = XMVector4Transform(rayDirVS, inverseView);
+	rayDirWS = XMVector4Normalize(rayDirWS);
 
-	// world -> local
+	// world -> model
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	gNrOfrenderedMeshes = intersectedMeshes.size();
+	for (int i = 0; i < gNrOfrenderedMeshes; i++)
+	{
+		XMMATRIX inverseWorld = XMMatrixInverse(nullptr, intersectedMeshes[i]->getModelMatrix());
+		XMVECTOR rayOriginMS = XMVector4Transform(rayOriginWS, inverseWorld);
+		XMVECTOR rayDirMS = XMVector4Transform(rayDirWS, inverseWorld);
+		rayDirMS = XMVector4Normalize(rayDirWS);
 
-
-	// change colour of pillar when picked
-	//currT = gPillar->getBoundingVolume()->intersectWithRay(rayDirection, rayOrigin);
-	//if (currT != -1.0f)
-	//	gPillar->getBoundingVolume()->setHighlight(true);
-	//else
-	//	gPillar->getBoundingVolume()->setHighlight(false);
+		currT = intersectedMeshes[i]->getBoundingVolume()->intersectWithRay(rayDirMS, rayOriginMS);
+	}
 
 	return currT;
 }
@@ -1417,9 +1423,21 @@ void update(float lastT, POINT cursorPos)
 	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
 	gDeviceContext->Unmap(gConstantBufferLight, 0);
 
-	/*gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
-	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);*/
+	gDeviceContext->Unmap(*gPillar->getBoundingVolume()->getVertexBuffer(), 0);
+
+	// bounding volumes pillars
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	gNrOfrenderedMeshes = intersectedMeshes.size();
+	for (int i = 0; i < intersectedMeshes.size(); i++)
+	{
+		gDeviceContext->Map(*intersectedMeshes[i]->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+		memcpy(mappedMemory.pData, intersectedMeshes[i]->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * intersectedMeshes[i]->getBoundingVolume()->getVertCount());
+		gDeviceContext->Unmap(*intersectedMeshes[i]->getBoundingVolume()->getVertexBuffer(), 0);
+	}
+
+
 
 	gDeviceContext->Map(gConstantBufferShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
 	memcpy(mappedMemory.pData, &gLightView, sizeof(gLightView));
@@ -1516,23 +1534,19 @@ void renderNormalMap()
 
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	//// BRICK WALL
-	//gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
-	//gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
+	// BRICK WALL
+	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
+	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
+	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
-	//// PILLAR
-	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	//gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
-
-	//gDeviceContext->PSSetShaderResources(0, 1, gPillar2->getSRV_Texture());
-	//gDeviceContext->PSSetShaderResources(1, 1, gPillar2->getSRV_Normal());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar2->getVertexBufferNormalMap(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar2->getVertCount(), 0);
+	// PILLAR
+	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
+	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 	
+	// PILLARS
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
 	for (int i = 0; i < intersectedMeshes.size(); i++)
@@ -1542,13 +1556,6 @@ void renderNormalMap()
 		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
 		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
 	}
-	//for (int i = 0; i < gPillars.size(); i++)
-	//{
-	//	gDeviceContext->PSSetShaderResources(0, 1, gPillars[i]->getSRV_Texture());
-	//	gDeviceContext->PSSetShaderResources(1, 1, gPillars[i]->getSRV_Normal());
-	//	gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
-	//	gDeviceContext->Draw(gPillars[i]->getVertCount(), 0);
-	//}
 }
 
 void renderBoundingVolume()
@@ -1571,12 +1578,14 @@ void renderBoundingVolume()
 	//ConstantBuffer
 	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
 
-	// issue a draw call of 3 vertices (similar to OpenGL)
 	for (int i = 0; i < gPillars.size(); i++)
 	{
 		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
 		gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
 	}
+
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getBoundingVolume()->getVertCount(), 0);
 }
 
 void renderBillboard()
@@ -1782,7 +1791,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				renderFirstPass();
 				renderNormalMap();
 				renderBoundingVolume();
-				//renderBillboard();
+				renderBillboard();
 
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);

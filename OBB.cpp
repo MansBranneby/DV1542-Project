@@ -6,7 +6,6 @@ OBB::OBB()
 }
 
 OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
-	:BoundingVolume(device, modelMatrix)
 {
 	// BOUNDING VOLUME
 	//
@@ -104,17 +103,32 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 			if (t2 < tMax)
 				tMax = t2;
 			if (tMin > tMax)
+			{
+				setHighlight(false);
 				return -1.0f;
+			}
 			if (tMax < 0)
+			{
+				setHighlight(false);
 				return -1.0f;
+			}
 		}
 		else if ((-e - w) > 0 || (-e + w) < 0)
+		{
+			setHighlight(false);
 			return -1.0f;
+		}
 	}
 	if (tMin > 0)
+	{
+		setHighlight(true);
 		return tMin;
+	}
 	else
+	{
+		setHighlight(true);
 		return tMax;
+	}
 }
 
 bool OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)

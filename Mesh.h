@@ -53,6 +53,6 @@ public:
 	ID3D11Buffer** getVertexBuffer();
 	ID3D11Buffer** getVertexBufferNormalMap();
 	int getVertCount();
-
+	DirectX::XMMATRIX getModelMatrix();
 	BoundingVolume* getBoundingVolume();
 };

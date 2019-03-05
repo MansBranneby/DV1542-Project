@@ -384,6 +384,11 @@ int Mesh::getVertCount()
 		return 0;
 }
 
+DirectX::XMMATRIX Mesh::getModelMatrix()
+{
+	return _modelMatrix;
+}
+
 BoundingVolume * Mesh::getBoundingVolume()
 {
 	return _boundingVolume;

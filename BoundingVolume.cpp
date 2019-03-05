@@ -38,11 +38,6 @@ BoundingVolume::BoundingVolume()
 {
 }
 
-BoundingVolume::BoundingVolume(ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
-{
-	//_modelMatrix = modelMatrix;
-}
-
 BoundingVolume::~BoundingVolume()
 {
 }
