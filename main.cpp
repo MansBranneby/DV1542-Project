@@ -22,6 +22,7 @@
 #include "Vertex_Pos_UV_Normal.h"
 #include "Heightmap.h"
 #include "QuadtreeNode.h"
+#include "ConstantBuffer.h"
 
 // DirectXTK
 #include "CommonStates.h"
@@ -130,6 +131,10 @@ float gDist = 0.0f;
 float gRotation = 0.0f;
 float gIncrement = 0;
 float gClearColour[3] = {};
+
+
+ConstantBuffer CBufferBillboard;
+
 //Meshes
 Mesh* gPillar = nullptr;
 Mesh* gBrickWall = nullptr;
@@ -1019,24 +1024,31 @@ void createConstantBuffer()
 	if (FAILED(result))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
 
-	// BillboardData
-	// Fill in a buffer description.
-	cbDesc.ByteWidth = sizeof(gBillboardData);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
 
-	// Fill in the subresource data.
-	InitData.pSysMem = &gBillboardData;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
 
-	// create a Constant Buffer
-	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
-	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+
+	//// BillboardData Constant
+	//// Fill in a buffer description.
+	//cbDesc.ByteWidth = sizeof(gBillboardData);
+	//cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	//cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	//cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	//cbDesc.MiscFlags = 0;
+	//cbDesc.StructureByteStride = 0;
+
+	//// Fill in the subresource data.
+	//InitData.pSysMem = &gBillboardData;
+	//InitData.SysMemPitch = 0;
+	//InitData.SysMemSlicePitch = 0;
+
+	//// create a Constant Buffer
+	//result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
+	//if (FAILED(result))
+	//	MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+
+	CBufferBillboard.createConstantBuffer(gDevice, &gBillboardData, sizeof(gBillboardData));
+
+
 
 	// Fill in the subresource data.
 	InitData.pSysMem = &gLightView;
@@ -1577,7 +1589,7 @@ void renderBillboard()
 	//ConstantBuffer
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->GSSetConstantBuffers(2, 1, &gConstantBufferBillboard);
+	gDeviceContext->GSSetConstantBuffers(2, 1, CBufferBillboard.getConstantBuffer());
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
 
 	gDeviceContext->Draw(1, 0);
@@ -1785,10 +1797,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				renderNormalMap();
 				renderBillboard();
 
-				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
+				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 
 				renderSecondPass();
+				
+				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, gDSV);
+				
 				renderBoundingVolume();
 
 				update(lastT, cursorPos);

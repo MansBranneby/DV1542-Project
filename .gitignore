@@ -40,3 +40,7 @@
 !Heightmap.cpp
 !QuadtreeNode.h
 !QuadtreeNode.cpp
+!ConstantBuffer.h
+!ConstantBuffer.cpp
+!Material.h
+!Material.cpp
