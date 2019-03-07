@@ -86,11 +86,11 @@ ID3D11Buffer* gVertexBufferFSQuad = nullptr;
 ID3D11Buffer* gVertexBufferBillboard = nullptr;
 ID3D11Buffer* gVertexBufferBoundingVolume = nullptr;
 
-ID3D11Buffer* gConstantBuffer = nullptr;
-ID3D11Buffer* gConstantBufferLight = nullptr;
-ID3D11Buffer* gConstantBufferCamera = nullptr;
-ID3D11Buffer* gConstantBufferBillboard = nullptr;
-ID3D11Buffer* gConstantBufferShadowMap = nullptr;
+ConstantBuffer gConstantBufferCamera;
+ConstantBuffer gConstantBufferLight;
+ConstantBuffer gConstantBufferMatrix;
+ConstantBuffer gConstantBufferShadowMap;
+ConstantBuffer gConstantBufferBillboard;
 
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11InputLayout* gVertexLayoutFSQuad = nullptr;
@@ -126,14 +126,8 @@ ID3D11PixelShader* gPixelShaderShadowMap = nullptr;
 // GLOBALS //
 float gHeight = 0.0f;
 bool gCameraWalkMode = true;
-float gFloat = 1.0f;
-float gDist = 0.0f;
-float gRotation = 0.0f;
-float gIncrement = 0;
 float gClearColour[3] = {};
 
-
-ConstantBuffer CBufferBillboard;
 
 //Meshes
 Mesh* gPillar = nullptr;
@@ -152,7 +146,6 @@ struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
 };
 PerFrameMatrices gMatricesPerFrame;
-ID3D11Buffer* gMatrixPerFrameBuffer = nullptr;
 
 struct Lights
 {
@@ -842,45 +835,6 @@ HRESULT createShadersShadowMap()
 
 	pVS->Release();
 
-	//////GeometryShader
-	//ID3DBlob* pGS = nullptr;
-	//if (errorBlob) errorBlob->Release();
-	//errorBlob = nullptr;
-
-	//result = D3DCompileFromFile(
-	//	L"GeometryShaderShadowMap.hlsl", // filename
-	//	nullptr,		// optional macros
-	//	nullptr,		// optional include files
-	//	"GS_main",		// entry point
-	//	"gs_5_0",		// shader model (target)
-	//	D3DCOMPILE_DEBUG,	// shader compile options (DEBUGGING)
-	//	0,				// IGNORE...DEPRECATED.
-	//	&pGS,			// double pointer to ID3DBlob		
-	//	&errorBlob		// pointer for Error Blob messages.
-	//);
-
-	//// compilation failed?
-	//if (FAILED(result))
-	//{
-	//	if (errorBlob)
-	//	{
-	//		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
-	//		// release "reference" to errorBlob interface object
-	//		errorBlob->Release();
-	//	}
-	//	if (pGS)
-	//		pGS->Release();
-	//	return result;
-	//}
-
-	//result = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShaderShadowMap);
-	//if (FAILED(result))
-	//	MessageBox(NULL, L"gGeometryShaderShadowMap", L"Error", MB_OK | MB_ICONERROR);
-
-	//// we do not need anymore this COM object, so we release it.
-	//pGS->Release();
-
-
 	// Pixelshader //
 	ID3DBlob* pPS = nullptr;
 	if (errorBlob) errorBlob->Release();
@@ -966,107 +920,11 @@ void createTriangleData()
 
 void createConstantBuffer()
 {
-	//WorldViewProj
-	// Fill in a buffer description.
-	D3D11_BUFFER_DESC cbDesc;
-	cbDesc.ByteWidth = sizeof(gMatricesPerFrame);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-
-	// Fill in the subresource data.
-	D3D11_SUBRESOURCE_DATA InitData;
-	InitData.pSysMem = &gMatricesPerFrame;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
-
-	// create a Constant Buffer
-	HRESULT result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBuffer);
-	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-
-	//Light
-	// Fill in a buffer description.
-	cbDesc.ByteWidth = sizeof(gLight);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-
-	// Fill in the subresource data.
-	InitData.pSysMem = &gLight;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
-
-	// create a Constant Buffer
-	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferLight);
-	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-	// CameraData
-	// Fill in a buffer description.
-	cbDesc.ByteWidth = sizeof(gCameraData);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-
-	// Fill in the subresource data.
-	InitData.pSysMem = &gCameraData;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
-
-	// create a Constant Buffer
-	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferCamera);
-	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-
-
-
-
-	//// BillboardData Constant
-	//// Fill in a buffer description.
-	//cbDesc.ByteWidth = sizeof(gBillboardData);
-	//cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	//cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	//cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	//cbDesc.MiscFlags = 0;
-	//cbDesc.StructureByteStride = 0;
-
-	//// Fill in the subresource data.
-	//InitData.pSysMem = &gBillboardData;
-	//InitData.SysMemPitch = 0;
-	//InitData.SysMemSlicePitch = 0;
-
-	//// create a Constant Buffer
-	//result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferBillboard);
-	//if (FAILED(result))
-	//	MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
-
-	CBufferBillboard.createConstantBuffer(gDevice, &gBillboardData, sizeof(gBillboardData));
-
-
-
-	// Fill in the subresource data.
-	InitData.pSysMem = &gLightView;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
-
-	//Shadow map
-	cbDesc.ByteWidth = sizeof(gLightView);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-
-	// create a Constant Buffer
-	result = gDevice->CreateBuffer(&cbDesc, &InitData, &gConstantBufferShadowMap);
-	if (FAILED(result))
-		MessageBox(NULL, L"gConstantBufferShadowMap", L"Error", MB_OK | MB_ICONERROR);
+	gConstantBufferMatrix.createConstantBuffer(gDevice, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
+	gConstantBufferLight.createConstantBuffer(gDevice, &gLight, sizeof(gLight));
+	gConstantBufferCamera.createConstantBuffer(gDevice, &gCameraData, sizeof(gCameraData));
+	gConstantBufferBillboard.createConstantBuffer(gDevice, &gBillboardData, sizeof(gBillboardData));
+	gConstantBufferShadowMap.createConstantBuffer(gDevice, &gLightView, sizeof(gLightView));
 }
 
 void setupTextures()
@@ -1421,17 +1279,17 @@ void update(float lastT, POINT cursorPos)
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 	D3D11_MAPPED_SUBRESOURCE mappedMemory;
-	gDeviceContext->Map(gConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	gDeviceContext->Map(*gConstantBufferMatrix.getConstantBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gMatricesPerFrame, sizeof(gMatricesPerFrame));
-	gDeviceContext->Unmap(gConstantBuffer, 0);
+	gDeviceContext->Unmap(*gConstantBufferMatrix.getConstantBuffer(), 0);
 
-	gDeviceContext->Map(gConstantBufferCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	gDeviceContext->Map(*gConstantBufferCamera.getConstantBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gCameraData, sizeof(gCameraData));
-	gDeviceContext->Unmap(gConstantBufferCamera, 0);
+	gDeviceContext->Unmap(*gConstantBufferCamera.getConstantBuffer(), 0);
 
-	gDeviceContext->Map(gConstantBufferLight, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
+	gDeviceContext->Map(*gConstantBufferLight.getConstantBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, &gLight, sizeof(gLight));
-	gDeviceContext->Unmap(gConstantBufferLight, 0);
+	gDeviceContext->Unmap(*gConstantBufferLight.getConstantBuffer(), 0);
 
 	gDeviceContext->Map(*gPillar->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 	memcpy(mappedMemory.pData, gPillar->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * gPillar->getBoundingVolume()->getVertCount());
@@ -1449,9 +1307,9 @@ void update(float lastT, POINT cursorPos)
 
 
 
-	gDeviceContext->Map(gConstantBufferShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
+	gDeviceContext->Map(*gConstantBufferShadowMap.getConstantBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory); //Shadow map
 	memcpy(mappedMemory.pData, &gLightView, sizeof(gLightView));
-	gDeviceContext->Unmap(gConstantBufferShadowMap, 0);
+	gDeviceContext->Unmap(*gConstantBufferShadowMap.getConstantBuffer(), 0);
 }
 
 void renderShadowMap()
@@ -1466,7 +1324,7 @@ void renderShadowMap()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShaderShadowMap, nullptr, 0);
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBufferShadowMap);
+	gDeviceContext->VSSetConstantBuffers(0, 1, gConstantBufferShadowMap.getConstantBuffer());
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
@@ -1506,7 +1364,7 @@ void renderFirstPass()
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->GSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 
 	UINT32 vertexSize = sizeof(Vertex_Pos_UV_Normal);
 	UINT32 offset = 0;
@@ -1542,7 +1400,7 @@ void renderNormalMap()
 	gDeviceContext->IASetInputLayout(gVertexLayout_Pos_UV_Normal_Tan);
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
 
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->VSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 
 	// BRICK WALL
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
@@ -1587,10 +1445,10 @@ void renderBillboard()
 	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 
 	//ConstantBuffer
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gConstantBuffer);
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->GSSetConstantBuffers(2, 1, CBufferBillboard.getConstantBuffer());
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
+	gDeviceContext->GSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
+	gDeviceContext->GSSetConstantBuffers(1, 1, gConstantBufferCamera.getConstantBuffer());
+	gDeviceContext->GSSetConstantBuffers(2, 1, gConstantBufferBillboard.getConstantBuffer());
+	gDeviceContext->PSSetConstantBuffers(0, 1, gConstantBufferLight.getConstantBuffer());
 
 	gDeviceContext->Draw(1, 0);
 }
@@ -1608,12 +1466,13 @@ void renderBoundingVolume()
 
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gConstantBuffer);
+	gDeviceContext->VSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 
 	for (int i = 0; i < gPillars.size(); i++)
 	{
 		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
-		gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
+		if(gPillars[i]->getBoundingVolume()->getHighlighted() == true)
+			gDeviceContext->Draw(gPillars[i]->getBoundingVolume()->getVertCount(), 0);
 	}
 
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
@@ -1639,9 +1498,9 @@ void renderSecondPass()
 	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
 	gDeviceContext->PSSetShaderResources(3, 1, &gShaderResourceShadowMap);
 
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gConstantBufferLight);
-	gDeviceContext->PSSetConstantBuffers(1, 1, &gConstantBufferCamera);
-	gDeviceContext->PSSetConstantBuffers(2, 1, &gConstantBufferShadowMap);
+	gDeviceContext->PSSetConstantBuffers(0, 1, gConstantBufferLight.getConstantBuffer());
+	gDeviceContext->PSSetConstantBuffers(1, 1, gConstantBufferCamera.getConstantBuffer());
+	gDeviceContext->PSSetConstantBuffers(2, 1, gConstantBufferShadowMap.getConstantBuffer());
 
 	gDeviceContext->Draw(6, 0);
 
@@ -1820,7 +1679,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		ImGui::DestroyContext();
 
 		gVertexBufferFSQuad->Release();
-		gConstantBuffer->Release();
+		//gConstantBufferMatrix->Release();
 		gShaderResourceDeferred[0]->Release();
 		gShaderResourceDeferred[1]->Release();
 		gShaderResourceDeferred[2]->Release();

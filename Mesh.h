@@ -4,6 +4,7 @@
 #include "Vertex_Pos_UV.h"
 #include "BoundingVolume.h"
 #include "OBB.h"
+#include "Material.h"
 
 #include <vector>
 #include <d3d11.h>
@@ -35,6 +36,7 @@ private:
 	ID3D11Buffer* _vertexBufferNormalMap;
 	DirectX::XMMATRIX _modelMatrix;
 	BoundingVolume* _boundingVolume;
+	Material _material;
 
 	void loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, bool normalMapped, boundingVolumes boundingVolumeChoice);
 	void transform(ID3D11Device* device, bool normalMapped);

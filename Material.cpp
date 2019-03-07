@@ -19,3 +19,18 @@ void Material::setMaterial(DirectX::XMFLOAT3 ambientCol, DirectX::XMFLOAT3 diffu
 
 
 }
+
+void Material::setAmbientCol(DirectX::XMFLOAT3 ambientCol)
+{
+	_ambientCol = ambientCol;
+}
+
+void Material::setDiffuseCol(DirectX::XMFLOAT3 diffuseCol)
+{
+	_diffuseCol = diffuseCol;
+}
+
+void Material::setSpecularCol(DirectX::XMFLOAT3 specularCol)
+{
+	_specularCol = specularCol;
+}

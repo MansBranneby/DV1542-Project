@@ -7,8 +7,6 @@ OBB::OBB()
 
 OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
 {
-	// BOUNDING VOLUME
-	//
 	DirectX::XMFLOAT3 halfXYZ;
 	halfXYZ.x = (abs(smallestXYZ.x) + abs(biggestXYZ.x)) / 2;
 	halfXYZ.y = (abs(smallestXYZ.y) + abs(biggestXYZ.y)) / 2;

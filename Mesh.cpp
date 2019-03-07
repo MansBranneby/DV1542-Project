@@ -15,7 +15,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 	std::ifstream inFile;
 	std::string line, special, libraries, material, bump;
 	std::istringstream inputString;
-	DirectX::XMFLOAT3 tempPos, tempNormal;
+	DirectX::XMFLOAT3 tempPos, tempNormal, ambientCol, specularCol, diffuseCol;
 	DirectX::XMFLOAT2 tempUV;
 	DirectX::XMFLOAT3 biggestXYZ(0.0, 0.0f, 0.0f), smallestXYZ(0.0f, 0.0f, 0.0f);
 	inFile.open(filePath);
@@ -136,7 +136,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 	}
 	inFile.close();
 
-	// Read materials
+	// Read material
 	filePath = "Resources\\MTL files\\" + materialLibs[0];
 	inFile.open(filePath);
 	while (std::getline(inFile, line))
@@ -145,14 +145,29 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 		if (line.substr(0, 7) == "map_Kd ")
 		{
 			inputString >> special >> material;
-
 		}
 		else if (line.substr(0, 9) == "map_Bump " || line.substr(0, 5) == "bump ")
 		{
 			inputString >> special >> bump;
 		}
+		else if (line.substr(0, 3) == "Ka ")
+		{
+			inputString >> special >> ambientCol.x >> ambientCol.y >> ambientCol.z;
+			_material.setAmbientCol(ambientCol);
+		}
+		else if (line.substr(0, 3) == "Kd ")
+		{
+			inputString >> special >> diffuseCol.x >> diffuseCol.y >> diffuseCol.z;
+			_material.setDiffuseCol(diffuseCol);
+		}
+		else if (line.substr(0, 3) == "Ks ")
+		{
+			inputString >> special >> specularCol.x >> specularCol.y >> specularCol.z;
+			_material.setSpecularCol(specularCol);
+		}
 		inputString.clear();
 	}
+	inFile.close();
 
 	// Texure
 	std::wstring widestr = std::wstring(material.begin(), material.end());
@@ -163,7 +178,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 	HRESULT hr = CoInitialize(NULL);
 	hr = DirectX::CreateWICTextureFromFile(device, fileName, NULL, &_SRV_Texture);
 	if (FAILED(hr))
-		MessageBox(NULL, L"ERROR TEXTURE", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"Error texture in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 
 	if (normalMapped)
 	{
@@ -176,9 +191,8 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 		hr = CoInitialize(NULL);
 		hr = DirectX::CreateWICTextureFromFile(device, fileNameBump, NULL, &_SRV_Normal);
 		if (FAILED(hr))
-			MessageBox(NULL, L"ERROR NORMAL", L"Error", MB_OK | MB_ICONERROR);
+			MessageBox(NULL, L"Error bump map in Mesh.cpp", L"Error", MB_OK | MB_ICONERROR);
 	}
-	inFile.close();
 
 	switch (boundingVolumeChoice)
 	{

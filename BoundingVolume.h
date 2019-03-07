@@ -28,6 +28,7 @@ public:
 	DirectX::XMFLOAT3 getCenter() const;
 	std::vector <Vertex_Pos_Col> & getVertices();
 	int getVertCount();
+	bool getHighlighted();
 
 	virtual void setWorldMatrix(ID3D11Device* device, DirectX::XMMATRIX worldMatrix) = 0;
 	virtual void transform(ID3D11Device* device, DirectX::XMMATRIX modelMatrix) = 0;
