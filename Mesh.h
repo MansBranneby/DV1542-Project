@@ -5,6 +5,7 @@
 #include "BoundingVolume.h"
 #include "OBB.h"
 #include "Material.h"
+#include "ConstantBuffer.h"
 
 #include <vector>
 #include <d3d11.h>
@@ -37,6 +38,7 @@ private:
 	DirectX::XMMATRIX _modelMatrix;
 	BoundingVolume* _boundingVolume;
 	Material _material;
+	ConstantBuffer _constantBuffer;
 
 	void loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, bool normalMapped, boundingVolumes boundingVolumeChoice);
 	void transform(ID3D11Device* device, bool normalMapped);
@@ -57,6 +59,7 @@ public:
 	ID3D11ShaderResourceView** getSRV_Normal();
 	ID3D11Buffer** getVertexBuffer();
 	ID3D11Buffer** getVertexBufferNormalMap();
+	ID3D11Buffer** getConstantBuffer();
 	int getVertCount();
 	DirectX::XMMATRIX getModelMatrix();
 	BoundingVolume* getBoundingVolume();

@@ -71,11 +71,11 @@ ID3D11RasterizerState* gRasterizerState = nullptr;
 ID3D11DepthStencilView* gDSV = nullptr;
 
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
-ID3D11RenderTargetView* gRenderTargetsDeferred[3] = {};
+ID3D11RenderTargetView* gRenderTargetsDeferred[6] = {};
 ID3D11RenderTargetView* gRenderTargetShadowMap = nullptr;
 
 ID3D11ShaderResourceView* gSRV_Texture = nullptr;
-ID3D11ShaderResourceView *gShaderResourceDeferred[3] = {};
+ID3D11ShaderResourceView *gShaderResourceDeferred[6] = {};
 ID3D11ShaderResourceView* gShaderResourceShadowMap = nullptr;
 
 // SAMPLERS //
@@ -102,6 +102,9 @@ ID3D11InputLayout* gVertexLayout_Pos_UV_Normal_Tan = nullptr;
 ID3D11Texture2D *gTexDeferredPos = nullptr;
 ID3D11Texture2D *gTexDeferredNor = nullptr;
 ID3D11Texture2D *gTexDeferredCol = nullptr;
+ID3D11Texture2D *gTexDeferredAmb = nullptr;
+ID3D11Texture2D *gTexDeferredDif = nullptr;
+ID3D11Texture2D *gTexDeferredSpec = nullptr;
 
 ID3D11Texture2D* gTexShadowMap = nullptr;
 
@@ -1080,6 +1083,15 @@ void createRenderTargets()
 	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredCol);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredAmb);
+	if (FAILED(hr))
+		MessageBox(NULL, L"TexDefferedAmb", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredDif);
+	if (FAILED(hr))
+		MessageBox(NULL, L"TexDefferedDif", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredSpec);
+	if (FAILED(hr))
+		MessageBox(NULL, L"TexDefferedSpec", L"Error", MB_OK | MB_ICONERROR);
 
 	// Rendertarget FIRST PASS //
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
@@ -1097,6 +1109,15 @@ void createRenderTargets()
 	hr = gDevice->CreateRenderTargetView(gTexDeferredCol, &renderTargetViewDesc, &gRenderTargetsDeferred[2]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredAmb, &renderTargetViewDesc, &gRenderTargetsDeferred[3]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gRenderTargetDeferred[3]", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredDif, &renderTargetViewDesc, &gRenderTargetsDeferred[4]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gRenderTargetDeferred[4]", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateRenderTargetView(gTexDeferredSpec, &renderTargetViewDesc, &gRenderTargetsDeferred[5]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gRenderTargetDeferred[5]", L"Error", MB_OK | MB_ICONERROR);
 
 
 	// Shaderresourceview SECOND PASS //
@@ -1117,6 +1138,15 @@ void createRenderTargets()
 	hr = gDevice->CreateShaderResourceView(gTexDeferredCol, &shaderResourceViewDesc, &gShaderResourceDeferred[2]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredAmb, &shaderResourceViewDesc, &gShaderResourceDeferred[3]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gShaderResourceDeferred[3]", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredDif, &shaderResourceViewDesc, &gShaderResourceDeferred[4]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gShaderResourceDeferred[4]", L"Error", MB_OK | MB_ICONERROR);
+	hr = gDevice->CreateShaderResourceView(gTexDeferredSpec, &shaderResourceViewDesc, &gShaderResourceDeferred[5]);
+	if (FAILED(hr))
+		MessageBox(NULL, L"gShaderResourceDeferred[5]", L"Error", MB_OK | MB_ICONERROR);
 
 	//Shadow map
 	D3D11_TEXTURE2D_DESC texDescSM;
@@ -1370,6 +1400,7 @@ void renderFirstPass()
 	UINT32 offset = 0;
 
 	//Plane
+	gDeviceContext->PSSetConstantBuffers(0, 1, gPlane->getConstantBuffer());
 	gDeviceContext->PSSetShaderResources(0, 1, gPlane->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
@@ -1380,6 +1411,7 @@ void renderFirstPass()
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// HEIGHTMAP
+	gDeviceContext->PSSetConstantBuffers(0, 1, gHeightmap->getConstantBuffer());
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
@@ -1403,12 +1435,14 @@ void renderNormalMap()
 	gDeviceContext->VSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 
 	// BRICK WALL
+	gDeviceContext->PSSetConstantBuffers(0, 1, gBrickWall->getConstantBuffer());
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->PSSetShaderResources(1, 1, gBrickWall->getSRV_Normal());
 	gDeviceContext->IASetVertexBuffers(0, 1, gBrickWall->getVertexBufferNormalMap(), &vertexSize, &offset);
 	gDeviceContext->Draw(gBrickWall->getVertCount(), 0);
 
 	// PILLAR
+	gDeviceContext->PSSetConstantBuffers(0, 1, gPillar->getConstantBuffer());
 	gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
 	gDeviceContext->PSSetShaderResources(1, 1, gPillar->getSRV_Normal());
 	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBufferNormalMap(), &vertexSize, &offset);
@@ -1419,6 +1453,7 @@ void renderNormalMap()
 	gNrOfrenderedMeshes = intersectedMeshes.size();
 	for (int i = 0; i < intersectedMeshes.size(); i++)
 	{
+		gDeviceContext->PSSetConstantBuffers(0, 1, intersectedMeshes[i]->getConstantBuffer());
 		gDeviceContext->PSSetShaderResources(0, 1, intersectedMeshes[i]->getSRV_Texture());
 		gDeviceContext->PSSetShaderResources(1, 1, intersectedMeshes[i]->getSRV_Normal());
 		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBufferNormalMap(), &vertexSize, &offset);
@@ -1495,8 +1530,8 @@ void renderSecondPass()
 	gDeviceContext->IASetInputLayout(gVertexLayoutFSQuad);
 
 	gDeviceContext->PSSetSamplers(0, 1, &gSamplerState);
-	gDeviceContext->PSSetShaderResources(0, 3, gShaderResourceDeferred);
-	gDeviceContext->PSSetShaderResources(3, 1, &gShaderResourceShadowMap);
+	gDeviceContext->PSSetShaderResources(0, 6, gShaderResourceDeferred);
+	gDeviceContext->PSSetShaderResources(6, 1, &gShaderResourceShadowMap);
 
 	gDeviceContext->PSSetConstantBuffers(0, 1, gConstantBufferLight.getConstantBuffer());
 	gDeviceContext->PSSetConstantBuffers(1, 1, gConstantBufferCamera.getConstantBuffer());
@@ -1646,11 +1681,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gClearColour[3] = 1.0;
 				renderShadowMap();
 				
-				gDeviceContext->OMSetRenderTargets(3, gRenderTargetsDeferred, gDSV);
+				gDeviceContext->OMSetRenderTargets(6, gRenderTargetsDeferred, gDSV);
 				gDeviceContext->ClearDepthStencilView(gDSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[0], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[1], gClearColour);
 				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[2], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[3], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[4], gClearColour);
+				gDeviceContext->ClearRenderTargetView(gRenderTargetsDeferred[5], gClearColour);
 
 				renderFirstPass();
 				renderNormalMap();

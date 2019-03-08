@@ -23,6 +23,11 @@ ID3D11Buffer ** Heightmap::getVertexBuffer()
 	return &_vertexBuffer;
 }
 
+ID3D11Buffer ** Heightmap::getConstantBuffer()
+{
+	return _constantBuffer.getConstantBuffer();
+}
+
 std::vector<Vertex_Pos_UV_Normal>& Heightmap::getVertices()
 {
 	return _vertices_Pos_UV_Normal;

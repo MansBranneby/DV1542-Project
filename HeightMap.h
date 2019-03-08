@@ -10,6 +10,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include "ConstantBuffer.h"
 
 class Heightmap
 {
@@ -25,6 +26,7 @@ private:
 	std::vector <float> _greyValues;
 	std::vector <DirectX::XMFLOAT3> _heightmap;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
+	ConstantBuffer _constantBuffer;
 
 	void loadHeightmap(std::string filePath);
 	void createVertexBuffer(ID3D11Device* device);
@@ -34,6 +36,7 @@ public:
 	~Heightmap();
 	
 	ID3D11Buffer** getVertexBuffer();
+	ID3D11Buffer** getConstantBuffer();
 	std::vector <Vertex_Pos_UV_Normal> & getVertices();
 	std::vector <DirectX::XMFLOAT3> getHeightmap();
 	std::vector <float> getGreyValues();

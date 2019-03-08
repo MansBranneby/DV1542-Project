@@ -1,7 +1,10 @@
 Texture2D txPosition : register(t0);
 Texture2D txNormal : register(t1);
 Texture2D txColour : register(t2);
-Texture2D shadowMap : register(t3);
+Texture2D txAmbient : register(t3);
+Texture2D txDiffuse : register(t4);
+Texture2D txSpecular : register(t5);
+Texture2D shadowMap : register(t6);
 SamplerState sampAni;
 
 struct VS_OUT
@@ -31,6 +34,9 @@ float4 PS_main(VS_OUT input) : SV_Target
 	float3 position = txPosition.Sample(sampAni, input.tex).xyz;
 	float3 normal = txNormal.Sample(sampAni, input.tex).xyz;
 	float3 colour = txColour.Sample(sampAni, input.tex).xyz;
+	float3 Ka = txAmbient.Sample(sampAni, input.tex).xyz;
+	float3 Kd = txDiffuse.Sample(sampAni, input.tex).xyz;
+	float4 Ks_specExp = txSpecular.Sample(sampAni, input.tex).xyzw;
 	float4 lightPosition = mul(float4(position, 1.0f), lightWVP);
 
 	//Shadowmap
@@ -48,15 +54,17 @@ float4 PS_main(VS_OUT input) : SV_Target
 	//LIGHTING//
 
 	//Ambient
-	float3 ambientCol = { 0.2, 0.2, 0.2 };
-	float3 ambient = colour * ambientCol;
+	float3 ambientLight = { 0.2, 0.2, 0.2 };
+	Ka = Ka * colour;
+	float3 ambient = Ka * ambientLight;
 	float3 fragmentCol;
 
 	if (pixelDepth < shadowMapDepth || !inLightFrustum)
 	{
 		//Diffuse
 		float diffuseFactor = max(dot(normalize(lightPos - position), normalize(normal)), 0);
-		float3 diffuse = colour * lightCol * diffuseFactor;
+		Kd = Kd * colour;
+		float3 diffuse = Kd * lightCol * diffuseFactor;
 
 		//Specular
 		float3 n = normalize(normal);
@@ -64,7 +72,8 @@ float4 PS_main(VS_OUT input) : SV_Target
 		float3 v = normalize(cameraPos - position);
 		float3 r = normalize(2 * dot(n, l) * n - l);
 
-		float3 specular = colour * lightCol * pow(max(dot(r, v), 0), 20);
+		Ks_specExp.xyz = Ks_specExp.xyz * colour;
+		float3 specular = Ks_specExp.xyz * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
 
 		//Final
 		fragmentCol = ambient + diffuse + specular;

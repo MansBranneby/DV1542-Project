@@ -18,6 +18,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 	DirectX::XMFLOAT3 tempPos, tempNormal, ambientCol, specularCol, diffuseCol;
 	DirectX::XMFLOAT2 tempUV;
 	DirectX::XMFLOAT3 biggestXYZ(0.0, 0.0f, 0.0f), smallestXYZ(0.0f, 0.0f, 0.0f);
+	float specularExp;
 	inFile.open(filePath);
 
 	while (std::getline(inFile, line))
@@ -149,6 +150,11 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 		else if (line.substr(0, 9) == "map_Bump " || line.substr(0, 5) == "bump ")
 		{
 			inputString >> special >> bump;
+		}
+		else if (line.substr(0, 3) == "Ns ")
+		{
+			inputString >> special >> specularExp;
+			_material.setSpecularExp(specularExp);
 		}
 		else if (line.substr(0, 3) == "Ka ")
 		{
@@ -339,6 +345,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 	transform(device, normalMapped);
 	getBoundingVolume()->setWorldMatrix(device, modelMatrix);
 	createVertexBuffer(device, deviceContext, normalMapped);
+	_constantBuffer.createConstantBuffer(device, &_material, sizeof(_material));
 }
 
 Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
@@ -399,6 +406,11 @@ ID3D11Buffer* *Mesh::getVertexBuffer()
 ID3D11Buffer ** Mesh::getVertexBufferNormalMap()
 {
 	return &_vertexBufferNormalMap;
+}
+
+ID3D11Buffer ** Mesh::getConstantBuffer()
+{
+	return _constantBuffer.getConstantBuffer();
 }
 
 int Mesh::getVertCount()

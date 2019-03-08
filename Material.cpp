@@ -34,3 +34,8 @@ void Material::setSpecularCol(DirectX::XMFLOAT3 specularCol)
 {
 	_specularCol = specularCol;
 }
+
+void Material::setSpecularExp(float specularExp)
+{
+	_specularExp = specularExp;
+}
