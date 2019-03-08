@@ -8,6 +8,7 @@ private:
 	DirectX::XMFLOAT3 _diffuseCol;
 	DirectX::XMFLOAT3 _specularCol;
 	float _specularExp;
+	float _padding1, padding2;
 
 public:
 	Material();
