@@ -1411,7 +1411,7 @@ void renderFirstPass()
 	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// HEIGHTMAP
-	gDeviceContext->PSSetConstantBuffers(0, 1, gHeightmap->getConstantBuffer());
+	gDeviceContext->PSSetConstantBuffers(0, 1, gPlane->getConstantBuffer());
 	gDeviceContext->PSSetShaderResources(0, 1, gBrickWall->getSRV_Texture());
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);

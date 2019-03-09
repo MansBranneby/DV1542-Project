@@ -5,6 +5,7 @@ Material::Material()
 	_ambientCol = { 0.0f, 0.0f, 0.0f, };
 	_diffuseCol = { 0.0f, 0.0f, 0.0f, };
 	_specularCol = { 0.0f, 0.0f, 0.0f, };
+	_specularExp = 96.0f;
 }
 
 Material::~Material()
