@@ -2,9 +2,9 @@
 
 Material::Material()
 {
-	_ambientCol = { 0.0f, 0.0f, 0.0f, };
-	_diffuseCol = { 0.0f, 0.0f, 0.0f, };
-	_specularCol = { 0.0f, 0.0f, 0.0f, };
+	_ambientCol = { 1.0f, 1.0f, 1.0f, };
+	_diffuseCol = { 0.5f, 0.5f, 0.5f, };
+	_specularCol = { 0.5f, 0.5f, 0.5f, };
 	_specularExp = 96.0f;
 }
 

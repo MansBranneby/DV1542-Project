@@ -14,17 +14,17 @@ struct VS_OUT
 //	float4 lightPos : TEXCOORD3;
 };
 
-cbuffer FS_CONSTANT_BUFFER_LIGHT : register(b0)
+cbuffer PS_CONSTANT_BUFFER_LIGHT : register(b0)
 {
 	float3 lightPos;
 	float3 lightCol;
 };
-cbuffer FS_CONSTANT_BUFFER_CAMERA : register(b1)
+cbuffer PS_CONSTANT_BUFFER_CAMERA : register(b1)
 {
 	float3 cameraPos;
 };
 
-cbuffer VS_CONSTANT_BUFFER : register(b2)
+cbuffer PS_CONSTANT_BUFFER : register(b2)
 {
 	matrix lightWVP;
 };
@@ -54,32 +54,28 @@ float4 PS_main(VS_OUT input) : SV_Target
 	//LIGHTING//
 
 	//Ambient
-	//float3 ambientLight = { 0.2, 0.2, 0.2 };
-	//Ka = Ka * colour;
-	//float3 ambient = Ka * ambientLight;
-	//float3 fragmentCol;
-
-	float3 ambientCol = { 0.2, 0.2, 0.2 };
-	float3 ambient = colour * ambientCol;
+	float3 ambientLight = { 0.2, 0.2, 0.2 };
+	Ka = Ka * colour;
+	float3 ambient = Ka * ambientLight;
 	float3 fragmentCol;
 
 	if (pixelDepth < shadowMapDepth || !inLightFrustum)
 	{
 		//Diffuse
 		float diffuseFactor = max(dot(normalize(lightPos - position), normalize(normal)), 0);
-		//Kd = Kd * colour;
-		//float3 diffuse = Kd * lightCol * diffuseFactor;
-		float3 diffuse = colour * lightCol * diffuseFactor;
+		Kd = Kd * colour;
+		float3 diffuse = Kd * lightCol * diffuseFactor;
+
 		//Specular
 		float3 n = normalize(normal);
 		float3 l = normalize(lightPos - position);
 		float3 v = normalize(cameraPos - position);
 		float3 r = normalize(2 * dot(n, l) * n - l);
 
-		//Ks_specExp.xyz = Ks_specExp.xyz * colour;
-		float3 specular = colour * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
+		Ks_specExp.xyz = Ks_specExp.xyz * colour;
+		float3 specular = Ks_specExp.xyz * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
 		
-		//float3 specular = colour * lightCol * pow(max(dot(r, v), 0), 20);
+		/*float3 specular = colour * lightCol * pow(max(dot(r, v), 0), 20);*/
 		
 		//Final
 		fragmentCol = ambient + diffuse + specular;
