@@ -301,8 +301,6 @@ void Mesh::transform(ID3D11Device* device, bool normalMapped)
 			_vertices_Pos_UV[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
 		}
 	}
-
-	getBoundingVolume()->setWorldMatrix(device, _modelMatrix);
 }
 
 void Mesh::createVertexBuffer(ID3D11Device* device, ID3D11DeviceContext* deviceContext, bool normalMapped)
@@ -343,7 +341,7 @@ Mesh::Mesh(std::string filePath, bool flippedUV, bool normalMapped, ID3D11Device
 
 	loadOBJ(filePath, device, flippedUV, normalMapped, boundingVolumeChoice);
 	transform(device, normalMapped);
-	getBoundingVolume()->setWorldMatrix(device, modelMatrix);
+	_boundingVolume->setWorldMatrix(device, _modelMatrix);
 	createVertexBuffer(device, deviceContext, normalMapped);
 	_constantBuffer.createConstantBuffer(device, &_material, sizeof(_material));
 }
@@ -380,6 +378,7 @@ void Mesh::setModelMatrix(ID3D11Device* device, ID3D11DeviceContext* deviceConte
 {
 	_modelMatrix = modelMatrix;
 	transform(device, normalMapped);
+	_boundingVolume->setWorldMatrix(device, _modelMatrix);
 	createVertexBuffer(device, deviceContext, normalMapped);
 }
 

@@ -51,7 +51,6 @@ OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Devi
 	_vertices.push_back(Vertex_Pos_Col(_leftUpFar, col));
 	_vertices.push_back(Vertex_Pos_Col(_rightUpFar, col));
 
-	transform(device, modelMatrix);
 	createVertexBuffer(device);
 }
 
@@ -162,6 +161,7 @@ bool OBB::intersectWithBox(DirectX::XMFLOAT3 center, float halfLength)
 void OBB::setWorldMatrix(ID3D11Device * device, DirectX::XMMATRIX worldMatrix)
 {
 	_modelMatrix = worldMatrix;
+
 	transform(device, _modelMatrix);
 	createVertexBuffer(device);
 }
