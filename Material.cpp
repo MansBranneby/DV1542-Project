@@ -6,19 +6,12 @@ Material::Material()
 	_diffuseCol = { 0.5f, 0.5f, 0.5f, };
 	_specularCol = { 0.5f, 0.5f, 0.5f, };
 	_specularExp = 96.0f;
+	_padding[0] = 0.0f;
+	_padding[1] = 96.0f;
 }
 
 Material::~Material()
 {
-}
-
-void Material::setMaterial(DirectX::XMFLOAT3 ambientCol, DirectX::XMFLOAT3 diffuseCol, DirectX::XMFLOAT3 specularCol)
-{
-	_ambientCol = ambientCol;
-	_diffuseCol = diffuseCol;
-	_specularCol = specularCol;
-
-
 }
 
 void Material::setAmbientCol(DirectX::XMFLOAT3 ambientCol)

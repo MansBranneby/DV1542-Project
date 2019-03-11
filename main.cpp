@@ -167,7 +167,7 @@ struct BillboardData
 {
 	float billboardHeight = 2.0f;
 	float billboardWidth = 2.0f;
-	float padding1, padding2;
+	float padding[2];
 };
 BillboardData gBillboardData;
 
@@ -1405,10 +1405,6 @@ void renderFirstPass()
 	gDeviceContext->IASetVertexBuffers(0, 1, gPlane->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
-	//// PILLAR
-	//gDeviceContext->PSSetShaderResources(0, 1, gPillar->getSRV_Texture());
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// HEIGHTMAP
 	gDeviceContext->PSSetConstantBuffers(0, 1, gPlane->getConstantBuffer());

@@ -21,7 +21,7 @@ struct PS_OUT
 	float4 spec : SV_Target5;
 };
 
-cbuffer GS_CONSTANT_BUFFER : register(b0)
+cbuffer PS_CONSTANT_BUFFER : register(b0)
 {
 	float3 ambient;
 	float3 diffuse;
