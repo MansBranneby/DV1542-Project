@@ -21,10 +21,10 @@ struct PS_OUT
 
 cbuffer PS_CONSTANT_BUFFER : register(b0)
 {
-	float3 ambient;
-	float3 diffuse;
-	float3 specular;
-	float specularExp;
+	float4 ambient;
+	float4 diffuse;
+	float4 specular;
+	float4 specularExp;
 };
 
 PS_OUT PS_main(GS_OUT input)
@@ -34,9 +34,9 @@ PS_OUT PS_main(GS_OUT input)
 	output.posWS = input.posWS;
 	output.norWS = normalize(input.norWS);
 	output.col = float4(txDiffuse.Sample(sampAni, input.tex).xyz, 1.0);
-	output.amb = float4(ambient, 1.0f);
-	output.dif = float4(diffuse, 1.0f);
-	output.spec = float4(specular, specularExp);
+	output.amb = float4(ambient.xyz, 1.0f);
+	output.dif = float4(diffuse.xyz, 1.0f);
+	output.spec = float4(specular.xyz, specularExp.x);
 
 	return output;
 };

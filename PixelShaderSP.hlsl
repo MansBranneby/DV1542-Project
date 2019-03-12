@@ -73,7 +73,7 @@ float4 PS_main(VS_OUT input) : SV_Target
 		float3 r = normalize(2 * dot(n, l) * n - l);
 
 		Ks_specExp.xyz = Ks_specExp.xyz * colour;
-		float3 specular = colour * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
+		float3 specular = Ks_specExp.xyz * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
 		
 		
 		//Final
