@@ -732,7 +732,7 @@ HRESULT createShadersSP()
 		&gVertexShaderSP
 	);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"CreateVertexShader SP", L"Error", MB_OK | MB_ICONERROR);
 
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{
@@ -757,7 +757,7 @@ HRESULT createShadersSP()
 
 	result = gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayoutFSQuad);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gVertexLayoutFSQuad", L"Error", MB_OK | MB_ICONERROR);
 
 	pVS->Release();
 
@@ -794,7 +794,7 @@ HRESULT createShadersSP()
 
 	result = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShaderSP);
 	if (FAILED(result))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gPixelShaderSP", L"Error", MB_OK | MB_ICONERROR);
 
 	return S_OK;
 }
@@ -935,8 +935,8 @@ void setupTextures()
 	//ShadowMap
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
-	texDesc.Width = WIDTH;
-	texDesc.Height = HEIGHT;
+	texDesc.Width = (UINT)WIDTH;
+	texDesc.Height = (UINT)HEIGHT;
 	texDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
@@ -955,8 +955,8 @@ void createDepthStencil()
 	//DepthStencil
 	ID3D11Texture2D* pDepthStencil = NULL;
 	D3D11_TEXTURE2D_DESC descDepth;
-	descDepth.Width = WIDTH;
-	descDepth.Height = HEIGHT;
+	descDepth.Width = (UINT)WIDTH;
+	descDepth.Height = (UINT)HEIGHT;
 	descDepth.MipLevels = 1;
 	descDepth.ArraySize = 1;
 	descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -968,7 +968,7 @@ void createDepthStencil()
 	descDepth.MiscFlags = 0;
 	HRESULT hr = gDevice->CreateTexture2D(&descDepth, NULL, &pDepthStencil);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"pDepthStencil", L"Error", MB_OK | MB_ICONERROR);
 
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 
@@ -981,7 +981,7 @@ void createDepthStencil()
 	ID3D11DepthStencilState * pDSState;
 	hr = gDevice->CreateDepthStencilState(&dsDesc, &pDSState);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"pDSState", L"Error", MB_OK | MB_ICONERROR);
 
 	// Bind depth stencil state
 	gDeviceContext->OMSetDepthStencilState(pDSState, 1);
@@ -995,7 +995,7 @@ void createDepthStencil()
 	// Create the depth stencil view
 	hr = gDevice->CreateDepthStencilView(pDepthStencil, &descDSV, &gDSV);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gDSV", L"Error", MB_OK | MB_ICONERROR);
 }
 
 void samplerSetUp()
@@ -1063,8 +1063,8 @@ void createRenderTargets()
 	//TEXTURE FOR FIRST PASS RENDER
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
-	texDesc.Width = WIDTH;
-	texDesc.Height = HEIGHT;
+	texDesc.Width = (UINT)WIDTH;
+	texDesc.Height = (UINT)HEIGHT;
 	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 1;
@@ -1076,13 +1076,13 @@ void createRenderTargets()
 	//Texture
 	HRESULT hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredPos);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gTexDeferredPos", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredNor);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gTexDeferredNor", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredCol);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gTexDeferredCol", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateTexture2D(&texDesc, NULL, &gTexDeferredAmb);
 	if (FAILED(hr))
 		MessageBox(NULL, L"TexDefferedAmb", L"Error", MB_OK | MB_ICONERROR);
@@ -1102,13 +1102,13 @@ void createRenderTargets()
 
 	hr = gDevice->CreateRenderTargetView(gTexDeferredPos, &renderTargetViewDesc, &gRenderTargetsDeferred[0]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gRenderTargetsDeferred[0])", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateRenderTargetView(gTexDeferredNor, &renderTargetViewDesc, &gRenderTargetsDeferred[1]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"RenderTargetsDeferred[1]", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateRenderTargetView(gTexDeferredCol, &renderTargetViewDesc, &gRenderTargetsDeferred[2]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gRenderTargetsDeferred[2]", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateRenderTargetView(gTexDeferredAmb, &renderTargetViewDesc, &gRenderTargetsDeferred[3]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"gRenderTargetDeferred[3]", L"Error", MB_OK | MB_ICONERROR);
@@ -1131,13 +1131,13 @@ void createRenderTargets()
 	// Create the shader resource view.
 	hr = gDevice->CreateShaderResourceView(gTexDeferredPos, &shaderResourceViewDesc, &gShaderResourceDeferred[0]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gShaderResourceDeferred[0]", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateShaderResourceView(gTexDeferredNor, &shaderResourceViewDesc, &gShaderResourceDeferred[1]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gShaderResourceDeferred[1]", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateShaderResourceView(gTexDeferredCol, &shaderResourceViewDesc, &gShaderResourceDeferred[2]);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gShaderResourceDeferred[2]", L"Error", MB_OK | MB_ICONERROR);
 	hr = gDevice->CreateShaderResourceView(gTexDeferredAmb, &shaderResourceViewDesc, &gShaderResourceDeferred[3]);
 	if (FAILED(hr))
 		MessageBox(NULL, L"gShaderResourceDeferred[3]", L"Error", MB_OK | MB_ICONERROR);
@@ -1151,8 +1151,8 @@ void createRenderTargets()
 	//Shadow map
 	D3D11_TEXTURE2D_DESC texDescSM;
 	ZeroMemory(&texDescSM, sizeof(texDescSM));
-	texDescSM.Width = WIDTH;
-	texDescSM.Height = HEIGHT;
+	texDescSM.Width = (UINT)WIDTH;
+	texDescSM.Height = (UINT)HEIGHT;
 	texDescSM.Format = DXGI_FORMAT_R32_FLOAT;
 	texDescSM.MipLevels = 1;
 	texDescSM.ArraySize = 1;
@@ -1187,8 +1187,8 @@ void createRenderTargets()
 void SetViewport()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = (float)WIDTH;
-	vp.Height = (float)HEIGHT;
+	vp.Width = (UINT)WIDTH;
+	vp.Height = (UINT)HEIGHT;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
@@ -1210,7 +1210,7 @@ void SetViewport()
 	
 	HRESULT hr = gDevice->CreateRasterizerState(&rasterizerDesc, &gRasterizerState);
 	if (FAILED(hr))
-		MessageBox(NULL, L"Error1", L"Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, L"gRasterizerState", L"Error", MB_OK | MB_ICONERROR);
 
 }
 
@@ -1254,7 +1254,7 @@ void transform(XMMATRIX rotation, XMMATRIX rotationYPos)
 
 	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
 	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, gCamera.lookAt, gCamera.up);
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1f, 200.0f);
 
 	gCamera.world = World;
 	gCamera.view = View;
@@ -1280,7 +1280,7 @@ void update(float lastT, POINT cursorPos)
 	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
 	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
-	XMMATRIX Projection = XMMatrixOrthographicLH(200, 200, 0.1, 200.0f);
+	XMMATRIX Projection = XMMatrixOrthographicLH(200.0f, 200.0f, 0.1f, 200.0f);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
@@ -1328,7 +1328,7 @@ void update(float lastT, POINT cursorPos)
 	// bounding volumes pillars
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
-	for (int i = 0; i < intersectedMeshes.size(); i++)
+	for (size_t i = 0; i < intersectedMeshes.size(); i++)
 	{
 		gDeviceContext->Map(*intersectedMeshes[i]->getBoundingVolume()->getVertexBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedMemory);
 		memcpy(mappedMemory.pData, intersectedMeshes[i]->getBoundingVolume()->getVertices().data(), sizeof(Vertex_Pos_Col) * intersectedMeshes[i]->getBoundingVolume()->getVertCount());
@@ -1375,7 +1375,7 @@ void renderShadowMap()
 
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
-	for (int i = 0; i < intersectedMeshes.size(); i++)
+	for (size_t i = 0; i < intersectedMeshes.size(); i++)
 	{
 		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
 		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
@@ -1447,7 +1447,7 @@ void renderNormalMap()
 	// PILLARS
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
-	for (int i = 0; i < intersectedMeshes.size(); i++)
+	for (size_t i = 0; i < intersectedMeshes.size(); i++)
 	{
 		gDeviceContext->PSSetConstantBuffers(0, 1, intersectedMeshes[i]->getConstantBuffer());
 		gDeviceContext->PSSetShaderResources(0, 1, intersectedMeshes[i]->getSRV_Texture());
@@ -1499,7 +1499,7 @@ void renderBoundingVolume()
 	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 	gDeviceContext->VSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 
-	for (int i = 0; i < gPillars.size(); i++)
+	for (size_t i = 0; i < gPillars.size(); i++)
 	{
 		gDeviceContext->IASetVertexBuffers(0, 1, gPillars[i]->getBoundingVolume()->getVertexBuffer(), &vertexSize, &offset);
 		if(gPillars[i]->getBoundingVolume()->getHighlighted() == true)
@@ -1634,9 +1634,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				mouse->SetMode(ms.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
 				if (ms.positionMode == Mouse::MODE_RELATIVE)
 				{
-					yaw += XMConvertToRadians(ms.x);
-					pitch += XMConvertToRadians(ms.y);
-					pitch = min(XM_PI / 2 - 0.0001, max(-XM_PI / 2 + 0.0001, pitch));
+					yaw += XMConvertToRadians((float)ms.x);
+					pitch += XMConvertToRadians((float)ms.y);
+					pitch = min(XM_PI / 2.0f - 0.0001f, max(-XM_PI / 2.0f + 0.0001f, pitch));
 				}
 
 				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
