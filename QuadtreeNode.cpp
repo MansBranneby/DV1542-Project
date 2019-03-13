@@ -53,6 +53,13 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 
 QuadtreeNode::~QuadtreeNode()
 {
+	for (int i = 0; i < 4; i++)
+		delete _children[i];
+
+	for (int i = 0; i < _meshes.size(); i++)
+		delete _meshes[i];
+
+
 }
 
 std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, DirectX::XMVECTOR lookAt, DirectX::XMVECTOR up, DirectX::XMMATRIX viewMatrix, DirectX::XMMATRIX projectionMatrix, float nearDist, float farDist, float FOV, float aspectRatio)

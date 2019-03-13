@@ -72,9 +72,8 @@ ID3D11DepthStencilView* gDSV = nullptr;
 
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 ID3D11RenderTargetView* gRenderTargetsDeferred[6] = {};
-ID3D11RenderTargetView* gRenderTargetShadowMap = nullptr;
-
 ID3D11ShaderResourceView *gShaderResourceDeferred[6] = {};
+ID3D11RenderTargetView* gRenderTargetShadowMap = nullptr;
 ID3D11ShaderResourceView* gShaderResourceShadowMap = nullptr;
 
 // SAMPLERS //
@@ -104,7 +103,6 @@ ID3D11Texture2D *gTexDeferredCol = nullptr;
 ID3D11Texture2D *gTexDeferredAmb = nullptr;
 ID3D11Texture2D *gTexDeferredDif = nullptr;
 ID3D11Texture2D *gTexDeferredSpec = nullptr;
-
 ID3D11Texture2D* gTexShadowMap = nullptr;
 
 // SHADERS //
@@ -152,7 +150,6 @@ PerFrameMatrices gMatricesPerFrame;
 struct Lights
 {
 	XMFLOAT3 lightPos = { 0.0f, 10.0f, -50.0f };
-
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f};
 };
 Lights gLight;
@@ -1544,8 +1541,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); // Skapa fönster
 
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF); //Find memory leaks
-
 	if (wndHandle)
 	{
 		CreateDirect3DContext(wndHandle); // Skapa och koppla SwapChain, Device och Device Context
@@ -1715,75 +1710,32 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		ImGui::DestroyContext();
 
 		gVertexBufferFSQuad->Release();
-		gVertexBufferBillboard->Release();
-		gVertexBufferBoundingVolume->Release();
 		//gConstantBufferMatrix->Release();
 		gShaderResourceDeferred[0]->Release();
 		gShaderResourceDeferred[1]->Release();
 		gShaderResourceDeferred[2]->Release();
-		gShaderResourceDeferred[3]->Release();
-		gShaderResourceDeferred[4]->Release();
-		gShaderResourceDeferred[5]->Release();
 		gRenderTargetsDeferred[0]->Release();
 		gRenderTargetsDeferred[1]->Release();
 		gRenderTargetsDeferred[2]->Release();
-		gRenderTargetsDeferred[3]->Release();
-		gRenderTargetsDeferred[4]->Release();
-		gRenderTargetsDeferred[5]->Release();
 		gSamplerState->Release();
-
-		gRenderTargetShadowMap->Release();
-		gShaderResourceShadowMap->Release();
 
 		gVertexLayout->Release();
 		gVertexLayoutFSQuad->Release();
-		gVertexLayoutPosCol->Release();
-		gVertexLayout_Pos_UV_Normal_Tan->Release();
-
-		gTexDeferredPos->Release();
-		gTexDeferredNor->Release();
-		gTexDeferredCol->Release();
-		gTexDeferredAmb->Release();
-		gTexDeferredDif->Release();
-		gTexDeferredSpec->Release();
-		gTexShadowMap->Release();
 
 		gVertexShader->Release();
-		gVertexShaderBoundingVolume->Release();
-		gVertexShaderNormalMap->Release();
 		gVertexShaderSP->Release();
-		gVertexShaderBillboard->Release();
-		gVertexShaderShadowMap->Release();
-		
 		gGeometryShader->Release();
-		gGeometryShaderBillboard->Release();
-		gGeometryShaderNormalMap->Release();
-		gGeometryShaderShadowMap->Release();
-
 		gPixelShader->Release();
 		gPixelShaderSP->Release();
-		gPixelShaderBoundingVolume->Release();
 		gPixelShaderBillboard->Release();
-		gPixelShaderNormalMap->Release();
-		gPixelShaderShadowMap->Release();
+		gGeometryShaderBillboard->Release();
 
 		gDSV->Release();
 		gBackbufferRTV->Release();
 		gSwapChain->Release();
 		gDevice->Release();
 		gDeviceContext->Release();
-		gRasterizerState->Release();
 		DestroyWindow(wndHandle);
-
-		delete gPillar;
-		delete gBrickWall;
-		delete gBillboard;
-		delete gBoundingVolume;
-		delete gPlane;
-		delete gHeightmap;
-		delete gRoot;
-		for (int i = 0; i < gPillars.size(); i++)
-			delete gPillars[i];
 	}
 
 	return (int)msg.wParam;
