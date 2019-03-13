@@ -81,8 +81,6 @@ ID3D11SamplerState *gSamplerState = nullptr;
 
 // BUFFERS //
 ID3D11Buffer* gVertexBufferFSQuad = nullptr;
-ID3D11Buffer* gVertexBufferBillboard = nullptr;
-ID3D11Buffer* gVertexBufferBoundingVolume = nullptr;
 
 ConstantBuffer gConstantBufferCamera;
 ConstantBuffer gConstantBufferLight;
@@ -115,7 +113,6 @@ ID3D11VertexShader* gVertexShaderShadowMap = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11GeometryShader* gGeometryShaderBillboard = nullptr;
 ID3D11GeometryShader* gGeometryShaderNormalMap = nullptr;
-ID3D11GeometryShader* gGeometryShaderShadowMap = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11PixelShader* gPixelShaderSP = nullptr;
 ID3D11PixelShader* gPixelShaderBoundingVolume = nullptr;
@@ -149,7 +146,7 @@ PerFrameMatrices gMatricesPerFrame;
 
 struct Lights
 {
-	XMFLOAT3 lightPos = { 0.0f, 10.0f, -50.0f };
+	XMFLOAT3 lightPos = { 0.0f, 10.0f, -3.0f };
 	XMVECTOR lightCol = { 1.0f, 1.0f, 1.0f};
 };
 Lights gLight;
@@ -205,9 +202,9 @@ void createMeshes()
 
 	int k = 0;
 	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixRotationY(XM_PI * 0.25f);
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 2; i++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int j = 0; j < 2; j++)
 		{
 			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, modelMatrix));
 			gPillars[k++]->setModelMatrix(gDevice, gDeviceContext, DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f), true);
@@ -1277,7 +1274,7 @@ void update(float lastT, POINT cursorPos)
 	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
 	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
-	XMMATRIX Projection = XMMatrixOrthographicLH(200.0f, 200.0f, 0.1f, 200.0f);
+	XMMATRIX Projection = XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 200.0f);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
@@ -1363,20 +1360,20 @@ void renderShadowMap()
 	gDeviceContext->Draw(gPlane->getVertCount(), 0);
 
 	// PILLAR
-	//gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
-	//gDeviceContext->Draw(gPillar->getVertCount(), 0);
+	gDeviceContext->IASetVertexBuffers(0, 1, gPillar->getVertexBuffer(), &vertexSize, &offset);
+	gDeviceContext->Draw(gPillar->getVertCount(), 0);
 
 	// Heightmap
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 
-	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
-	gNrOfrenderedMeshes = intersectedMeshes.size();
-	for (size_t i = 0; i < intersectedMeshes.size(); i++)
-	{
-		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
-		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
-	}
+	//std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	//gNrOfrenderedMeshes = intersectedMeshes.size();
+	//for (size_t i = 0; i < intersectedMeshes.size(); i++)
+	//{
+	//	gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
+	//	gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
+	//}
 }
 
 void renderFirstPass()
@@ -1532,12 +1529,14 @@ void renderSecondPass()
 
 	gDeviceContext->Draw(6, 0);
 
-	ID3D11ShaderResourceView* nullRTV = { NULL };
-	gDeviceContext->PSSetShaderResources(0, 1, &nullRTV);
+	ID3D11ShaderResourceView* nullRTV[7] = { NULL };
+	gDeviceContext->PSSetShaderResources(0, 7, nullRTV);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); // Skapa fönster
 
@@ -1685,7 +1684,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 				renderFirstPass();
 				renderNormalMap();
-				renderBillboard();
+
+				ID3D11RenderTargetView* nullRTV[6] = { nullptr };
+				gDeviceContext->OMSetRenderTargets(6, nullRTV, nullptr);
 
 				gDeviceContext->ClearRenderTargetView(gBackbufferRTV, gClearColour);
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
@@ -1695,6 +1696,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, gDSV);
 				
 				renderBoundingVolume();
+				renderBillboard();
 
 				update(lastT, cursorPos);
 
@@ -1710,32 +1712,73 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		ImGui::DestroyContext();
 
 		gVertexBufferFSQuad->Release();
-		//gConstantBufferMatrix->Release();
+
 		gShaderResourceDeferred[0]->Release();
 		gShaderResourceDeferred[1]->Release();
 		gShaderResourceDeferred[2]->Release();
+		gShaderResourceDeferred[3]->Release();
+		gShaderResourceDeferred[4]->Release();
+		gShaderResourceDeferred[5]->Release();
+		gShaderResourceShadowMap->Release();
+
 		gRenderTargetsDeferred[0]->Release();
 		gRenderTargetsDeferred[1]->Release();
 		gRenderTargetsDeferred[2]->Release();
+		gRenderTargetsDeferred[3]->Release();
+		gRenderTargetsDeferred[4]->Release();
+		gRenderTargetsDeferred[5]->Release();
+		gRenderTargetShadowMap->Release();
+
 		gSamplerState->Release();
 
 		gVertexLayout->Release();
 		gVertexLayoutFSQuad->Release();
+		gVertexLayoutPosCol->Release();
+		gVertexLayout_Pos_UV_Normal_Tan->Release();
+
+		gTexDeferredPos->Release();
+		gTexDeferredNor->Release();
+		gTexDeferredCol->Release();
+		gTexDeferredAmb->Release();
+		gTexDeferredDif->Release();
+		gTexDeferredSpec->Release();
+		gTexShadowMap->Release();
 
 		gVertexShader->Release();
+		gVertexShaderBoundingVolume->Release();
+		gVertexShaderNormalMap->Release();
 		gVertexShaderSP->Release();
+		gVertexShaderBillboard->Release();
+		gVertexShaderShadowMap->Release();
+
 		gGeometryShader->Release();
+		gGeometryShaderBillboard->Release();
+		gGeometryShaderNormalMap->Release();
+
 		gPixelShader->Release();
 		gPixelShaderSP->Release();
+		gPixelShaderBoundingVolume->Release();
 		gPixelShaderBillboard->Release();
-		gGeometryShaderBillboard->Release();
+		gPixelShaderNormalMap->Release();
+		gPixelShaderShadowMap->Release();
 
 		gDSV->Release();
 		gBackbufferRTV->Release();
 		gSwapChain->Release();
 		gDevice->Release();
 		gDeviceContext->Release();
+		gRasterizerState->Release();
 		DestroyWindow(wndHandle);
+
+		delete gPillar;
+		delete gBrickWall;
+		delete gBillboard;
+		delete gBoundingVolume;
+		delete gPlane;
+		delete gHeightmap;
+		delete gRoot;
+		for (int i = 0; i < gPillars.size(); i++)
+			delete gPillars[i];
 	}
 
 	return (int)msg.wParam;
@@ -1807,7 +1850,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		NULL,
+		D3D11_CREATE_DEVICE_DEBUG,
 		NULL,
 		NULL,
 		D3D11_SDK_VERSION,

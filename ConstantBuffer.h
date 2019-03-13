@@ -4,7 +4,7 @@
 class ConstantBuffer
 {
 private:
-	ID3D11Buffer* _constantBuffer;
+	ID3D11Buffer* _constantBuffer = nullptr;
 
 public:
 	ConstantBuffer();

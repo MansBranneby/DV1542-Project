@@ -356,7 +356,7 @@ Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	D3D11_SUBRESOURCE_DATA data;
-	// billboard
+
 	bufferDesc.ByteWidth = sizeof(Vertex_Pos_Col) * _vertices_Pos_Col.size();
 	data.pSysMem = _vertices_Pos_Col.data();
 	HRESULT result = device->CreateBuffer(&bufferDesc, &data, &_vertexBuffer);
@@ -367,12 +367,17 @@ Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
 
 Mesh::~Mesh()
 {
-	_SRV_Texture->Release();
-	_SRV_Normal->Release();
-	_vertexBuffer->Release();
-	_vertexBufferNormalMap->Release();
+	if(_SRV_Texture != nullptr)
+		_SRV_Texture->Release();
+	if(_vertexBufferNormalMap != nullptr)
+		_vertexBufferNormalMap->Release();
+	if(_SRV_Normal != nullptr)
+		_SRV_Normal->Release();
 
-	delete _boundingVolume;
+	_vertexBuffer->Release();
+	
+	if(_boundingVolume != nullptr)
+		delete _boundingVolume;
 }
 
 void Mesh::setVertices(std::vector<Vertex_Pos_UV_Normal> vertices)

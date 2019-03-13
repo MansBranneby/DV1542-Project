@@ -7,20 +7,20 @@ struct GS_OUT
 	float3 col : COLOUR;
 };
 
-struct PS_OUT
-{
-	float4 posWS : SV_Target0;
-	float4 norWS : SV_Target1;
-	float4 col : SV_Target2;
-};
+//struct PS_OUT
+//{
+//	float4 posWS : SV_Target0;
+//	float4 norWS : SV_Target1;
+//	float4 col : SV_Target2;
+//};
 
-PS_OUT PS_main(GS_OUT input)
+float4 PS_main(GS_OUT input) : SV_Target
 {
-	PS_OUT output;
-	
-	output.posWS = input.pos;
-	output.norWS = input.worldNor;
-	output.col = float4(input.col, 1.0f);
+	//PS_OUT output;
+	//
+	//output.posWS = input.pos;
+	//output.norWS = input.worldNor;
+	//output.col = float4(input.col, 1.0f);
 
-	return output;
+	return float4(1.0, 0.0, 0.0, 1.0);
 };

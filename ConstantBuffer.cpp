@@ -6,7 +6,8 @@ ConstantBuffer::ConstantBuffer()
 
 ConstantBuffer::~ConstantBuffer()
 {
-	_constantBuffer->Release();
+	if(_constantBuffer != nullptr)
+		_constantBuffer->Release();
 }
 
 void ConstantBuffer::createConstantBuffer(ID3D11Device* device, const void* data, UINT dataSize)

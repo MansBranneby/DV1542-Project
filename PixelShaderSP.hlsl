@@ -55,16 +55,14 @@ float4 PS_main(VS_OUT input) : SV_Target
 
 	//Ambient
 	float3 ambientLight = { 0.2, 0.2, 0.2 };
-	Ka = Ka * colour;
-	float3 ambient = Ka * ambientLight;
+	float3 ambient = colour * ambientLight;
 	float3 fragmentCol;
 
 	if (pixelDepth < shadowMapDepth || !inLightFrustum)
 	{
 		//Diffuse
 		float diffuseFactor = max(dot(normalize(lightPos - position), normalize(normal)), 0);
-		Kd = Kd * colour;
-		float3 diffuse = Kd * lightCol * diffuseFactor;
+		float3 diffuse = colour * lightCol * diffuseFactor;
 
 		//Specular
 		float3 n = normalize(normal);
@@ -72,12 +70,10 @@ float4 PS_main(VS_OUT input) : SV_Target
 		float3 v = normalize(cameraPos - position);
 		float3 r = normalize(2 * dot(n, l) * n - l);
 
-		Ks_specExp.xyz = Ks_specExp.xyz * colour;
-		float3 specular = Ks_specExp.xyz * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
-		
+		float3 specular = colour * lightCol * pow(max(dot(r, v), 0), Ks_specExp.w);
 		
 		//Final
-		fragmentCol = ambient + diffuse + specular;
+		fragmentCol = Ka * ambient + Kd * diffuse + Ks_specExp.xyz * specular;
 	}
 	else
 		fragmentCol = ambient;

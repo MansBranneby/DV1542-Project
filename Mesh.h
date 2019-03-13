@@ -31,12 +31,12 @@ private:
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	std::vector <Vertex_Pos_Col> _vertices_Pos_Col;
 	std::vector <Vertex_Pos_UV> _vertices_Pos_UV;
-	ID3D11ShaderResourceView* _SRV_Texture;
-	ID3D11ShaderResourceView* _SRV_Normal;
-	ID3D11Buffer* _vertexBuffer;
-	ID3D11Buffer* _vertexBufferNormalMap;
+	ID3D11ShaderResourceView* _SRV_Texture = nullptr;
+	ID3D11ShaderResourceView* _SRV_Normal = nullptr;
+	ID3D11Buffer* _vertexBuffer = nullptr;
+	ID3D11Buffer* _vertexBufferNormalMap = nullptr;
 	DirectX::XMMATRIX _modelMatrix;
-	BoundingVolume* _boundingVolume;
+	BoundingVolume* _boundingVolume = nullptr;
 	Material _material;
 	ConstantBuffer _constantBuffer;
 
