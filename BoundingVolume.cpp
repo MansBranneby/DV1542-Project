@@ -25,6 +25,7 @@ BoundingVolume::BoundingVolume()
 
 BoundingVolume::~BoundingVolume()
 {
+	_vertexBuffer->Release();
 }
 
 void BoundingVolume::setCenter(DirectX::XMFLOAT3 center)

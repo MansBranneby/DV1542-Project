@@ -367,6 +367,12 @@ Mesh::Mesh(std::vector<Vertex_Pos_Col> vertices_Pos_Col, ID3D11Device * device)
 
 Mesh::~Mesh()
 {
+	_SRV_Texture->Release();
+	_SRV_Normal->Release();
+	_vertexBuffer->Release();
+	_vertexBufferNormalMap->Release();
+
+	delete _boundingVolume;
 }
 
 void Mesh::setVertices(std::vector<Vertex_Pos_UV_Normal> vertices)

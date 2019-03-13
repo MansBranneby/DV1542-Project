@@ -16,6 +16,7 @@ Heightmap::Heightmap(std::string filePath, float widthFactor, float heightFactor
 
 Heightmap::~Heightmap()
 {
+	_vertexBuffer->Release();
 }
 
 ID3D11Buffer ** Heightmap::getVertexBuffer()

@@ -20,5 +20,6 @@ private:
 
 public:
 	QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::vector <Mesh*> meshes, int quadtreeLevels, int currentLevel);
+	~QuadtreeNode();
 	std::vector<Mesh*> getIntersectedMeshes(DirectX::XMVECTOR camPos, DirectX::XMVECTOR lookAt, DirectX::XMVECTOR up, DirectX::XMMATRIX viewMatrix, DirectX::XMMATRIX projectionMatrix, float nearDist, float farDist, float FOV, float aspectRatio);
 };
