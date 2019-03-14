@@ -27,7 +27,7 @@ public:
 	ID3D11Buffer** getVertexBuffer();
 	DirectX::XMFLOAT3 getCenter() const;
 	std::vector <Vertex_Pos_Col> & getVertices();
-	int getVertCount();
+	size_t getVertCount();
 	bool getHighlighted();
 
 	virtual void setWorldMatrix(ID3D11Device* device, DirectX::XMMATRIX worldMatrix) = 0;

@@ -8,9 +8,9 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 	std::vector<DirectX::XMFLOAT3> vtxNormal;
 	std::vector<std::string> materialLibs;
 	std::vector<std::string> materials;
-	std::vector<int> vertexIndices;
-	std::vector<int> uvIndices;
-	std::vector<int> normalIndices;
+	std::vector<size_t> vertexIndices;
+	std::vector<size_t> uvIndices;
+	std::vector<size_t> normalIndices;
 
 	std::ifstream inFile;
 	std::string line, special, libraries, material, bump;
@@ -105,11 +105,11 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 		inputString.clear();
 	}
 	//Sort
-	for (int i = 0; i < vertexIndices.size(); i++)
+	for (size_t i = 0; i < vertexIndices.size(); i++)
 	{
-		int posIndex = vertexIndices[i];
-		int uvIndex = uvIndices[i];
-		int normalIndex = normalIndices[i];
+		size_t posIndex = vertexIndices[i];
+		size_t uvIndex = uvIndices[i];
+		size_t normalIndex = normalIndices[i];
 
 		DirectX::XMFLOAT3 vertPos = vtxPos[posIndex - 1];
 		DirectX::XMFLOAT3 vertNormal = vtxNormal[normalIndex - 1];
@@ -221,7 +221,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 		std::fill(tangents.begin(), tangents.end(), DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//Calculate triangle tangents
-		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i += 3)
+		for (size_t i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i += 3)
 		{
 			// Loading from XMFLOAT3 to XMVECTOR in order to use vector subtraction
 			DirectX::XMVECTOR vert0 = DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent.at(i).getPos());
@@ -255,7 +255,7 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 
 			tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()), faceTangent);
 		}
-		for (int i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i++)
+		for (size_t i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i++)
 		{
 			DirectX::XMFLOAT3 tangent = {
 				DirectX::XMVectorGetX(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex())),
@@ -271,7 +271,7 @@ void Mesh::transform(ID3D11Device* device, bool normalMapped)
 {
 	if (_vertices_Pos_UV_Normal_Tangent.size() > 0)
 	{
-		for (int i = 0; i < getVertCount(); i++)
+		for (size_t i = 0; i < getVertCount(); i++)
 		{
 			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal_Tangent[i].getPos()), _modelMatrix);
 			_vertices_Pos_UV_Normal_Tangent[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
@@ -279,7 +279,7 @@ void Mesh::transform(ID3D11Device* device, bool normalMapped)
 	}
 	if (_vertices_Pos_UV_Normal.size() > 0)
 	{
-		for (int i = 0; i < getVertCount(); i++)
+		for (size_t i = 0; i < getVertCount(); i++)
 		{
 			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV_Normal[i].getPos()), _modelMatrix);
 			_vertices_Pos_UV_Normal[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
@@ -287,7 +287,7 @@ void Mesh::transform(ID3D11Device* device, bool normalMapped)
 	}
 	if (_vertices_Pos_Col.size() > 0)
 	{
-		for (int i = 0; i < getVertCount(); i++)
+		for (size_t i = 0; i < getVertCount(); i++)
 		{
 			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_Col[i].getPos()), _modelMatrix);
 			_vertices_Pos_Col[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
@@ -295,7 +295,7 @@ void Mesh::transform(ID3D11Device* device, bool normalMapped)
 	}
 	if (_vertices_Pos_UV.size() > 0)
 	{
-		for (int i = 0; i < getVertCount(); i++)
+		for (size_t i = 0; i < getVertCount(); i++)
 		{
 			DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices_Pos_UV[i].getPos()), _modelMatrix);
 			_vertices_Pos_UV[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
@@ -423,7 +423,7 @@ ID3D11Buffer ** Mesh::getConstantBuffer()
 	return _constantBuffer.getConstantBuffer();
 }
 
-int Mesh::getVertCount()
+size_t Mesh::getVertCount()
 {
 	if (_vertices_Pos_UV_Normal_Tangent.size() > 0)
 		return _vertices_Pos_UV_Normal_Tangent.size();

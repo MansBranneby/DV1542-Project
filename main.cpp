@@ -137,7 +137,7 @@ std::vector<Mesh*> gPillars;
 // Quadtree //
 QuadtreeNode* gRoot;
 int gQuadtreeLevels = 4;
-int gNrOfrenderedMeshes;
+size_t gNrOfrenderedMeshes;
 
 struct PerFrameMatrices {
 	XMMATRIX World, WorldViewProj;
@@ -200,11 +200,11 @@ void createMeshes()
 	gPillar = new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, identityMatrix);
 	gPlane = new Mesh("Resources\\OBJ files\\plane.obj", false, false, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, identityMatrix);
 
-	int k = 0;
+	unsigned int k = 0;
 	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixRotationY(XM_PI * 0.25f);
-	for (int i = 0; i < 2; i++)
+	for (unsigned int i = 0; i < 2; i++)
 	{
-		for (int j = 0; j < 2; j++)
+		for (unsigned int j = 0; j < 2; j++)
 		{
 			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, modelMatrix));
 			gPillars[k++]->setModelMatrix(gDevice, gDeviceContext, DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f), true);
@@ -1039,7 +1039,7 @@ float mousePicking(POINT cursorPos)
 	// world -> model
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
-	for (int i = 0; i < gNrOfrenderedMeshes; i++)
+	for (size_t i = 0; i < gNrOfrenderedMeshes; i++)
 	{
 		XMMATRIX inverseWorld = XMMatrixInverse(nullptr, intersectedMeshes[i]->getModelMatrix());
 		XMVECTOR rayOriginMS = XMVector4Transform(rayOriginWS, inverseWorld);
@@ -1536,6 +1536,8 @@ void renderSecondPass()
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	#define _ITERATOR_DEBUG_LEVEL 0
+	#define _HAS_ITERATOR_DEBUGGING 0
 
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); // Skapa fönster
@@ -1777,7 +1779,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		delete gPlane;
 		delete gHeightmap;
 		delete gRoot;
-		for (int i = 0; i < gPillars.size(); i++)
+		for (size_t i = 0; i < gPillars.size(); i++)
 			delete gPillars[i];
 	}
 
