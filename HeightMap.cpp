@@ -6,6 +6,8 @@ Heightmap::Heightmap()
 
 Heightmap::Heightmap(std::string filePath, float widthFactor, float heightFactor, float depthFactor, ID3D11Device* device)
 {
+	_modelMatrix = DirectX::XMMatrixIdentity();
+
 	_widthFactor = widthFactor;
 	_heightFactor = heightFactor;
 	_depthFactor = depthFactor;
@@ -46,6 +48,13 @@ std::vector<float> Heightmap::getGreyValues()
 
 float Heightmap::getHeight(float x, float z)
 {
+	DirectX::XMMATRIX inverseModel = DirectX::XMMatrixInverse(nullptr, _modelMatrix);
+	DirectX::XMVECTOR posMS = DirectX::XMVector4Transform(DirectX::XMVECTOR{ x, 0.0f, z, 1.0f }, inverseModel);
+	x = DirectX::XMVectorGetX(posMS);
+	z = DirectX::XMVectorGetZ(posMS);
+	if (x < 0 || z < 0)
+		return 0.0f;
+
 	int index = ((int)(z*_depthFactor)) * _terrainWidth + (int)(x*_widthFactor);
 		
 	if (index < 0 || index >= _terrainSize || (int)(x * _widthFactor) > _terrainWidth || (int)(z * _depthFactor) > _terrainHeight)

@@ -263,7 +263,6 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> frustumPl
 		//Find best diagonal
 		for (int j = 0; j < 4; j++)
 		{
-			//XMVECTOR normal = { XMVectorGetX(frustumPlanes[i]), XMVectorGetY(frustumPlanes[i]), XMVectorGetZ(frustumPlanes[i]), 0.0f };
 			float newDotValue = abs(XMVectorGetX(XMVector3Dot(frustumPlanes[i], _diagonals[j])));
 			if (newDotValue > dotValue)
 			{

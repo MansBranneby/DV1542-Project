@@ -1473,7 +1473,7 @@ void renderBillboard()
 	gDeviceContext->GSSetConstantBuffers(0, 1, gConstantBufferMatrix.getConstantBuffer());
 	gDeviceContext->GSSetConstantBuffers(1, 1, gConstantBufferCamera.getConstantBuffer());
 	gDeviceContext->GSSetConstantBuffers(2, 1, gConstantBufferBillboard.getConstantBuffer());
-	gDeviceContext->PSSetConstantBuffers(0, 1, gConstantBufferLight.getConstantBuffer());
+	/*gDeviceContext->PSSetConstantBuffers(0, 1, gConstantBufferLight.getConstantBuffer());*/
 
 	gDeviceContext->Draw(1, 0);
 }
