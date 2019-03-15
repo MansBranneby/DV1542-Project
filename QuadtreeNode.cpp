@@ -3,7 +3,7 @@
 std::vector<Mesh*> QuadtreeNode::boundingVolumeMeshTest(std::vector<Mesh*> meshes)
 {
 	std::vector<Mesh*> intersectedMeshes;
-	for (int i = 0; i < meshes.size(); i++)
+	for (size_t i = 0; i < meshes.size(); i++)
 	{
 		if (meshes[i]->getBoundingVolume()->intersectWithBox(_centerPos, _halfLength))
 			intersectedMeshes.push_back(meshes[i]);
@@ -44,7 +44,7 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 	{
 		std::vector<DirectX::XMFLOAT3> centers = calculateCenter();
 
-		for (int i = 0; i < 4; i++)
+		for (size_t i = 0; i < 4; i++)
 		{
 			_children.push_back(new QuadtreeNode(_halfLength / 2, centers[i], _meshes, quadtreeLevels, currentLevel + 1));
 		}
@@ -53,10 +53,10 @@ QuadtreeNode::QuadtreeNode(float halfLength, DirectX::XMFLOAT3 centerPos, std::v
 
 QuadtreeNode::~QuadtreeNode()
 {
-	for (int i = 0; i < 4; i++)
+	for (size_t i = 0; i < 4; i++)
 		delete _children[i];
 
-	for (int i = 0; i < _meshes.size(); i++)
+	for (size_t i = 0; i < _meshes.size(); i++)
 		delete _meshes[i];
 
 
@@ -123,7 +123,7 @@ std::vector<Mesh*> QuadtreeNode::getIntersectedMeshes(DirectX::XMVECTOR camPos, 
 	}; 
 
 	// Normalize planes
-	for (int i = 0; i < frustumPlanes.size(); i++)
+	for (size_t i = 0; i < frustumPlanes.size(); i++)
 		frustumPlanes[i] = XMPlaneNormalize(frustumPlanes[i]);
 
 	return getMeshes(frustumPlanes, 1);
@@ -133,13 +133,13 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, 
 {
 	using namespace DirectX;
 	//Intersecton for each plane
-	for (int i = 0; i < 6; i++)
+	for (size_t i = 0; i < 6; i++)
 	{
 		float dotValue = -1;
-		int sIndex = -1;
+		size_t sIndex = 0;
 
 		//Find best diagonal
-		for (int j = 0; j < 4; j++)
+		for (size_t j = 0; j < 4; j++)
 		{
 			float newDotValue = XMVectorGetX(XMVector3Dot(normals[i], _diagonals[j]));
 			if (newDotValue > dotValue)
@@ -255,13 +255,13 @@ bool QuadtreeNode::intersectWithFrustum(std::vector<DirectX::XMVECTOR> frustumPl
 
 
 	//Intersecton for each plane
-	for (int i = 0; i < 6; i++)
+	for (size_t i = 0; i < 6; i++)
 	{
 		float dotValue = -1;
-		int sIndex = -1;
+		size_t sIndex = 0;
 
 		//Find best diagonal
-		for (int j = 0; j < 4; j++)
+		for (size_t j = 0; j < 4; j++)
 		{
 			float newDotValue = abs(XMVectorGetX(XMVector3Dot(frustumPlanes[i], _diagonals[j])));
 			if (newDotValue > dotValue)
@@ -336,10 +336,10 @@ std::vector<Mesh*> QuadtreeNode::getMeshes(std::vector<DirectX::XMVECTOR> normal
 	std::vector<Mesh*> tempMeshes;
 	if (intersectWithFrustum(normals, points, planeConstants) && currentLevel < _quadTreeLevels)
 	{
-		for (int i = 0; i < 4; i++)
+		for (size_t i = 0; i < 4; i++)
 		{
 			tempMeshes = _children[i]->getMeshes(normals, points, planeConstants, currentLevel + 1);
-			for (int j = 0; j < tempMeshes.size(); j++)
+			for (size_t j = 0; j < tempMeshes.size(); j++)
 				returnMeshes.push_back(tempMeshes[j]);
 		}
 	}
@@ -355,10 +355,10 @@ std::vector<Mesh*> QuadtreeNode::getMeshes(std::vector<DirectX::XMVECTOR> frustu
 	std::vector<Mesh*> tempMeshes;
 	if (intersectWithFrustum(frustumPlanes) && currentLevel < _quadTreeLevels)
 	{
-		for (int i = 0; i < 4; i++)
+		for (size_t i = 0; i < 4; i++)
 		{
 			tempMeshes = _children[i]->getMeshes(frustumPlanes, currentLevel + 1);
-			for (int j = 0; j < tempMeshes.size(); j++)
+			for (size_t j = 0; j < tempMeshes.size(); j++)
 				returnMeshes.push_back(tempMeshes[j]);
 		}
 	}

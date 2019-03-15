@@ -6,8 +6,6 @@ Material::Material()
 	_diffuseCol = { 0.5f, 0.5f, 0.5f, };
 	_specularCol = { 0.5f, 0.5f, 0.5f, };
 	_specularExp = 96.0f;
-	//_padding[0] = 0.0f;
-	//_padding[1] = 96.0f;
 }
 
 Material::~Material()

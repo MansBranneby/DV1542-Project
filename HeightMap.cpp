@@ -63,7 +63,7 @@ float Heightmap::getHeight(float x, float z)
 	return _greyValues[index]/_heightFactor;
 }
 
-int Heightmap::getVertCount()
+size_t Heightmap::getVertCount()
 {
 	return _vertices_Pos_UV_Normal.size();
 }
@@ -110,13 +110,13 @@ void Heightmap::loadHeightmap(std::string filePath)
 	// Store vertices. Each pixel equals one vertex
 	_heightmap.resize(_terrainSize);
 	int k = 0;
-	for (int i = 0; i < _terrainHeight; i++)
+	for (unsigned int i = 0; i < _terrainHeight; i++)
 	{
-		for (int j = 0; j < _terrainWidth; j++)
+		for (unsigned int j = 0; j < _terrainWidth; j++)
 		{
-			float width = j	/ _widthFactor;						// scale x
+			float width = (float)j	/ _widthFactor;						// scale x
 			float height = _greyValues[k++] / _heightFactor;	// scale y
-			float depth = i / _depthFactor;						// scale z
+			float depth = (float)i / _depthFactor;						// scale z
 
 			int index = (i * _terrainWidth + j);
 
@@ -126,9 +126,9 @@ void Heightmap::loadHeightmap(std::string filePath)
 	}
 
 	Vertex_Pos_UV_Normal tempVert;
-	for (int i = 0; i < _terrainHeight - 1; i++)
+	for (unsigned int i = 0; i < _terrainHeight - 1; i++)
 	{
-		for (int j = 0; j < _terrainWidth - 1; j++)
+		for (unsigned int j = 0; j < _terrainWidth - 1; j++)
 		{
 			// TL 
 			tempVert.setPos(_heightmap[i * _terrainWidth + j]);

@@ -27,8 +27,7 @@ private:
 	std::vector <DirectX::XMFLOAT3> _heightmap;
 	std::vector <Vertex_Pos_UV_Normal> _vertices_Pos_UV_Normal;
 	ConstantBuffer _constantBuffer;
-	DirectX::XMMATRIX _modelMatrix;
-
+	
 	void loadHeightmap(std::string filePath);
 	void createVertexBuffer(ID3D11Device* device);
 public:
@@ -43,5 +42,5 @@ public:
 	std::vector <float> getGreyValues();
 	float getHeight(float x, float z);
 
-	int getVertCount();
+	size_t getVertCount();
 };

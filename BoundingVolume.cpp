@@ -38,12 +38,12 @@ void BoundingVolume::setHighlight(bool highlighted)
 	_highlighted = highlighted;
 	if (_highlighted == true)
 	{
-		for (int i = 0; i < _vertices.size(); i++)
+		for (size_t i = 0; i < _vertices.size(); i++)
 			_vertices.at(i).setCol(DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f));
 	}
 	else
 	{
-		for (int i = 0; i < _vertices.size(); i++)
+		for (size_t i = 0; i < _vertices.size(); i++)
 			_vertices.at(i).setCol(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 	}
 }
@@ -63,7 +63,7 @@ std::vector<Vertex_Pos_Col>& BoundingVolume::getVertices()
 	return _vertices;
 }
 
-int BoundingVolume::getVertCount()
+size_t BoundingVolume::getVertCount()
 {
 	return _vertices.size();
 }

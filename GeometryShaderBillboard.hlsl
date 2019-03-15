@@ -53,7 +53,7 @@ void GS_main(point GS_IN input[1] : SV_POSITION, inout TriangleStream< GS_OUT > 
 	billboardVertices[3] = input[0].pos.xyz + billboardRightVector + billboardUpVector;
 
 	GS_OUT element;
-	for (int i = 0; i < 4; i++)
+	for (uint i = 0; i < 4; i++)
 	{
 		element.pos = mul(float4(billboardVertices[i].xyz, 1.0f), worldViewProj);
 		element.worldPos = mul(billboardVertices[i], world);

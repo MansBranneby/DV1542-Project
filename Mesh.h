@@ -60,7 +60,7 @@ public:
 	ID3D11Buffer** getVertexBuffer();
 	ID3D11Buffer** getVertexBufferNormalMap();
 	ID3D11Buffer** getConstantBuffer();
-	int getVertCount();
+	size_t getVertCount();
 	DirectX::XMMATRIX getModelMatrix();
 	BoundingVolume* getBoundingVolume();
 };

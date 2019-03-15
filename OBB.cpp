@@ -78,7 +78,7 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 	DirectX::XMVECTOR p = DirectX::XMVectorSubtract(center, rayOrigin);
 	DirectX::XMVECTOR arr[3] = {defU, defV, defW };
 
-	for (int i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
 		DirectX::XMVECTOR eVec = DirectX::XMVector3Dot(arr[i], p); // Dot product with DirectXMath returns a vector with the same value copied into the xyzw positions
 		DirectX::XMVECTOR fVec = DirectX::XMVector3Dot(arr[i], rayDir); 
@@ -169,7 +169,7 @@ void OBB::setWorldMatrix(ID3D11Device * device, DirectX::XMMATRIX worldMatrix)
 
 void OBB::transform(ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
 {
-	for (int i = 0; i < _vertices.size(); i++)
+	for (size_t i = 0; i < _vertices.size(); i++)
 	{
 		DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices[i].getPos()), modelMatrix);
 		_vertices[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
