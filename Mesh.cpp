@@ -254,6 +254,8 @@ void Mesh::loadOBJ(std::string filePath, ID3D11Device* device, bool flippedUV, b
 				(t2 * DirectX::XMVectorGetZ(v0) - t1 * DirectX::XMVectorGetZ(v1)) * r, 1.0f);
 
 			tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i).getVertIndex()), faceTangent);
+			tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i + 1).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i + 1).getVertIndex()), faceTangent);
+			tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i + 2).getVertIndex()) = DirectX::XMVectorAdd(tangents.at(_vertices_Pos_UV_Normal_Tangent.at(i + 2).getVertIndex()), faceTangent);
 		}
 		for (size_t i = 0; i < _vertices_Pos_UV_Normal_Tangent.size(); i++)
 		{

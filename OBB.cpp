@@ -118,12 +118,12 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 	}
 	if (tMin > 0)
 	{
-		setHighlight(true);
+		//setHighlight(true);
 		return tMin;
 	}
 	else
 	{
-		setHighlight(true);
+		//setHighlight(true);
 		return tMax;
 	}
 }

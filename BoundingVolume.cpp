@@ -36,16 +36,6 @@ void BoundingVolume::setCenter(DirectX::XMFLOAT3 center)
 void BoundingVolume::setHighlight(bool highlighted)
 {
 	_highlighted = highlighted;
-	if (_highlighted == true)
-	{
-		for (size_t i = 0; i < _vertices.size(); i++)
-			_vertices.at(i).setCol(DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f));
-	}
-	else
-	{
-		for (size_t i = 0; i < _vertices.size(); i++)
-			_vertices.at(i).setCol(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-	}
 }
 
 ID3D11Buffer ** BoundingVolume::getVertexBuffer()

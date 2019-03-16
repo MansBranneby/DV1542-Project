@@ -45,7 +45,7 @@
 #include "WICTextureLoader.h"
 using namespace DirectX;
 
-using Microsoft::WRL::ComPtr; //Behövs denna?
+using Microsoft::WRL::ComPtr;
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -1023,7 +1023,7 @@ float mousePicking(POINT cursorPos)
 	// MS = Model space//
 	/////////////////////
 
-	// screen -> view
+	// screen -> ndc -> view
 	float viewX = (2.0f * (float)cursorPos.x / WIDTH - 1.0f) / projX;
 	float viewY = (-2.0f * (float)cursorPos.y / HEIGHT + 1.0f) / projY;
 
@@ -1039,6 +1039,8 @@ float mousePicking(POINT cursorPos)
 	// world -> model
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
 	gNrOfrenderedMeshes = intersectedMeshes.size();
+	float closestT = 100000.0f;
+	int closestIndex = -1;
 	for (size_t i = 0; i < gNrOfrenderedMeshes; i++)
 	{
 		XMMATRIX inverseWorld = XMMatrixInverse(nullptr, intersectedMeshes[i]->getModelMatrix());
@@ -1047,7 +1049,20 @@ float mousePicking(POINT cursorPos)
 		rayDirMS = XMVector4Normalize(rayDirWS);
 
 		currT = intersectedMeshes[i]->getBoundingVolume()->intersectWithRay(rayDirMS, rayOriginMS);
+		if (currT < closestT && currT != -1)
+		{
+			closestT = currT;
+			closestIndex = i;
+			intersectedMeshes[i]->getBoundingVolume()->setHighlight(true);
+		}
 	}
+
+	for (size_t i = 0; i < gNrOfrenderedMeshes; i++)
+	{
+		if (i != closestIndex)
+			intersectedMeshes[i]->getBoundingVolume()->setHighlight(false);
+	}
+
 
 	return currT;
 }
