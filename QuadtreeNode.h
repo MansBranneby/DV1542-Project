@@ -13,9 +13,7 @@ private:
 	std::vector<Mesh*> boundingVolumeMeshTest(std::vector<Mesh*> meshes);
 	std::vector <DirectX::XMFLOAT3> calculateCenter();
 	
-	bool intersectWithFrustum(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, std::vector<float> planeConstants);
 	bool intersectWithFrustum(std::vector<DirectX::XMVECTOR> frustumPlanes); // Plane extraction
-	std::vector<Mesh*> getMeshes(std::vector<DirectX::XMVECTOR> normals, std::vector<DirectX::XMVECTOR> points, std::vector<float> planeConstants, int currentLevel);
 	std::vector<Mesh*> getMeshes(std::vector<DirectX::XMVECTOR> frustumPlanes, int currentLevel); // Plane extraction
 
 public:

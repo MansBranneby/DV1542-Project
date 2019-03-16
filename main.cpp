@@ -1274,7 +1274,7 @@ void update(float lastT, POINT cursorPos)
 	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
 	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
-	XMMATRIX Projection = XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 200.0f);
+	XMMATRIX Projection = XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 40.0f);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
 	XMMATRIX worldView = XMMatrixMultiply(Projection, XMMatrixMultiply(View, gMatricesPerFrame.World));
@@ -1289,7 +1289,7 @@ void update(float lastT, POINT cursorPos)
 
 	ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 	ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, -20.0f, 100.0f);
+	ImGui::SliderFloat("lightPosY", &gLight.lightPos.y, 1.0f, 20.0f);
 	ImGui::ColorEdit3("clear color", (float*)&gClearColour); // Edit 3 floats representing a color
 	ImGui::Checkbox("Walk Mode", &gCameraWalkMode);
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
