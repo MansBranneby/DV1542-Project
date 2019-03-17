@@ -15,7 +15,7 @@ OBB::OBB(DirectX::XMFLOAT3 smallestXYZ, DirectX::XMFLOAT3 biggestXYZ, ID3D11Devi
 	_center = { 0.0f, halfXYZ.y, 0.0f };
 	_half_u_v_w = { halfXYZ.x, halfXYZ.y, halfXYZ.z };
 
-	DirectX::XMFLOAT3 col(0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 col(1.0f, 1.0f, 1.0f);
 	_rightUpNear = { biggestXYZ.x, biggestXYZ.y, smallestXYZ.z };
 	_rightDownNear = { biggestXYZ.x, smallestXYZ.y, smallestXYZ.z };
 	_leftUpNear = { smallestXYZ.x, biggestXYZ.y, smallestXYZ.z };

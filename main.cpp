@@ -1261,7 +1261,7 @@ void transform(XMMATRIX rotation, XMMATRIX rotationYPos)
 		gCamera.distance = 10.0f;
 	}
 
-	XMMATRIX World = DirectX::XMMatrixRotationY(0.0f);
+	XMMATRIX World = DirectX::XMMatrixIdentity();
 	XMMATRIX View = XMMatrixLookAtLH(gCamera.pos, gCamera.lookAt, gCamera.up);
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1f, 200.0f);
 
