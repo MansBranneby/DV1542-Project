@@ -1650,8 +1650,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 					pitch = min(XM_PI / 2.0f - 0.0001f, max(-XM_PI / 2.0f + 0.0001f, pitch));
 				}
 
-				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
-				XMMATRIX rotationYPos = XMMatrixRotationRollPitchYaw(0.0f, yaw, 0.0f);
+				XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);    // rotation around x and y-axis
+				XMMATRIX rotationYPos = XMMatrixRotationRollPitchYaw(0.0f, yaw, 0.0f); // rotation around y-axis
 			
 				gCamera.velocity.x = 0;
 				gCamera.velocity.y = 0;

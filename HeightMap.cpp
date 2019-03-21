@@ -52,11 +52,13 @@ float Heightmap::getHeight(float x, float z)
 	DirectX::XMVECTOR posMS = DirectX::XMVector4Transform(DirectX::XMVECTOR{ x, 0.0f, z, 1.0f }, inverseModel);
 	x = DirectX::XMVectorGetX(posMS);
 	z = DirectX::XMVectorGetZ(posMS);
+
 	if (x < 0 || z < 0)
 		return 0.0f;
 
+	// location in array
 	int index = ((int)(z*_depthFactor)) * _terrainWidth + (int)(x*_widthFactor);
-		
+	
 	if (index < 0 || index >= _terrainSize || (int)(x * _widthFactor) > _terrainWidth || (int)(z * _depthFactor) > _terrainHeight)
 		index = 0;
 
