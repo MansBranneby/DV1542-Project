@@ -1034,7 +1034,6 @@ float mousePicking(POINT cursorPos)
 	XMMATRIX inverseView = XMMatrixInverse(nullptr, gCamera.view);
 	XMVECTOR rayOriginWS = inverseView.r[3];
 	XMVECTOR rayDirWS = XMVector4Transform(rayDirVS, inverseView);
-	rayDirWS = XMVector4Normalize(rayDirWS);
 
 	// world -> model
 	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
