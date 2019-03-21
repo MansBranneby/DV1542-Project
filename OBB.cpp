@@ -72,7 +72,7 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 	DirectX::XMVECTOR defU = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, _half_u_v_w.x);
 	DirectX::XMVECTOR defV = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, _half_u_v_w.y);
 	DirectX::XMVECTOR defW = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, _half_u_v_w.z);
-	// IMPLEMENT HERE
+
 	float tMin = -1000000, tMax = 1000000;
 	DirectX::XMVECTOR center = DirectX::XMLoadFloat3(&getCenter());
 	DirectX::XMVECTOR p = DirectX::XMVectorSubtract(center, rayOrigin);
@@ -118,12 +118,10 @@ float OBB::intersectWithRay(DirectX::XMVECTOR rayDir, DirectX::XMVECTOR rayOrigi
 	}
 	if (tMin > 0)
 	{
-		//setHighlight(true);
 		return tMin;
 	}
 	else
 	{
-		//setHighlight(true);
 		return tMax;
 	}
 }
@@ -174,7 +172,8 @@ void OBB::transform(ID3D11Device* device, DirectX::XMMATRIX modelMatrix)
 		DirectX::XMVECTOR posWS = DirectX::XMVector3Transform(DirectX::XMLoadFloat3(&_vertices[i].getPos()), modelMatrix);
 		_vertices[i].setPos({ DirectX::XMVectorGetX(posWS), DirectX::XMVectorGetY(posWS), DirectX::XMVectorGetZ(posWS) });
 	}
-	_rightUpNear = _vertices[0].getPos(); //Spagetti
+
+	_rightUpNear = _vertices[0].getPos();
 	_rightDownNear = _vertices[1].getPos();
 	_leftDownNear = _vertices[3].getPos();
 	_leftUpNear = _vertices[5].getPos();

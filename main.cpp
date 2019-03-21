@@ -202,9 +202,9 @@ void createMeshes()
 
 	unsigned int k = 0;
 	DirectX::XMMATRIX modelMatrix = DirectX::XMMatrixRotationY(XM_PI * 0.25f);
-	for (unsigned int i = 0; i < 2; i++)
+	for (unsigned int i = 0; i < 8; i++)
 	{
-		for (unsigned int j = 0; j < 2; j++)
+		for (unsigned int j = 0; j < 8; j++)
 		{
 			gPillars.push_back(new Mesh("Resources\\OBJ files\\LP_Pillar_Textured.obj", true, true, gDevice, gDeviceContext, ORIENTED_BOUNDING_BOX, modelMatrix));
 			gPillars[k++]->setModelMatrix(gDevice, gDeviceContext, DirectX::XMMatrixTranslation(-35.0f + i * 10.0f, 0.0f, -35.0f + j * 10.0f), true);
@@ -1284,11 +1284,10 @@ void transform(XMMATRIX rotation, XMMATRIX rotationYPos)
 void update(float lastT, POINT cursorPos)
 {
 	//Update LightView
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f); //Dåligt att göra detta i update
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 	XMVECTOR LookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	XMFLOAT4 lightPos = XMFLOAT4(gLight.lightPos.x, gLight.lightPos.y, gLight.lightPos.z, 1.0f);
 	XMMATRIX View = XMMatrixLookAtLH(DirectX::XMLoadFloat4(&lightPos), LookAt, camUp);
-	//XMMATRIX Projection = XMMatrixPerspectiveFovLH(0.45f * DirectX::XM_PI, WIDTH / HEIGHT, 0.1, 200.0f);
 	XMMATRIX Projection = XMMatrixOrthographicLH(20.0f, 20.0f, 0.1f, 40.0f);
 	View = XMMatrixTranspose(View);
 	Projection = XMMatrixTranspose(Projection);
@@ -1382,13 +1381,13 @@ void renderShadowMap()
 	gDeviceContext->IASetVertexBuffers(0, 1, gHeightmap->getVertexBuffer(), &vertexSize, &offset);
 	gDeviceContext->Draw(gHeightmap->getVertCount(), 0);
 
-	//std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
-	//gNrOfrenderedMeshes = intersectedMeshes.size();
-	//for (size_t i = 0; i < intersectedMeshes.size(); i++)
-	//{
-	//	gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
-	//	gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
-	//}
+	std::vector<Mesh*> intersectedMeshes = gRoot->getIntersectedMeshes(gCamera.pos, gCamera.lookAt, gCamera.up, gCamera.view, gCamera.projection, 0.1f, 200.0f, 0.45f * DirectX::XM_PI, HEIGHT / WIDTH);
+	gNrOfrenderedMeshes = intersectedMeshes.size();
+	for (size_t i = 0; i < intersectedMeshes.size(); i++)
+	{
+		gDeviceContext->IASetVertexBuffers(0, 1, intersectedMeshes[i]->getVertexBuffer(), &vertexSize, &offset);
+		gDeviceContext->Draw(intersectedMeshes[i]->getVertCount(), 0);
+	}
 }
 
 void renderFirstPass()
@@ -1476,12 +1475,11 @@ void renderBillboard()
 
 	UINT32 vertexSize = sizeof(Vertex_Pos_Col);
 	UINT32 offset = 0;
-	// specify which vertex buffer to use next.
+
+
 	gDeviceContext->IASetVertexBuffers(0, 1, gBillboard->getVertexBuffer(), &vertexSize, &offset);
 
-	// specify the topology to use when drawing
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-	// specify the IA Layout (how is data passed)
 	gDeviceContext->IASetInputLayout(gVertexLayoutPosCol);
 
 	//ConstantBuffer
